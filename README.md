@@ -6,5 +6,5 @@
 3. Thread-----------多线程demo，两种方法；     
 4. mysqlmodel---mysql调用，模型方法；  
 5. Client-------------多线程客户端，一个线程一个客户端；   
-6. MulService-----多线程服务端，一个线程一个客户端处理（QT可以实现Reactor？不用原生C++）；
-
+6. MulService-----多线程服务端，一个线程一个客户端处理（QT可以实现Reactor？不用原生C++）；  
+7. TabView---------View/Model(MVC)模型；   
