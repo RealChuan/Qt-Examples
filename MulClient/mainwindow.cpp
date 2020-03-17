@@ -16,7 +16,7 @@ public:
         portSpinBox->setRange(1, 65536);
         portSpinBox->setValue(65533);
         numSpinBox = new QSpinBox(owner);
-        numSpinBox->setMinimum(1);
+        numSpinBox->setRange(1, 2147483647);
         numSpinBox->setValue(1);
         timeSpinBox = new QSpinBox(owner);
         timeSpinBox->setSuffix(" ms");

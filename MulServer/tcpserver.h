@@ -11,7 +11,7 @@ public:
     ~TcpServer() override;
 
 signals:
-    void message(QString);
+    void message(const QString&);
     void maxCount(QAtomicInt);
     void clientCount(QAtomicInt);
 

@@ -13,7 +13,7 @@ public:
     QString getInfo() const;
 
 signals:
-    void message(QString);
+    void message(const QString&);
 
 public slots:
     void onReadyRead();
