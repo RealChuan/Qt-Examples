@@ -4,7 +4,8 @@
 TcpServer::TcpServer(QObject *parent)
     :QTcpServer(parent)
 {
-
+    qRegisterMetaType<qintptr>("qintptr");
+    qRegisterMetaType<QAtomicInt>("QAtomicInt");
 }
 
 TcpServer::~TcpServer()

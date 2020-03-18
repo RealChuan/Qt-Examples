@@ -11,6 +11,8 @@ public:
     MainWindowPrivate(QMainWindow* owner) : owner(owner){
         ipBox = new QComboBox(owner);
         portEdit = new QLineEdit(owner);
+        threadSpinBox = new QSpinBox(owner);
+        threadSpinBox->setRange(0, 2147483647);
         listenBtn = new QPushButton(QObject::tr("Listen"), owner);
         listenBtn->setCheckable(true);
         messageEdit = new QTextEdit(owner);
@@ -21,6 +23,7 @@ public:
     QMainWindow *owner;
     QComboBox *ipBox;
     QLineEdit *portEdit;
+    QSpinBox *threadSpinBox;
     QPushButton *listenBtn;
     QTextEdit *messageEdit;
     QLabel *currentConnections;
@@ -52,7 +55,12 @@ void MainWindow::onListen()
                                  tr("Port is empty!"), QMessageBox::Ok);
             return;
         }
-        d->tcpServer = new TcpServer(this);
+        int num = d->threadSpinBox->value();
+        if(num == 0)
+            d->messageEdit->append(tr("Single thread mode reactor!"));
+        else
+            d->messageEdit->append(tr("Multithreaded (master-slave) mode reactor!"));
+        d->tcpServer = new TcpServer(num, this);
         connect(d->tcpServer, &TcpServer::message, d->messageEdit, &QTextEdit::append, Qt::UniqueConnection);
         connect(d->tcpServer, &TcpServer::maxCount, this, &MainWindow::onMaxCount, Qt::UniqueConnection);
         connect(d->tcpServer, &TcpServer::clientCount, this, &MainWindow::onCount, Qt::UniqueConnection);
@@ -91,7 +99,8 @@ void MainWindow::setupUI()
     topLayout->addWidget(d->ipBox);
     topLayout->addWidget(new QLabel(tr("Local Port: "), this));
     topLayout->addWidget(d->portEdit);
-    topLayout->addStretch(1);
+    topLayout->addWidget(new QLabel(tr("SubReactor Nums: "), this));
+    topLayout->addWidget(d->threadSpinBox);
     topLayout->addWidget(d->listenBtn);
 
     QHBoxLayout *midLayout = new QHBoxLayout;

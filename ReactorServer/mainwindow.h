@@ -7,19 +7,20 @@ class MainWindowPrivate;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
+
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
-    void onConnect();
-    void onWrite();
-    void onClearList();
+    void onListen();
+    void onMaxCount(QAtomicInt);
+    void onCount(QAtomicInt);
 
 private:
-    void warningBox(const QString&, QWidget*);
-    void buildConnect();
     void setupUI();
+    void initParam();
+    void buildConnect();
 
     MainWindowPrivate *d;
 };

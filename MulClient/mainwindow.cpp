@@ -26,6 +26,7 @@ public:
         connectBtn = new QPushButton(QObject::tr("Connect"), owner);
         connectBtn->setCheckable(true);
         messageEdit = new QTextEdit(owner);
+        messageEdit->document()->setMaximumBlockCount(1000);
         sendTime = new QTimer(owner);
     }
     QWidget *owner;
@@ -51,8 +52,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    qDeleteAll(d->clientList);
-    d->clientList.clear();
+    if(!d->clientList.isEmpty()){
+        qDeleteAll(d->clientList);
+        d->clientList.clear();
+    }
     delete d;
 }
 
@@ -86,6 +89,7 @@ void MainWindow::onConnect()
         for(int i=0; i<num; i++){
             Thread *thread = new Thread(ip, port, this);
             connect(thread, &Thread::message, d->messageEdit, &QTextEdit::append, Qt::UniqueConnection);
+            connect(thread, &Thread::destroyed, this, &MainWindow::onClearList);
             d->clientList.append(thread);
             thread->start();
         }
@@ -100,7 +104,6 @@ void MainWindow::onConnect()
                 thread->wait();
             }
         }
-        qDeleteAll(d->clientList);
         d->clientList.clear();
         d->connectBtn->setText(tr("Connect"));
         d->connectBtn->setChecked(false);
@@ -109,12 +112,21 @@ void MainWindow::onConnect()
 
 void MainWindow::onWrite()
 {
-    QByteArray buf = "ni hao wa!";
+    QString str = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
+    QByteArray buf = str.toLatin1() + " Hello World!";
     foreach(Thread* thread, d->clientList){
         if(thread && thread->isRunning()){
             emit thread->writeToServer(buf);
         }
     }
+}
+
+void MainWindow::onClearList()
+{
+    d->sendTime->stop();
+    d->clientList.clear();
+    d->connectBtn->setText(tr("Connect"));
+    d->connectBtn->setChecked(false);
 }
 
 void MainWindow::warningBox(const QString &str, QWidget *w)

@@ -10,7 +10,6 @@ Thread::Thread(qintptr socketDescriptor, QObject *parent)
     :QThread(parent)
     ,socketfd(socketDescriptor)
 {
-    qRegisterMetaType<QAtomicInt>("QAtomicInt");
 }
 
 Thread::~Thread()
@@ -19,7 +18,7 @@ Thread::~Thread()
         quit();
         wait();
     }
-    count--;
+    count.fetchAndSubOrdered(1);
     QString str = tr("Client Offline Current quantity: ") +
             QString::number(count);
     emit message(str);
@@ -36,7 +35,8 @@ void Thread::run()
                    << tcpSocket->errorString();
         return;
     }
-    count++;
+    count.fetchAndAddOrdered(1);
+    qDebug() << "onNewConnect: " << count;
     connect(tcpSocket.data(), &TcpSocket::readyRead,
             tcpSocket.data(), &TcpSocket::onReadyRead, Qt::DirectConnection);
     connect(tcpSocket.data(), &TcpSocket::message, this, &Thread::message);
