@@ -14,12 +14,13 @@ public:
 private slots:
     void onConnect();
     void onWrite();
-    void onClearList();
+    //void onStop();
 
 private:
     void warningBox(const QString&, QWidget*);
     void buildConnect();
     void setupUI();
+    void changeControlState(bool);
 
     MainWindowPrivate *d;
 };

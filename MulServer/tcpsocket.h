@@ -12,9 +12,6 @@ public:
 
     QString getInfo() const;
 
-signals:
-    void message(const QString&);
-
 public slots:
     void onReadyRead();
 };

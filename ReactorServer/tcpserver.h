@@ -23,10 +23,10 @@ protected:
 private:
     void createSocket(qintptr);
     Thread* getNextThread();
-    QList<Thread*> threads;
-    int index;
 
+    QList<Thread*> threads;
     SubReactor* subReactor = nullptr;
+    int index;
 };
 
 #endif // TCPSERVER_H

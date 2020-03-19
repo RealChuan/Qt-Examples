@@ -12,9 +12,6 @@ public:
 
     QString getInfo() const;
 
-signals:
-    void message(QString);
-
 public slots:
     void onWrite(const QByteArray&);
     void onReadyRead();

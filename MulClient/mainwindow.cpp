@@ -48,14 +48,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setupUI();
     buildConnect();
+    qDebug() << "MainWindows: " << QThread::currentThreadId();
 }
 
 MainWindow::~MainWindow()
 {
-    if(!d->clientList.isEmpty()){
-        qDeleteAll(d->clientList);
-        d->clientList.clear();
-    }
     delete d;
 }
 
@@ -88,12 +85,15 @@ void MainWindow::onConnect()
         d->clientList.clear();
         for(int i=0; i<num; i++){
             Thread *thread = new Thread(ip, port, this);
-            connect(thread, &Thread::message, d->messageEdit, &QTextEdit::append, Qt::UniqueConnection);
-            connect(thread, &Thread::destroyed, this, &MainWindow::onClearList);
             d->clientList.append(thread);
             thread->start();
+            QString str = QString::number(i+1) + tr(" Clients (threads) start running");
+            d->messageEdit->append(str);
         }
+        //connect(d->clientList[0], &Thread::destroyed, this, &MainWindow::onStop);
+        connect(d->clientList[0], &Thread::destroyed, qApp, &QApplication::quit);
         d->sendTime->start();
+        changeControlState(false);
         d->connectBtn->setText(tr("Connected"));
         d->connectBtn->setChecked(true);
     }else{
@@ -105,6 +105,7 @@ void MainWindow::onConnect()
             }
         }
         d->clientList.clear();
+        changeControlState(true);
         d->connectBtn->setText(tr("Connect"));
         d->connectBtn->setChecked(false);
     }
@@ -121,13 +122,14 @@ void MainWindow::onWrite()
     }
 }
 
-void MainWindow::onClearList()
-{
-    d->sendTime->stop();
-    d->clientList.clear();
-    d->connectBtn->setText(tr("Connect"));
-    d->connectBtn->setChecked(false);
-}
+//void MainWindow::onStop()
+//{
+//    d->sendTime->stop();
+//    d->clientList.clear();
+//    changeControlState(true);
+//    d->connectBtn->setText(tr("Connect"));
+//    d->connectBtn->setChecked(false);
+//}
 
 void MainWindow::warningBox(const QString &str, QWidget *w)
 {
@@ -165,5 +167,13 @@ void MainWindow::setupUI()
     frame->setLayout(layout);
 
     setCentralWidget(frame);
+}
+
+void MainWindow::changeControlState(bool state)
+{
+    d->ipEdit->setEnabled(state);
+    d->portSpinBox->setEnabled(state);
+    d->numSpinBox->setEnabled(state);
+    d->timeSpinBox->setEnabled(state);
 }
 

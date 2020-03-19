@@ -1,7 +1,6 @@
 #include "mainwindow.h"
-#include "tcpserver.h"
+#include "accepter.h"
 
-#include <QHostAddress>
 #include <QNetworkInterface>
 #include <QtWidgets>
 
@@ -16,7 +15,7 @@ public:
         listenBtn = new QPushButton(QObject::tr("Listen"), owner);
         listenBtn->setCheckable(true);
         messageEdit = new QTextEdit(owner);
-        messageEdit->document()->setMaximumBlockCount(1000);
+        messageEdit->document()->setMaximumBlockCount(1000);    //1000 max
         currentConnections = new QLabel("0", owner);
         historyMaxConnections = new QLabel("0", owner);
     }
@@ -28,7 +27,7 @@ public:
     QTextEdit *messageEdit;
     QLabel *currentConnections;
     QLabel *historyMaxConnections;
-    TcpServer *tcpServer;
+    Accepter *accepter;
 };
 
 MainWindow::MainWindow(QWidget *parent)
@@ -38,6 +37,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
     initParam();
     buildConnect();
+    qDebug() << "MainWindows: " << QThread::currentThreadId();
 }
 
 MainWindow::~MainWindow()
@@ -60,23 +60,25 @@ void MainWindow::onListen()
             d->messageEdit->append(tr("Single thread mode reactor!"));
         else
             d->messageEdit->append(tr("Multithreaded (master-slave) mode reactor!"));
-        d->tcpServer = new TcpServer(num, this);
-        connect(d->tcpServer, &TcpServer::message, d->messageEdit, &QTextEdit::append, Qt::UniqueConnection);
-        connect(d->tcpServer, &TcpServer::maxCount, this, &MainWindow::onMaxCount, Qt::UniqueConnection);
-        connect(d->tcpServer, &TcpServer::clientCount, this, &MainWindow::onCount, Qt::UniqueConnection);
-        bool ok = d->tcpServer->listen(QHostAddress::Any, quint16(port.toUInt()));
+        d->accepter = new Accepter(quint16(port.toUInt()), num, this);
+        connect(d->accepter, &Accepter::message, d->messageEdit, &QTextEdit::append, Qt::UniqueConnection);
+        connect(d->accepter, &Accepter::maxCount, this, &MainWindow::onMaxCount, Qt::UniqueConnection);
+        connect(d->accepter, &Accepter::clientCount, this, &MainWindow::onCount, Qt::UniqueConnection);
+        d->accepter->start();
+        bool ok = d->accepter->isRunning();
         d->ipBox->setEnabled(!ok);
         d->portEdit->setEnabled(!ok);
+        d->threadSpinBox->setEnabled(!ok);
         d->listenBtn->setChecked(ok);
         QString text = ok? tr("Disconnect") : tr("Listen");
         d->listenBtn->setText(text);
     }
-    else if(d->tcpServer->isListening()){
-        d->tcpServer->close();
-        delete d->tcpServer;
-        d->tcpServer= nullptr;
+    else if(d->accepter->isRunning()){
+        delete d->accepter;
+        d->accepter = nullptr;
         d->ipBox->setEnabled(true);
         d->portEdit->setEnabled(true);
+        d->threadSpinBox->setEnabled(true);
         d->listenBtn->setChecked(false);
         d->listenBtn->setText(tr("Listen"));
     }

@@ -9,7 +9,6 @@ TcpSocket::TcpSocket(QObject *parent)
 
 TcpSocket::~TcpSocket()
 {
-    qDebug() << tr("Client Offline!");
     qDebug() << "~TcpSocket";
 }
 
@@ -26,7 +25,6 @@ void TcpSocket::onReadyRead()
     QByteArray buf = readAll();
     write(buf);
     waitForBytesWritten(3000);
-    QString str =  getInfo() + buf;
-    emit message(str);
+    //QString str =  getInfo() + buf;
     //qDebug() << "onReadyRead: " << str;
 }

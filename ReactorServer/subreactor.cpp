@@ -23,26 +23,27 @@ void SubReactor::onNewConnect(qintptr socketfd)
                    << tcpSocket->errorString();
         return;
     }
-    count++;
-    totalCount.fetchAndAddOrdered(1);
-    qDebug() << "onNewConnect: " << totalCount;
     connect(tcpSocket, &TcpSocket::readyRead,
             tcpSocket, &TcpSocket::onReadyRead, Qt::DirectConnection);
-    connect(tcpSocket, &TcpSocket::message, this, &SubReactor::message);
     connect(tcpSocket, &TcpSocket::disconnected,
             tcpSocket, &TcpSocket::deleteLater, Qt::DirectConnection);
     connect(tcpSocket, &TcpSocket::disconnected, this, &SubReactor::onClose, Qt::DirectConnection);
-    QString str = tr("Client online: ") + tcpSocket->getInfo();
+    count++;
+    totalCount.fetchAndAddOrdered(1);
+    QString str = QString::number(totalCount) + tr(" Client online: ") +
+            tcpSocket->getInfo();
     emit message(str);
-    emit maxCount(count);
-    emit clientCount(count);
+    emit maxCount(totalCount);
+    emit clientCount(totalCount);
+    qDebug() << "Thread: " << QThread::currentThreadId()
+             << "The current number of clients is: " << count;
 }
 
 void SubReactor::onClose()
 {
     count--;
     totalCount.fetchAndSubOrdered(1);
-    QString str = tr("Client Offline Current quantity: ") +
+    QString str = tr("The client is offline. The current number is: ") +
             QString::number(totalCount);
     emit message(str);
     emit clientCount(totalCount);

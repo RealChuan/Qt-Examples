@@ -30,6 +30,5 @@ void TcpClient::onReadyRead()
 {
     QByteArray buf = readAll();
     QString str =  getInfo() + buf;
-    emit message(str);
     //qDebug() << "onReadyRead: " << str;
 }

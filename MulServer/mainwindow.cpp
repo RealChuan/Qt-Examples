@@ -1,7 +1,6 @@
 #include "mainwindow.h"
-#include "tcpserver.h"
+#include "accepter.h"
 
-#include <QHostAddress>
 #include <QNetworkInterface>
 #include <QtWidgets>
 
@@ -25,7 +24,7 @@ public:
     QTextEdit *messageEdit;
     QLabel *currentConnections;
     QLabel *historyMaxConnections;
-    TcpServer *tcpServer;
+    Accepter *accepter;
 };
 
 MainWindow::MainWindow(QWidget *parent)
@@ -35,6 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
     initParam();
     buildConnect();
+    qDebug() << "MainWindows: " << QThread::currentThreadId();
 }
 
 MainWindow::~MainWindow()
@@ -51,22 +51,22 @@ void MainWindow::onListen()
             QMessageBox::warning(this, tr("Warning!"),
                                  tr("Port is empty!"), QMessageBox::Ok);
             return;
-        }
-        d->tcpServer = new TcpServer(this);
-        connect(d->tcpServer, &TcpServer::message, d->messageEdit, &QTextEdit::append, Qt::UniqueConnection);
-        connect(d->tcpServer, &TcpServer::maxCount, this, &MainWindow::onMaxCount, Qt::UniqueConnection);
-        connect(d->tcpServer, &TcpServer::clientCount, this, &MainWindow::onCount, Qt::UniqueConnection);
-        bool ok = d->tcpServer->listen(QHostAddress::Any, quint16(port.toUInt()));
+        }       
+        d->accepter = new Accepter(quint16(port.toUInt()), this);
+        connect(d->accepter, &Accepter::message, d->messageEdit, &QTextEdit::append, Qt::UniqueConnection);
+        connect(d->accepter, &Accepter::maxCount, this, &MainWindow::onMaxCount, Qt::UniqueConnection);
+        connect(d->accepter, &Accepter::clientCount, this, &MainWindow::onCount, Qt::UniqueConnection);
+        d->accepter->start();
+        bool ok = d->accepter->isRunning();
         d->ipBox->setEnabled(!ok);
         d->portEdit->setEnabled(!ok);
         d->listenBtn->setChecked(ok);
         QString text = ok? tr("Disconnect") : tr("Listen");
         d->listenBtn->setText(text);
     }
-    else if(d->tcpServer->isListening()){
-        d->tcpServer->close();
-        delete d->tcpServer;
-        d->tcpServer= nullptr;
+    else if(d->accepter->isRunning()){
+        delete d->accepter;
+        d->accepter = nullptr;
         d->ipBox->setEnabled(true);
         d->portEdit->setEnabled(true);
         d->listenBtn->setChecked(false);

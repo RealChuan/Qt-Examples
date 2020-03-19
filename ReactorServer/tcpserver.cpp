@@ -6,8 +6,6 @@ TcpServer::TcpServer(int num, QObject *parent)
     : QTcpServer(parent)
     , index(0)
 {
-    qDebug() << "TcpServer: " << QThread::currentThreadId();
-
     qRegisterMetaType<qintptr>("qintptr");
     qRegisterMetaType<QAtomicInt>("QAtomicInt");
 
@@ -47,7 +45,6 @@ void TcpServer::incomingConnection(qintptr handle)
     else if(subReactor != nullptr)
         subReactor->onNewConnect(handle);
 }
-
 
 Thread *TcpServer::getNextThread()
 {

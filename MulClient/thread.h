@@ -11,7 +11,6 @@ public:
     ~Thread() override;
 
 signals:
-    void message(QString);
     void writeToServer(const QByteArray&);
 
 protected:
