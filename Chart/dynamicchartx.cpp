@@ -2,17 +2,18 @@
 
 class DynamicChartXPrivate{
 public:
-    DynamicChartXPrivate(QChartView *parent)
+    DynamicChartXPrivate(ChartView *parent)
         : owner(parent)
         , timerId(0)
         , xValue(0)
     {
-        valueAxis = new QValueAxis;
-        splineSeries = new QSplineSeries;
-        scatterSeries = new QScatterSeries;
+        valueAxis = new QValueAxis(owner);
+        splineSeries = new QSplineSeries(owner);
+        scatterSeries = new QScatterSeries(owner);
         scatterSeries->setMarkerSize(8);
 
         chart = new QChart;
+        chart->setAnimationOptions(QChart::AllAnimations);
         chart->setTitle(QObject::tr("Real Time Dynamic Curve X"));
         chart->addSeries(splineSeries);
         chart->addSeries(scatterSeries);
@@ -24,7 +25,7 @@ public:
         chart->axes(Qt::Vertical).first()->setRange(0, 100);
     }
 
-    QChartView *owner;
+    ChartView *owner;
     QChart *chart;
     QValueAxis *valueAxis;
     QSplineSeries *splineSeries;
@@ -35,7 +36,7 @@ public:
 };
 
 DynamicChartX::DynamicChartX(QWidget *parent)
-    : QChartView(parent)
+    : ChartView(parent)
     , d(new DynamicChartXPrivate(this))
 {
     setupChart();
@@ -59,13 +60,13 @@ void DynamicChartX::dataReceived(int value)
 {
     if(!isVisible())
         return;
-    qreal x = d->chart->plotArea().width() / 20;
-    d->splineSeries->append(d->xValue*100/20, value);
-    d->scatterSeries->append(d->xValue*100/20, value);
-    if(d->xValue > 20)
+    qreal x = d->chart->plotArea().width() / 10;
+    d->splineSeries->append(d->xValue*100/10, value);
+    d->scatterSeries->append(d->xValue*100/10, value);
+    if(d->xValue > 10)
         d->chart->scroll(x, 0);
     d->xValue++;
-    if(d->splineSeries->points().size() > 20)
+    if(d->splineSeries->points().size() > 10)
     {
         d->splineSeries->points().removeFirst();
         d->scatterSeries->points().removeFirst();
@@ -74,7 +75,7 @@ void DynamicChartX::dataReceived(int value)
 
 void DynamicChartX::startChart()
 {
-    d->timerId = startTimer(500);
+    d->timerId = startTimer(1000);
     qsrand(QDateTime::currentDateTime().toTime_t());
 }
 

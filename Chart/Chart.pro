@@ -16,15 +16,35 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    areachart.cpp \
+    callout.cpp \
+    chartlabel.cpp \
+    chartview.cpp \
+    datetimechart.cpp \
+    dialogchart.cpp \
     dynamicchart.cpp \
     dynamicchartx.cpp \
+    linechart.cpp \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    normalchartdata.cpp \
+    piechart.cpp \
+    stackedbarchart.cpp
 
 HEADERS += \
+    areachart.h \
+    callout.h \
+    chartlabel.h \
+    chartview.h \
+    datetimechart.h \
+    dialogchart.h \
     dynamicchart.h \
     dynamicchartx.h \
-    mainwindow.h
+    linechart.h \
+    mainwindow.h \
+    normalchartdata.h \
+    piechart.h \
+    stackedbarchart.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

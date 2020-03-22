@@ -2,12 +2,12 @@
 
 class DynamicChartPrivate{
 public:
-    DynamicChartPrivate(QChartView *parent)
+    DynamicChartPrivate(ChartView *parent)
         : owner(parent)
         , timerId(0)
     {
-        splineSeries = new QSplineSeries;
-        scatterSeries = new QScatterSeries;
+        splineSeries = new QSplineSeries(owner);
+        scatterSeries = new QScatterSeries(owner);
         scatterSeries->setMarkerSize(8);
 
         chart = new QChart;
@@ -19,7 +19,7 @@ public:
         chart->axes(Qt::Vertical).first()->setRange(0, 100);
     }
 
-    QChartView *owner;
+    ChartView *owner;
     QChart *chart;
     QSplineSeries *splineSeries;
     QScatterSeries *scatterSeries;
@@ -28,7 +28,7 @@ public:
 };
 
 DynamicChart::DynamicChart(QWidget *parent)
-    : QChartView(parent)
+    : ChartView(parent)
     , d(new DynamicChartPrivate(this))
 {
     setupChart();
@@ -61,8 +61,8 @@ void DynamicChart::dataReceived(int value)
 
     d->splineSeries->clear();
     d->scatterSeries->clear();
-    int dx = 100 / 20;
-    int less = 20 - d->data.size();
+    int dx = 100 / 10;
+    int less = 10 - d->data.size();
 
     for (int i = 0; i < d->data.size(); ++i) {
         d->splineSeries->append(less*dx+i*dx, d->data.at(i));
@@ -72,7 +72,7 @@ void DynamicChart::dataReceived(int value)
 
 void DynamicChart::startChart()
 {
-    d->timerId = startTimer(500);
+    d->timerId = startTimer(1000);
     qsrand(QDateTime::currentDateTime().toTime_t());
 }
 

@@ -1,10 +1,10 @@
 #ifndef DYNAMICCHART_H
 #define DYNAMICCHART_H
 
-#include <QtCharts>
+#include "chartview.h"
 
 class DynamicChartPrivate;
-class DynamicChart : public QChartView
+class DynamicChart : public ChartView
 {
 public:
     DynamicChart(QWidget *parent = nullptr);
