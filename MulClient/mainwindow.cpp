@@ -90,6 +90,12 @@ void MainWindow::onConnect()
             QString str = QString::number(i+1) + tr(" Clients (threads) start running");
             d->messageEdit->append(str);
         }
+        //
+        // fix me?
+        // Keep the window, clear the thread list, stop the timer,
+        // and the "connectBtn" button is displayed as connect.
+        // In the connected state, closing the window will not crash.
+        //
         //connect(d->clientList[0], &Thread::destroyed, this, &MainWindow::onStop);
         connect(d->clientList[0], &Thread::destroyed, qApp, &QApplication::quit);
         d->sendTime->start();
