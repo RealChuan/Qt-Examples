@@ -45,9 +45,9 @@ MainWindow::~MainWindow()
     delete d;
 }
 
-void MainWindow::onListen()
+void MainWindow::onListen(bool state)
 {
-    if(d->listenBtn->isChecked()){
+    if(state){
         d->listenBtn->setChecked(false);
         QString port = d->portEdit->text();
         if(port.isEmpty()){

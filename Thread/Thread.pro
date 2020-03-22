@@ -16,37 +16,21 @@ DEFINES += QT_DEPRECATED_WARNINGS
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
-    MyThread.cpp \
-    MyThread_object.cpp \
     main.cpp \
     mainwindow.cpp \
-    mainwindow_object.cpp
+    test.cpp \
+    thread1.cpp \
+    thread2.cpp \
+    thread3.cpp
 
 HEADERS += \
-    MyThread.h \
-    MyThread_object.h \
     mainwindow.h \
-    mainwindow_object.h
-
-FORMS += \
-    mainwindow.ui \
-    mainwindow_object.ui
+    test.h \
+    thread1.h \
+    thread2.h \
+    thread3.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
-
-# Output directory
-CONFIG(debug, debug|release) {
-    output = debug
-}
-CONFIG(release, debug|release) {
-    output = release
-}
-
-DESTDIR     = bin
-OBJECTS_DIR = $$output
-MOC_DIR     = $$output
-RCC_DIR     = $$output
-UI_DIR      = $$output

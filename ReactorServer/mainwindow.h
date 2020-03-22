@@ -13,7 +13,7 @@ public:
     ~MainWindow();
 
 private slots:
-    void onListen();
+    void onListen(bool);
     void onMaxCount(QAtomicInt);
     void onCount(QAtomicInt);
 

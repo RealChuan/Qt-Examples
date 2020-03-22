@@ -3,12 +3,7 @@
 
 #include <QMainWindow>
 
-#include "MyThread.h"
-
-QT_BEGIN_NAMESPACE
-namespace Ui { class MainWindow; }
-QT_END_NAMESPACE
-
+class MainWindowPrivate;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -18,14 +13,15 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_openbtn_clicked();
-    void on_closebtn_clicked();
-    void display(int i);
+    void onStart(bool);
+    void onDoSomeThing();
+    void setLable1(const QString&);
+    void setLable2(const QString&);
+    void setLable3(const QString&);
 
 private:
-    Ui::MainWindow *ui;
-    MyThread *thread_;
-    QTimer *time_;
-    int count;
+    void buildConnect();
+    void setupUI();
+    MainWindowPrivate *d;
 };
 #endif // MAINWINDOW_H

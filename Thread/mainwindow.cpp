@@ -1,75 +1,141 @@
-﻿#include "mainwindow.h"
-#include "ui_mainwindow.h"
+#include "mainwindow.h"
+#include "thread1.h"
+#include "thread2.h"
+#include "thread3.h"
 
-#include <QDebug>
-#include <QTimer>
+#include <QtWidgets>
 
-#pragma execution_character_set("utf-8")
+class MainWindowPrivate{
+public:
+    MainWindowPrivate(QWidget *parent)
+        :owner(parent)
+        ,count(0){
+        mainLabel = new QLabel(owner);
+        threadLabel1 = new QLabel(owner);
+        threadLabel1->setAlignment(Qt::AlignCenter);
+        threadLabel2 = new QLabel(owner);
+        threadLabel2->setAlignment(Qt::AlignCenter);
+        threadLabel3 = new QLabel(owner);
+        threadLabel3->setAlignment(Qt::AlignCenter);
+        startButton = new QPushButton(QObject::tr("Start Threads"), owner);
+        startButton->setCheckable(true);
+        doButton = new QPushButton(QObject::tr("Do Something"), owner);
+        doButton->setEnabled(false);
+    }
+    QWidget *owner;
+    QLabel *mainLabel;
+    QLabel *threadLabel1;
+    QLabel *threadLabel2;
+    QLabel *threadLabel3;
+    QPushButton *startButton;
+    QPushButton *doButton;
+    Thread1 *thread1;
+    Thread2 *thread2;
+    Thread3 *thread3;
+    int count;
+};
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , ui(new Ui::MainWindow)
-    ,count(0)
+    , d(new MainWindowPrivate(this))
 {
-    ui->setupUi(this);
-
-    ui->label->setFont(QFont("微软雅黑", 20, QFont::Normal, false));
-    ui->label->setAlignment(Qt::AlignCenter);
-    ui->label->setText("Hello World!");
-
-    ui->label_3->setFont(QFont("微软雅黑", 20, QFont::Normal, false));
-    ui->label_3->setAlignment(Qt::AlignCenter);
-    ui->label_3->setText("Hello World!");
-
-    time_ = new QTimer(this);
-    time_->setInterval(1000);
-    connect(time_,&QTimer::timeout,[this]
-    {
-        QString str=QString("UI线程函数\n编号：%1\n线程id:%2").arg(count++)
-                .arg(reinterpret_cast<int>(QThread::currentThreadId()));
-        ui->label->setText(str);
-        qDebug()<<"主线程："<<QThread::currentThreadId();
-    });
-
-    /*线程初始化*/
-    thread_ = new MyThread;
-    connect(thread_,&MyThread::message,this,&MainWindow::display,Qt::DirectConnection);
-
-    connect(thread_,&QThread::finished,[]{
-        qDebug()<<"线程："<<QThread::currentThreadId();
-        qDebug()<<tr("完成信号finished触发");
-    });
+    setupUI();
+    buildConnect();
 }
 
 MainWindow::~MainWindow()
 {
-    thread_->closeThread();
-    thread_->wait();
-    thread_->deleteLater();
-    delete thread_;
-    delete ui;
+    delete d;
 }
 
-void MainWindow::on_openbtn_clicked()
+void MainWindow::onStart(bool checked)
 {
-    time_->start();
-    /*开启一个线程*/
-    qDebug()<<"主线程："<<QThread::currentThreadId();
-    thread_->setRun(true);
-    thread_->start();
+    if(checked){
+        d->thread1 = new Thread1(this);
+        d->thread2 = new Thread2(this);
+        d->thread3 = new Thread3(this);
+
+        connect(d->thread1, &Thread1::message, this, &MainWindow::setLable1, Qt::DirectConnection);
+        connect(d->thread2, &Thread2::message, this, &MainWindow::setLable2, Qt::DirectConnection);
+        connect(d->thread3, &Thread3::message, this, &MainWindow::setLable3, Qt::DirectConnection);
+
+        d->thread1->start();
+        d->thread2->start();
+
+        d->startButton->setText(tr("Stop Threads"));
+        d->doButton->setEnabled(true);
+    }else{
+        d->thread1->deleteLater();
+        d->thread2->deleteLater();
+        d->thread3->deleteLater();
+        d->startButton->setText(tr("Start Threads"));
+        d->doButton->setEnabled(false);
+    }
 }
 
-void MainWindow::on_closebtn_clicked()
+void MainWindow::onDoSomeThing()
 {
-    time_->stop();
-    /*关闭多线程*/
-    thread_->closeThread();
-    thread_->wait();
+    d->thread1->wakeUpThread();
+    emit d->thread2->doSomeThing(2);
+    emit d->thread3->doSomething(3);
+    //d->thread3->doSomeThing(3);
+    QString str = tr("I am main thread(UI): %1, Count: %2").
+            arg(reinterpret_cast<int>(QThread::currentThreadId())).
+            arg(d->count);
+    d->mainLabel->setText(str);
+    d->count++;
+    update();
 }
 
-void MainWindow::display(int i)
+void MainWindow::setLable1(const QString &str)
 {
-    QString str=QString("信号槽常规函数\n编号：%1\n线程id:%2").arg(i)
-            .arg(reinterpret_cast<int>(QThread::currentThreadId()));
-    ui->label_3->setText(str);
+    QString buf = str + "\n" + tr("The current thread is: %1").
+            arg(reinterpret_cast<int>(QThread::currentThreadId()));
+    d->threadLabel1->setText(buf);
 }
+
+void MainWindow::setLable2(const QString &str)
+{
+    QString buf = str + "\n" + tr("The current thread is: %1").
+            arg(reinterpret_cast<int>(QThread::currentThreadId()));
+    d->threadLabel2->setText(buf);
+}
+
+void MainWindow::setLable3(const QString &str)
+{
+    QString buf = str + "\n" + tr("The current thread is: %1").
+            arg(reinterpret_cast<int>(QThread::currentThreadId()));
+    d->threadLabel3->setText(buf);
+}
+
+void MainWindow::buildConnect()
+{
+    connect(d->startButton, &QPushButton::clicked, this, &MainWindow::onStart);
+    connect(d->doButton, &QPushButton::clicked, this, &MainWindow::onDoSomeThing);
+}
+
+void MainWindow::setupUI()
+{
+    QGridLayout *gLayout = new QGridLayout;
+    gLayout->addWidget(d->mainLabel, 0, 0);
+    gLayout->addWidget(d->threadLabel1, 0, 1);
+    gLayout->addWidget(d->threadLabel2, 1, 0);
+    gLayout->addWidget(d->threadLabel3, 1, 1);
+    gLayout->addWidget(d->startButton, 2, 0);
+    gLayout->addWidget(d->doButton, 2, 1);
+
+    QFrame *frame = new QFrame(this);
+    frame->setLayout(gLayout);
+    setCentralWidget(frame);
+    setMinimumSize(640, 480);
+
+    setStyleSheet("QLabel{\
+                  background-color: #787878;\
+                  border-radius: 4px;\
+                  font-family: \"Microsoft YaHei\";\
+                  font-weight:bold;\
+                  font-size:14px;\
+                  color: #FFFFFF;\
+                  }");
+}
+
