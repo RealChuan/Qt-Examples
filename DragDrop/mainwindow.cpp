@@ -1,51 +1,14 @@
-﻿#include "mainwindow.h"
-#include "acceptwidget.h"
-#include "menwidget.h"
+#include "mainwindow.h"
+#include "draglistwidget.h"
+#include "droplistwidget.h"
 
-#include <QFrame>
-#include <QLayout>
-#include <QGroupBox>
-#include <QMimeData>
-#include <QDropEvent>
-#include <QPushButton>
-#include <QDebug>
-
-#pragma execution_character_set("utf-8")
+#include <QtWidgets>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    QFrame *frame=new QFrame(this);
-    QVBoxLayout *layout=new QVBoxLayout(frame);
-
-    QGroupBox *GBox_1=new QGroupBox("向右复制",frame);
-    QHBoxLayout *layout_1=new QHBoxLayout();
-    acceptWidget *acc=new acceptWidget(this);
-    menWidget *menu=new menWidget(this);
-    layout_1->addWidget(menu);
-    layout_1->addWidget(acc);
-    GBox_1->setLayout(layout_1);
-
-    QGroupBox *GBox_2=new QGroupBox("文本阅读器",frame);
-    QHBoxLayout *layout_2=new QHBoxLayout();
-    textEdit=new QTextEdit();
-    textEdit->setPlaceholderText("把文本文件拖入框内");
-    textEdit->setAcceptDrops(false);
+    setupUI();
     setAcceptDrops(true);
-    QPushButton *clearBtn=new QPushButton("清除");
-    connect(clearBtn,&QPushButton::clicked,[this]
-    {
-        textEdit->clear();
-    });
-    layout_2->addWidget(textEdit);
-    layout_2->addWidget(clearBtn);
-    GBox_2->setLayout(layout_2);
-
-    layout->addWidget(GBox_1);
-    layout->addWidget(GBox_2);
-
-    setCentralWidget(frame);
-    setSizePolicy(QSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed));
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *event)
@@ -60,19 +23,49 @@ void MainWindow::dropEvent(QDropEvent *event)
     if (urls.isEmpty())
         return;
     QString fileName = urls.first().toLocalFile();
-    textEdit->append("文件路径");
-    textEdit->append(fileName);
     if (fileName.isEmpty())
         return;
+    textEdit->append(tr("File Path: "));
+    textEdit->append(fileName);
     QFile file(fileName);
-    if(!file.open(QIODevice::ReadOnly))
-    {
+    if(!file.open(QIODevice::ReadOnly)){
         textEdit->append(file.errorString());
         return;
     }
-    QString str=file.readAll();
+    QString str = file.readAll();
     file.close();
-    textEdit->append("文件内容");
+    textEdit->append(tr("Document content: "));
     textEdit->append(str);
+}
+
+void MainWindow::setupUI()
+{
+    DragListWidget *dragListWidget = new DragListWidget(this);
+    DropListWidget *dropListWidget = new DropListWidget(this);
+
+    QHBoxLayout *dLayout = new QHBoxLayout;
+    dLayout->addWidget(dragListWidget);
+    dLayout->addWidget(dropListWidget);
+    QGroupBox *groupBox = new QGroupBox(tr("Move to the right"), this);
+    groupBox->setLayout(dLayout);
+
+    textEdit = new QTextEdit(this);
+    textEdit->setPlaceholderText(tr("Drag text file into text box."));
+    textEdit->setAcceptDrops(false);
+    QPushButton *button = new QPushButton(tr("Clear"), this);
+    QHBoxLayout *textLayout = new QHBoxLayout;
+    textLayout->addWidget(textEdit);
+    textLayout->addWidget(button);
+    QGroupBox *textBox = new QGroupBox(tr("Text reader"), this);
+    textBox->setLayout(textLayout);
+
+    QVBoxLayout *layout = new QVBoxLayout;
+    layout->addWidget(groupBox);
+    layout->addWidget(textBox);
+    QFrame *frame = new QFrame(this);
+    frame->setLayout(layout);
+    setCentralWidget(frame);
+
+    connect(button, &QPushButton::clicked, textEdit, &QTextEdit::clear);
 }
 

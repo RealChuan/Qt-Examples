@@ -2,22 +2,23 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include <QTextEdit>
 
 class menuWidget;
 class acceptWidget;
-
+class QTextEdit;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 
 public:
     MainWindow(QWidget *parent = nullptr);
+
 protected:
     void dragEnterEvent(QDragEnterEvent *event) override;
     void dropEvent(QDropEvent *event) override;
 
 private:
+    void setupUI();
     QTextEdit *textEdit;
 };
 #endif // MAINWINDOW_H
