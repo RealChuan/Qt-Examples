@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
     QElapsedTimer timer;
     timer.start();
 
-    for(int i=0; i< 1000 * 1000 * 10; i++){
+    for(int i=0; i< 1000 * 1000; i++){
         qDebug() << "123456789qwertyuioplkjhgfdsa" << i;
     }
 
