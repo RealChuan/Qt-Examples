@@ -12,6 +12,7 @@ public:
         portEdit = new QLineEdit(owner);
         threadSpinBox = new QSpinBox(owner);
         threadSpinBox->setRange(0, 2147483647);
+        threadSpinBox->setValue(QThreadPool::globalInstance()->maxThreadCount() * 2);
         listenBtn = new QPushButton(QObject::tr("Listen"), owner);
         listenBtn->setCheckable(true);
         messageEdit = new QTextEdit(owner);
