@@ -34,7 +34,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
                 QString(context.file),
                 QString::number(context.line));
 
-    const QString message = QString("%1 %2 [%3] %4-%5\n")
+    const QString message = QString("%1 %2 [%3] %4 - %5\n")
             .arg(dataTimeString, threadId, level, msg, contexInfo);
 
     if(g_LogAsync)
