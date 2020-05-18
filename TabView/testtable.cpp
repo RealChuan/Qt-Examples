@@ -14,7 +14,8 @@ QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
     Student *stu = m_students[row];
     switch (role) {
     case Qt::TextAlignmentRole: return QVariant(Qt::AlignCenter);
-    case Qt::DisplayRole: {
+    case Qt::DisplayRole:
+    case Qt::EditRole: {    //双击为空需添加
         switch (col) {
         case ID:            return stu->Id();
         case NAME:          return stu->name();
