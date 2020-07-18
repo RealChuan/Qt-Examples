@@ -19,15 +19,15 @@ SOURCES += \
     accepter.cpp \
     main.cpp \
     mainwindow.cpp \
+    tcpclient.cpp \
     tcpserver.cpp \
-    tcpsocket.cpp \
     thread.cpp
 
 HEADERS += \
     accepter.h \
     mainwindow.h \
+    tcpclient.h \
     tcpserver.h \
-    tcpsocket.h \
     thread.h
 
 # Default rules for deployment.

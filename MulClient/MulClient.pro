@@ -19,12 +19,12 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     tcpclient.cpp \
-    thread.cpp
+    tcpclientthread.cpp
 
 HEADERS += \
     mainwindow.h \
     tcpclient.h \
-    thread.h
+    tcpclientthread.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

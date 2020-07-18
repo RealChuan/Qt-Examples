@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "thread.h"
+#include "tcpclientthread.h"
 
 #include <QtWidgets>
 
@@ -17,7 +17,7 @@ public:
         portSpinBox->setValue(65533);
         numSpinBox = new QSpinBox(owner);
         numSpinBox->setRange(1, 2147483647);
-        numSpinBox->setValue(1);
+        numSpinBox->setValue(QThreadPool::globalInstance()->maxThreadCount() * 2);
         timeSpinBox = new QSpinBox(owner);
         timeSpinBox->setSuffix(" ms");
         timeSpinBox->setRange(1, 1000000);
@@ -37,10 +37,9 @@ public:
     QPushButton *connectBtn;
     QTextEdit *messageEdit;
 
-    QList<Thread*> clientList;
+    QMap<int, TcpClientThread*> clientMap;
     QTimer *sendTime;
 };
-
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -48,17 +47,17 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setupUI();
     buildConnect();
-    qDebug() << "MainWindows: " << QThread::currentThreadId();
 }
 
 MainWindow::~MainWindow()
 {
+    clearAll();
     delete d;
 }
 
-void MainWindow::onConnect()
+void MainWindow::onConnect(bool state)
 {
-    if(d->connectBtn->isChecked()){
+    if(state){
         d->connectBtn->setChecked(false);
         QString ip = d->ipEdit->text();
         if(ip.isEmpty()){
@@ -80,37 +79,23 @@ void MainWindow::onConnect()
             warningBox(tr("Please enter the correct timeout!"), d->numSpinBox);
             return;
         }
+        clearAll();
         d->sendTime->setInterval(time);
-        qDeleteAll(d->clientList);
-        d->clientList.clear();
         for(int i=0; i<num; i++){
-            Thread *thread = new Thread(ip, port, this);
-            d->clientList.append(thread);
-            thread->start();
+            TcpClientThread *thread = new TcpClientThread(ip, quint16(port), i, this);
+            d->clientMap.insert(i, thread);
             QString str = QString::number(i+1) + tr(" Clients (threads) start running");
             d->messageEdit->append(str);
+            connect(thread, &TcpClientThread::quitThread, this, &MainWindow::removeOne);
+            thread->start();
         }
-        //
-        // fix me?
-        // Keep the window, clear the thread list, stop the timer,
-        // and the "connectBtn" button is displayed as connect.
-        // In the connected state, closing the window will not crash.
-        //
-        //connect(d->clientList[0], &Thread::destroyed, this, &MainWindow::onStop);
-        connect(d->clientList[0], &Thread::destroyed, qApp, &QApplication::quit);
         d->sendTime->start();
         changeControlState(false);
         d->connectBtn->setText(tr("Connected"));
         d->connectBtn->setChecked(true);
     }else{
         d->sendTime->stop();
-        foreach(Thread* thread, d->clientList){
-            if(thread && thread->isRunning()){
-                thread->quit();
-                thread->wait();
-            }
-        }
-        d->clientList.clear();
+        clearAll();
         changeControlState(true);
         d->connectBtn->setText(tr("Connect"));
         d->connectBtn->setChecked(false);
@@ -121,21 +106,23 @@ void MainWindow::onWrite()
 {
     QString str = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
     QByteArray buf = str.toLatin1() + " Hello World!";
-    foreach(Thread* thread, d->clientList){
-        if(thread && thread->isRunning()){
-            emit thread->writeToServer(buf);
-        }
+    QMap<int, TcpClientThread*>::iterator it;
+    for(it = d->clientMap.begin(); it != d->clientMap.end(); it++){
+        if(it.value()->isRunning())
+            emit it.value()->writeToServer(buf);
     }
 }
 
-//void MainWindow::onStop()
-//{
-//    d->sendTime->stop();
-//    d->clientList.clear();
-//    changeControlState(true);
-//    d->connectBtn->setText(tr("Connect"));
-//    d->connectBtn->setChecked(false);
-//}
+void MainWindow::removeOne(const int index)
+{
+    delete d->clientMap.take(index);
+    if(d->clientMap.isEmpty()){
+        d->sendTime->stop();
+        changeControlState(true);
+        d->connectBtn->setText(tr("Connect"));
+        d->connectBtn->setChecked(false);
+    }
+}
 
 void MainWindow::warningBox(const QString &str, QWidget *w)
 {
@@ -165,12 +152,10 @@ void MainWindow::setupUI()
     btnLayout->addLayout(gLayout);
     btnLayout->addWidget(d->connectBtn);
 
-    QVBoxLayout *layout = new QVBoxLayout;
+    QFrame *frame = new QFrame(this);
+    QVBoxLayout *layout = new QVBoxLayout(frame);
     layout->addLayout(btnLayout);
     layout->addWidget(d->messageEdit);
-
-    QFrame *frame = new QFrame(this);
-    frame->setLayout(layout);
 
     setCentralWidget(frame);
 }
@@ -181,5 +166,12 @@ void MainWindow::changeControlState(bool state)
     d->portSpinBox->setEnabled(state);
     d->numSpinBox->setEnabled(state);
     d->timeSpinBox->setEnabled(state);
+}
+
+void MainWindow::clearAll()
+{
+    if(d->clientMap.isEmpty()) return;
+    qDeleteAll(d->clientMap);
+    d->clientMap.clear();
 }
 

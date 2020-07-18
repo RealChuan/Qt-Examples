@@ -8,9 +8,9 @@ int main(int argc, char *argv[])
 {
     QCoreApplication a(argc, argv);
 
-    LogAsync log;
-    //log.setLogLevel(QtDebugMsg);
-    log.start();
+    LogAsync *log = LogAsync::instance();
+    log->setLogLevel(QtDebugMsg); // 实际环境中可通过读取配置设置日志级别
+    log->startWork();
 
     QElapsedTimer timer;
     timer.start();
@@ -20,6 +20,6 @@ int main(int argc, char *argv[])
     }
 
     qInfo() << timer.elapsed();
-
+    log->finish();
     return 0;
 }

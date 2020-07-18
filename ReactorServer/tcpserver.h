@@ -5,6 +5,7 @@
 
 class Thread;
 class SubReactor;
+class TcpServerPrivate;
 class TcpServer : public QTcpServer
 {
     Q_OBJECT
@@ -24,9 +25,7 @@ private:
     void createSocket(qintptr);
     Thread* getNextThread();
 
-    QList<Thread*> threads;
-    SubReactor* subReactor = nullptr;
-    int index;
+    QScopedPointer<TcpServerPrivate> d;
 };
 
 #endif // TCPSERVER_H

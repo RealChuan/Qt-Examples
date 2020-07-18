@@ -20,6 +20,5 @@ void TcpServer::incomingConnection(qintptr handle)
     connect(thread, &Thread::message, this, &TcpServer::message);
     connect(thread, &Thread::maxCount, this, &TcpServer::maxCount);
     connect(thread, &Thread::clientCount, this, &TcpServer::clientCount);
-    //connect(thread, &Thread::finished, thread, &Thread::deleteLater);
     thread->start();
 }

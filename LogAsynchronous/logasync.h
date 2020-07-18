@@ -8,17 +8,23 @@ class LogAsync : public QThread
 {
     Q_OBJECT
 public:
-    LogAsync(unsigned long flushInterval = 5000, QObject *parent = nullptr);
-    ~LogAsync() override;
+    static LogAsync* instance();
 
-    void appendBuf(const QString&);
     void setLogLevel(QtMsgType);    //日志级别
+    void startWork();
+    void finish();
+
+signals:
+    void appendBuf(const QString&);
 
 protected:
     void run() override;
 
 private:
-    LogAsyncPrivate *d;
+    LogAsync(QObject *parent = nullptr);
+    ~LogAsync() override;
+
+    QScopedPointer<LogAsyncPrivate> d;
 };
 
 #endif // LOGASYNC_H

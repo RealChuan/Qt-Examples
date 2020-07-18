@@ -16,7 +16,7 @@ public:
     FileUtilPrivate(QObject *parent) : owner(parent){}
     QObject *owner;
     QFile file;
-    QTextStream stream;
+    QTextStream stream;     //QTextStream 读写分离的，内部有缓冲区static const int QTEXTSTREAM_BUFFERSIZE = 16384;
     qint64 startTime = 0;
     qint64 lastRoll = 0;
     int count = 0;
@@ -34,14 +34,9 @@ FileUtil::FileUtil(qint64 days, QObject *parent) : QObject(parent)
 FileUtil::~FileUtil()
 {
     d->stream.flush();
-    if(d->file.isOpen()){
-        d->file.flush();
-        d->file.close();
-    }
-    delete d;
 }
 
-void FileUtil::write(const QString &msg)
+void FileUtil::onWrite(const QString &msg)
 {
     if(d->file.size() > ROLLSIZE){
         rollFile(++d->count);
@@ -83,8 +78,7 @@ bool FileUtil::rollFile(int count)
         filename += QString(".%1").arg(count);
     }
     qint64 start = now / kRollPerSeconds_ * kRollPerSeconds_;
-    if (now > d->lastRoll)
-    {
+    if (now > d->lastRoll){
         d->startTime = start;
         d->lastRoll = now;
         if(d->file.isOpen()){
@@ -106,7 +100,8 @@ void FileUtil::autoDelFile()
     newDir("log");
     QDir dir("./log/");
 
-    QFileInfoList list = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Time);
+    QFileInfoList list = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot
+                                           , QDir::Time);
     QDateTime cur = QDateTime::currentDateTime();
     QDateTime pre = cur.addDays(-d->autoDelFileDays);
 

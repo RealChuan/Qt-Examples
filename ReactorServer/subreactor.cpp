@@ -1,11 +1,10 @@
 #include "subreactor.h"
 #include "thread.h"
-#include "tcpsocket.h"
+#include "tcpclient.h"
 
 static QAtomicInt totalCount = 0;
 
-SubReactor::SubReactor(QObject *parent)
-    :QObject(parent)
+SubReactor::SubReactor(QObject *parent) : QObject(parent)
 {
 }
 
@@ -17,17 +16,15 @@ SubReactor::~SubReactor()
 void SubReactor::onNewConnect(qintptr socketfd)
 {
     qDebug() << "Test onNewConnect: " << QThread::currentThreadId();
-    TcpSocket *tcpSocket = new TcpSocket(this);
+    TcpClient *tcpSocket = new TcpClient(this);
     if(!tcpSocket->setSocketDescriptor(socketfd)){
         qWarning() << tr("connection failed fd: ") << socketfd
                    << tcpSocket->errorString();
         return;
     }
-    connect(tcpSocket, &TcpSocket::readyRead,
-            tcpSocket, &TcpSocket::onReadyRead, Qt::DirectConnection);
-    connect(tcpSocket, &TcpSocket::disconnected,
-            tcpSocket, &TcpSocket::deleteLater, Qt::DirectConnection);
-    connect(tcpSocket, &TcpSocket::disconnected, this, &SubReactor::onClose, Qt::DirectConnection);
+    connect(tcpSocket, &TcpClient::readyRead, tcpSocket, &TcpClient::onReadyRead);
+    connect(tcpSocket, &TcpClient::disconnected, tcpSocket, &TcpClient::deleteLater);
+    connect(tcpSocket, &TcpClient::disconnected, this, &SubReactor::onClose, Qt::DirectConnection);
     count++;
     totalCount.fetchAndAddOrdered(1);
     QString str = QString::number(totalCount) + tr(" Client online: ") +

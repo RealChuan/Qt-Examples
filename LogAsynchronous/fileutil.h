@@ -3,7 +3,6 @@
 
 #include <QObject>
 
-
 class FileUtilPrivate;
 class FileUtil : public QObject
 {
@@ -12,9 +11,8 @@ public:
     explicit FileUtil(qint64 days = 30, QObject *parent = nullptr);
     ~FileUtil();
 
-    void write(const QString&);
-
-signals:
+public slots:
+    void onWrite(const QString&);
 
 private:
     void newDir(const QString &);
@@ -22,7 +20,7 @@ private:
     bool rollFile(int);
     void autoDelFile();
 
-    FileUtilPrivate *d;
+    QScopedPointer<FileUtilPrivate> d;
 };
 
 #endif // FILEUTIL_H

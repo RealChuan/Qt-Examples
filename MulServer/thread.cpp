@@ -1,14 +1,13 @@
 #include "thread.h"
-#include "tcpsocket.h"
+#include "tcpclient.h"
 
 #include <QHostAddress>
 #include <QAtomicInt>
 
 static QAtomicInt count = 0;
 
-Thread::Thread(qintptr socketDescriptor, QObject *parent)
-    :QThread(parent)
-    ,socketfd(socketDescriptor)
+Thread::Thread(qintptr socketDescriptor, QObject *parent) : QThread(parent)
+  , socketfd(socketDescriptor)
 {
 }
 
@@ -29,7 +28,7 @@ Thread::~Thread()
 
 void Thread::run()
 {
-    QScopedPointer<TcpSocket> tcpSocket(new TcpSocket);
+    QScopedPointer<TcpClient> tcpSocket(new TcpClient);
     if(!tcpSocket->setSocketDescriptor(socketfd)){
         qWarning() << tr("connection failed fd: ") << socketfd
                    << tcpSocket->errorString();
@@ -37,11 +36,9 @@ void Thread::run()
     }
     qDebug() << "New Client: " << QThread::currentThreadId();
     count.fetchAndAddOrdered(1);
-    connect(tcpSocket.data(), &TcpSocket::readyRead,
-            tcpSocket.data(), &TcpSocket::onReadyRead, Qt::DirectConnection);
-    connect(tcpSocket.data(), &TcpSocket::disconnected, this, &Thread::deleteLater);
-    QString str = QString::number(count) + tr(" Client online: ") +
-            tcpSocket->getInfo();
+    connect(tcpSocket.data(), &TcpClient::readyRead, tcpSocket.data(), &TcpClient::onReadyRead);
+    connect(tcpSocket.data(), &TcpClient::disconnected, this, &Thread::deleteLater);
+    QString str = QString::number(count) + tr(" Client online: ") + tcpSocket->getInfo();
     emit message(str);
     emit maxCount(count);
     emit clientCount(count);

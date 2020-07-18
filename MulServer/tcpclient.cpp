@@ -1,25 +1,25 @@
-#include "tcpsocket.h"
+#include "tcpclient.h"
 
 #include <QHostAddress>
 
-TcpSocket::TcpSocket(QObject *parent)
+TcpClient::TcpClient(QObject *parent)
     :QTcpSocket(parent)
 {
 }
 
-TcpSocket::~TcpSocket()
+TcpClient::~TcpClient()
 {
     qDebug() << "~TcpSocket";
 }
 
-QString TcpSocket::getInfo() const
+QString TcpClient::getInfo() const
 {
     QString info = peerName() + " " + peerAddress().toString()
             + " " + QString::number(peerPort()) + " ";
     return info;
 }
 
-void TcpSocket::onReadyRead()
+void TcpClient::onReadyRead()
 {
     //这里如果有复杂的计算可以放入QThreadPool中，以免下一个信号排队等待
     QByteArray buf = readAll();

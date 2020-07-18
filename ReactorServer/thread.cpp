@@ -1,5 +1,5 @@
 #include "thread.h"
-#include "tcpsocket.h"
+#include "tcpclient.h"
 #include "subreactor.h"
 
 #include <QHostAddress>
@@ -7,7 +7,6 @@
 Thread::Thread(QObject *parent)
     :QThread(parent)
 {
-
 }
 
 Thread::~Thread()

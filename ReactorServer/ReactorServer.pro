@@ -20,16 +20,16 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     subreactor.cpp \
+    tcpclient.cpp \
     tcpserver.cpp \
-    tcpsocket.cpp \
     thread.cpp
 
 HEADERS += \
     accepter.h \
     mainwindow.h \
     subreactor.h \
+    tcpclient.h \
     tcpserver.h \
-    tcpsocket.h \
     thread.h
 
 # Default rules for deployment.

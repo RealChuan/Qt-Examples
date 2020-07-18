@@ -3,12 +3,12 @@
 
 #include <QTcpSocket>
 
-class TcpSocket : public QTcpSocket
+class TcpClient : public QTcpSocket
 {
     Q_OBJECT
 public:
-    TcpSocket(QObject *parent = nullptr);
-    ~TcpSocket();
+    TcpClient(QObject *parent = nullptr);
+    ~TcpClient();
 
     QString getInfo() const;
 
