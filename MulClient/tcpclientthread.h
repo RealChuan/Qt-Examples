@@ -8,7 +8,10 @@ class TcpClientThread : public QThread
 {
     Q_OBJECT
 public:
-    TcpClientThread(const QString&, const quint16, const int, QObject *parent = nullptr);
+    TcpClientThread(const QString &ip,
+                    const quint16 port,
+                    const int index,
+                    QObject *parent = nullptr);
     ~TcpClientThread() override;
 
 signals:

@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "testtable.h"
+#include "stuedenttable.h"
 
 #include <QtWidgets>
 

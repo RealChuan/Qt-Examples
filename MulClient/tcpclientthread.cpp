@@ -3,14 +3,18 @@
 
 class TcpClientThreadPrivate{
 public:
-    TcpClientThreadPrivate(QThread *parent = nullptr) : owner(parent){}
+    TcpClientThreadPrivate(QThread *parent = nullptr)
+        : owner(parent){}
     QThread *owner;
     QString ip = "127.0.0.1";
     quint16 port = 65533;
     int index = 0;
 };
 
-TcpClientThread::TcpClientThread(const QString &ip, const quint16 port, const int index, QObject *parent)
+TcpClientThread::TcpClientThread(const QString &ip,
+                                 const quint16 port,
+                                 const int index,
+                                 QObject *parent)
     : QThread(parent)
     , d(new TcpClientThreadPrivate)
 {
@@ -39,7 +43,7 @@ void TcpClientThread::run()
     if(!client->waitForConnected(1000)){
         qWarning() << tr("connection failed fd: ")
                    << client->errorString();
-        quitThread(d->index);
+        emit quitThread(d->index);
         return;
     }
     //    while(!client->waitForConnected(3000)){

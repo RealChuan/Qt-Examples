@@ -1,5 +1,5 @@
-#ifndef TESTTABLE_H
-#define TESTTABLE_H
+#ifndef STUDENTTABLE_H
+#define STUDENTTABLE_H
 
 #include <QAbstractTableModel>
 #include <QStyledItemDelegate>
@@ -75,4 +75,4 @@ protected:
     void setModelData(QWidget *editor, QAbstractItemModel *model, const  QModelIndex &index) const Q_DECL_OVERRIDE;
 };
 
-#endif // TESTTABLE_H
+#endif // STUDENTTABLE_H

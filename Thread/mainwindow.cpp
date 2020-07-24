@@ -55,7 +55,8 @@ void MainWindow::onStart(bool checked)
         d->thread2 = new Thread2(this);
         d->thread3 = new Thread3(this);
 
-        connect(d->thread1, &Thread1::message, this, &MainWindow::setLable1, Qt::DirectConnection);
+        // Qt::DirectConnection直连，QLabel支持子线程中更新，（部分控件是支持在子线程中更新）
+        connect(d->thread1, &Thread1::message, this, &MainWindow::setLable1/*, Qt::DirectConnection*/);
         connect(d->thread2, &Thread2::message, this, &MainWindow::setLable2, Qt::DirectConnection);
         connect(d->thread3, &Thread3::message, this, &MainWindow::setLable3, Qt::DirectConnection);
 

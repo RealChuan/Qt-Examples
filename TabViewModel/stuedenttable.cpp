@@ -1,4 +1,4 @@
-#include "testtable.h"
+#include "stuedenttable.h"
 
 #include <QtWidgets>
 

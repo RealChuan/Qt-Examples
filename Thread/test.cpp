@@ -18,7 +18,7 @@ Test::~Test()
 void Test::doSomeThing(int index)
 {
     QString str = tr("I am thread %1: %2, Count: %3").arg(index).
-            arg(reinterpret_cast<int>(QThread::currentThreadId())).
+            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId())).
             arg(count);
     emit message(str);
     count++;
