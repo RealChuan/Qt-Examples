@@ -63,9 +63,13 @@ void LogAsync::startWork()
     d->waitCondition.wait(&d->mutex);
 }
 
-void LogAsync::finish()
+void LogAsync::stop()
 {
-    QThread::msleep(200);
+    if(isRunning()){
+        QThread::msleep(500);   // 最后一条日志格式化可能来不及进入信号槽
+        quit();
+        wait();
+    }
 }
 
 void LogAsync::run()
@@ -84,10 +88,7 @@ LogAsync::LogAsync(QObject *parent) : QThread(parent)
 
 LogAsync::~LogAsync()
 {
-    if(isRunning()){
-        quit();
-        wait();
-    }
+    stop();
     qInstallMessageHandler(nullptr);
     fprintf(stderr, "%s\n", "~LogAsync");
 }

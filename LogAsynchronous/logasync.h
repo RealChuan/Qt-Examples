@@ -12,7 +12,7 @@ public:
 
     void setLogLevel(QtMsgType);    //日志级别
     void startWork();
-    void finish();
+    void stop();
 
 signals:
     void appendBuf(const QString&);
