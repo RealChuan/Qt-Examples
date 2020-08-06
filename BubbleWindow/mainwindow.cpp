@@ -22,14 +22,14 @@ void MainWindow::onShowBubble()
     BubbleWidget w(this);
     w.setTriangleInfo(20, 10);
     w.setDerection(BubbleWidget::Top);
-    w.setCentralWidget(new QLabel("123456789", this));
+    w.setCentralWidget(new QLabel("display", this));
     w.move(x - w.width() / 2, y - SHADOW_WIDTH);
     w.exec();
 }
 
 void MainWindow::setupUI()
 {
-    button = new QPushButton("1111", this);
+    button = new QPushButton("show", this);
     connect(button, &QPushButton::clicked, this, &MainWindow::onShowBubble);
 
     BubbleWidget *top = new BubbleWidget(this);
