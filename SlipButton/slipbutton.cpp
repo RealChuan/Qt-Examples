@@ -3,13 +3,17 @@
 #include <QPropertyAnimation>
 #include <QtWidgets>
 
+#define ScaleFactor 1.8
+
 struct SlipButtonPrivate{
     int height = 18;
     int offset = height / 2;
     int margin = 2;
-    QBrush brush = QColor("#4da1ff");
-    QPropertyAnimation *animation;
+    QColor uncheckBackgroundColor = QColor("#FFE0E0E0");
+    QColor checkedBackgroundColor = QColor("#4da1ff");
     bool hover = false;
+    bool constSize = false;
+    QPropertyAnimation *animation;
 };
 
 SlipButton::SlipButton(QWidget *parent)
@@ -18,8 +22,8 @@ SlipButton::SlipButton(QWidget *parent)
 {
     d->animation = new QPropertyAnimation(this, "offset", this);
     setCheckable(true);
-    setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    connect(this, &SlipButton::toggled, this, &SlipButton::startAnimation);
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    connect(this, &SlipButton::toggled, this, &SlipButton::onStartAnimation);
 }
 
 SlipButton::~SlipButton()
@@ -28,24 +32,50 @@ SlipButton::~SlipButton()
 
 QSize SlipButton::sizeHint() const
 {
-    return QSize(int(d->height * 1.8), d->height);
+    if(d->constSize)
+        return constSize();
+    return QSize(180, 100);
 }
 
-void SlipButton::setBrush(const QBrush& brush)
+QSize SlipButton::minimumSizeHint() const
 {
-    d->brush = brush;
+    if(d->constSize)
+        return constSize();
+    return QSize(18 * ScaleFactor, 18);
+}
+
+void SlipButton::setCheckedBackgroundColor(const QColor& color)
+{
+    d->checkedBackgroundColor = color;
     update();
+}
+
+QColor SlipButton::checkedBackgroundColor() const
+{
+    return d->checkedBackgroundColor;
+}
+
+void SlipButton::setUncheckedBackgroundColor(const QColor &color)
+{
+    d->uncheckBackgroundColor = color;
+    update();
+}
+
+QColor SlipButton::uncheckedBackgroundColor() const
+{
+    return d->uncheckBackgroundColor;
 }
 
 void SlipButton::setButtonHeight(int height)
 {
-    d->height = qMax(0, height);
-    startAnimation();
+    d->constSize = true;
+    d->height = qMax(d->height, height);
+    onStartAnimation();
 }
 
 void SlipButton::setMargin(int margin)
 {
-    d->margin = qMin(qMax(0, margin), d->height / 2 -1);
+    d->margin = qMin(qMax(0, margin), height() / 2 - 1);
     update();
 }
 
@@ -60,38 +90,54 @@ void SlipButton::setOffset(int offset)
     update();
 }
 
+const QSize SlipButton::constSize() const
+{
+    return QSize(d->height * ScaleFactor, d->height);
+}
+
 void SlipButton::paintEvent(QPaintEvent* event)
 {
+    //qDebug() << offset();
     QWidget::paintEvent(event);
-    QPainter p(this);
-    p.setPen(Qt::NoPen);
-    p.setRenderHint(QPainter::Antialiasing);
+    QPainter painter(this);
+    painter.setPen(Qt::NoPen);
+    painter.setRenderHint(QPainter::Antialiasing);
 
-    int width = sizeHint().width();
-    int height = sizeHint().height();
-    const double radius = height / 2;
-    QRectF rectSlot = QRectF(0, 0, width, height);
-    //QRectF rectSlot = QRectF(0.5, d->margin, width - 0.5, height - d->margin * 2);
-    QRectF rectSlotFill = rectSlot.adjusted(0, 0, -(width - offset()) + radius, 0);
-    QRectF rectThumb = QRectF(offset() - radius, 0, height, height);
-    QColor colorSlot = QColor("#FFE0E0E0");
-    QColor colorSlotFill = d->brush.color();
-    QColor colorThumbBorder = (d->hover) ? colorSlotFill: QColor("#FFA8A8A8");
-    QColor colorThumb = isEnabled() ? QColor(Qt::white) : QColor("#FFE0E0E0");
-    double slotRoundness = rectSlot.height() / 2;
-
-    p.setBrush(colorSlot);
-    p.drawRoundedRect(rectSlot, slotRoundness, slotRoundness);
-    if(isEnabled() && isChecked()) {
-        p.setBrush(colorSlotFill);
-        p.drawRoundedRect(rectSlotFill, slotRoundness, slotRoundness);
+    int w = - d->margin;
+    int h = - d->margin;
+    if(d->constSize){
+        w += constSize().width();
+        h += constSize().height();
+    }else{
+        w += width();
+        h += height();
     }
 
-    p.setBrush(colorThumbBorder);
-    p.drawEllipse(rectThumb);
-    p.setBrush(colorThumb);
+    // 画背景
+    QRectF rectSlot = QRectF(0, 0, w, h);
+    double slotRoundness = rectSlot.height() / 2;
+    painter.setBrush(d->uncheckBackgroundColor);
+    painter.drawRoundedRect(rectSlot, slotRoundness, slotRoundness);
+
+    // 选中情况下，背景变蓝
+    const double radius = h / 2;
+    if(isEnabled() && isChecked()){
+        QRectF rectSlotFill = rectSlot.adjusted(0, 0, -(w - offset()) + radius, 0);
+        painter.setBrush(d->checkedBackgroundColor);
+        painter.drawRoundedRect(rectSlotFill, slotRoundness, slotRoundness);
+    }
+
+    // hover 边框
+    QRectF rectThumb = QRectF(offset() - radius, 0, h, h);
+    QColor colorThumbBorder = (d->hover) ? d->checkedBackgroundColor: QColor("#FFA8A8A8");
+    painter.setBrush(colorThumbBorder);
+    painter.drawEllipse(rectThumb);
+
+    // 按钮圆点
+    QColor colorThumb = isEnabled() ? QColor(Qt::white) : QColor("#FFE0E0E0");
+    painter.setBrush(colorThumb);
     rectThumb.adjust(1.1, 1.1, -1.1, -1.1);
-    p.drawEllipse(rectThumb);
+    painter.drawEllipse(rectThumb);
 }
 
 void SlipButton::enterEvent(QEvent* event)
@@ -107,13 +153,36 @@ void SlipButton::leaveEvent(QEvent* event)
     d->hover = false;
 }
 
-void SlipButton::startAnimation()
+void SlipButton::resizeEvent(QResizeEvent *event)
 {
-    int start = d->height / 2;
-    int end = sizeHint().width() - d->height / 2;
+    if(d->constSize)
+        return;
+    int h = event->size().height();
+    int w = event->size().width();
+    if(w < ScaleFactor * h)
+        h = w / ScaleFactor;
+    resize(h * ScaleFactor, h);
+    onStartAnimation();
+}
+
+void SlipButton::onStartAnimation()
+{
+    int start = 0;
+    int end = 0;
+    if(d->constSize){
+        start = d->height / 2;
+        end = constSize().width() - d->height / 2;
+    }else{
+        start = height() / 2;
+        end = width() - height() / 2;
+    }
+
     if(!isChecked())
         qSwap(start, end);
 
+    // 改变参数值（offset = startValue, offset += interval_1...offset += interval_N）
+    // 改变offset的同时，不断repaint（update）
+    // 直到为目标值（offset = endValue）paint完成；
     d->animation->setStartValue(start);
     d->animation->setEndValue(end);
     d->animation->setDuration(120);

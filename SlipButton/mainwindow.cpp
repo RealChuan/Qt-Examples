@@ -6,15 +6,14 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    SlipButton *slipButton = new SlipButton(this);
+    //slipButton->setButtonHeight(50);
+
     QWidget *widget = new QWidget(this);
-    QGridLayout *avatarLayout = new QGridLayout(widget);
-    avatarLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding), 0, 2);
-    avatarLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Minimum, QSizePolicy::Expanding), 2, 2);
-    avatarLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 1, 1);
-    avatarLayout->addItem(new QSpacerItem(0, 0, QSizePolicy::Expanding, QSizePolicy::Minimum), 1, 3);
-    avatarLayout->addWidget(new SlipButton(this), 1, 2);
+    QVBoxLayout *layout = new QVBoxLayout(widget);
+    layout->addWidget(slipButton);
     setCentralWidget(widget);
-    resize(300, 180);
+    resize(240, 110);
 }
 
 MainWindow::~MainWindow()
