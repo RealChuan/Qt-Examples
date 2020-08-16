@@ -10,9 +10,9 @@ struct BatteryWidgetPrivate{
     QColor borderColor = QColor(80, 80, 80);
     QColor powerColor = QColor(65, 205, 82);
     QColor alarmColor = QColor(250, 118, 113);
-    QPropertyAnimation *animation;
     int alarmValue = 20;
     int value = 0;
+    QPropertyAnimation *animation;
 };
 
 BatteryWidget::BatteryWidget(QWidget *parent)
@@ -34,7 +34,7 @@ void BatteryWidget::setBorderColor(const QColor &color)
     update();
 }
 
-const QColor BatteryWidget::borderColor() const
+QColor BatteryWidget::borderColor() const
 {
     return d->borderColor;
 }
@@ -45,7 +45,7 @@ void BatteryWidget::setPowerColor(const QColor &color)
     update();
 }
 
-const QColor BatteryWidget::powerColor() const
+QColor BatteryWidget::powerColor() const
 {
     return d->powerColor;
 }
@@ -56,7 +56,7 @@ void BatteryWidget::setAlarmColor(const QColor &color)
     update();
 }
 
-const QColor BatteryWidget::alarmColor() const
+QColor BatteryWidget::alarmColor() const
 {
     return d->alarmColor;
 }
@@ -127,6 +127,9 @@ void BatteryWidget::paintEvent(QPaintEvent *event)
 
 void BatteryWidget::onStartAnimation(const int value)
 {
+    if(value == d->value)
+        return;
+
     int start = d->value;
     int end = value;
 

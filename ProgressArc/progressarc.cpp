@@ -13,7 +13,7 @@ struct ProgressArcPrivate{
     QColor arcColor = QColor("#4da1ff");
     QColor textColor = QColor("#4da1ff");
     QColor titleColor = QColor(80, 80, 80);
-    QColor baseColor = QColor(80, 80, 80);
+    QColor baseColor = QColor(179,179,179);
     QColor backgroundColor = Qt::transparent;
 
     bool percent = true;
@@ -42,7 +42,7 @@ void ProgressArc::setTitle(const QString &title)
     update();
 }
 
-const QString ProgressArc::title() const
+QString ProgressArc::title() const
 {
     return d->title;
 }
@@ -108,7 +108,7 @@ void ProgressArc::setArcColor(const QColor &color)
     update();
 }
 
-const QColor ProgressArc::arcColor() const
+QColor ProgressArc::arcColor() const
 {
     return d->arcColor;
 }
@@ -119,7 +119,7 @@ void ProgressArc::setTextColor(const QColor &color)
     update();
 }
 
-const QColor ProgressArc::textColor() const
+QColor ProgressArc::textColor() const
 {
     return d->textColor;
 }
@@ -130,7 +130,7 @@ void ProgressArc::setTitleColor(const QColor &color)
     update();
 }
 
-const QColor ProgressArc::titleColor() const
+QColor ProgressArc::titleColor() const
 {
     return d->titleColor;
 }
@@ -141,7 +141,7 @@ void ProgressArc::setBaseColor(const QColor &color)
     update();
 }
 
-const QColor ProgressArc::baseColor() const
+QColor ProgressArc::baseColor() const
 {
     return d->baseColor;
 }
@@ -152,19 +152,19 @@ void ProgressArc::setBackgroundColor(const QColor &color)
     update();
 }
 
-const QColor ProgressArc::backgroundColor() const
+QColor ProgressArc::backgroundColor() const
 {
     return d->backgroundColor;
 }
 
 QSize ProgressArc::sizeHint() const
 {
-    return QSize(150, 80);
+    return QSize(200, 200);
 }
 
 QSize ProgressArc::minimumSizeHint() const
 {
-    return QSize(80, 45);
+    return QSize(80, 80);
 }
 
 void ProgressArc::paintEvent(QPaintEvent *event)

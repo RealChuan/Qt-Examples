@@ -15,18 +15,18 @@ public:
     explicit BatteryWidget(QWidget *parent = nullptr);
     ~BatteryWidget();
 
-    void setBorderColor(const QColor& color);
-    QColor const borderColor() const;
-
-    void setPowerColor(const QColor& color);
-    QColor const powerColor() const;
-
-    void setAlarmColor(const QColor& color);
-    QColor const alarmColor() const;
-
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
+public slots:
+    void setBorderColor(const QColor& color);
+    QColor borderColor() const;
+
+    void setPowerColor(const QColor& color);
+    QColor powerColor() const;
+
+    void setAlarmColor(const QColor& color);
+    QColor alarmColor() const;
 signals:
     void valueChanged(const int value);
 

@@ -23,8 +23,12 @@ public:
     explicit ProgressArc(const QString &title, QWidget *parent = nullptr);
     ~ProgressArc();
 
+    QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
+
+public slots:
     void setTitle(const QString &title);
-    QString const title() const;
+    QString title() const;
 
     void setPercent(const bool percent);
     bool percent() const;
@@ -42,22 +46,19 @@ public:
     double endAngle() const;
 
     void setArcColor(const QColor &color);
-    QColor const arcColor() const;
+    QColor arcColor() const;
 
     void setTextColor(const QColor &color);
-    QColor const textColor() const;
+    QColor textColor() const;
 
     void setTitleColor(const QColor &color);
-    QColor const titleColor() const;
+    QColor titleColor() const;
 
     void setBaseColor(const QColor &color);
-    QColor const baseColor() const;
+    QColor baseColor() const;
 
     void setBackgroundColor(const QColor &color);
-    QColor const backgroundColor() const;
-
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
+    QColor backgroundColor() const;
 
 signals:
     void valueChanged(const double value);
