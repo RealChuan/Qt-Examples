@@ -39,6 +39,11 @@ private slots:
     void setValue(const int value);
 
 private:
+    void drawBorder(QPainter *painter, const QRectF &batteryRect, const double linew);
+    void drawPower(QPainter *painter, const QRectF &batteryRect, const double linew);
+    void drawValue(QPainter *painter, const QRectF &batteryRect);
+    void drawHeader(QPainter *painter, const QRectF &batteryRect);
+
     QScopedPointer<BatteryWidgetPrivate> d;
 };
 

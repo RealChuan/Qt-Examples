@@ -37,15 +37,19 @@
 
 7. [MulServer](MulServer/)-----------------多线程服务端，一个线程一个客户端处理（处理实时性很高的TCP通讯）；  
 
-8. [ProgressArc](ProgressArc/)-----------------圆弧进度条；  
+8. [NavigationProgressBar](/NavigationProgressBar)-----------------导航进度栏;  
+
+    <center><img src="NavigationProgressBar/picture/NavigationProgressBar.png"></center>  
+
+9. [ProgressArc](ProgressArc/)-----------------圆弧进度条；  
 
     <center><img src="ProgressArc/picture/ProgressArc.png"></center>  
 
-9. [ReactorServer](ReactorServer/)-----------------多线程服务端，Reactor模式（Echo），TcpServer类作为mainReactor（Accepter），每个Thread里跑一个Subreactor，建立相应的信号槽，负载均衡使用轮询法（Round-Robin），由于Qt的事件循环机制和信号槽机制，可省去很多回调函数的写法（其实就是使用信号槽替代）；  
+10. [ReactorServer](ReactorServer/)-----------------多线程服务端，Reactor模式（Echo），TcpServer类作为mainReactor（Accepter），每个Thread里跑一个Subreactor，建立相应的信号槽，负载均衡使用轮询法（Round-Robin），由于Qt的事件循环机制和信号槽机制，可省去很多回调函数的写法（其实就是使用信号槽替代）；  
 
-10. [SqlTabview](SqlTabview/)-----------------SQLite数据库调用，模型方法；  
+11. [SqlTabview](SqlTabview/)-----------------SQLite数据库调用，模型方法；  
 
-11. [SlipButton](SlipButton/)-----------------滑动按钮；
+12. [SlipButton](SlipButton/)-----------------滑动按钮；
 <table>
     <tr>
         <td ><center><img src="SlipButton/picture/SlipButton_check.png"></center><center>滑动前</center></td >
@@ -53,9 +57,7 @@
     </tr>
 </table>
 
-10. [TabViewModel](TabViewModel/)-----------------表格视图（MVC）；  
-
-11. [Thread](Thread/)-----------------多线程例子，三种写法，不包括QtConcurrent::run()；  
-
-12. [TreeViewModel](TreeViewModel/)-----------------树形视图（MVC），QtCreator源码；  
+13. [TabViewModel](TabViewModel/)-----------------表格视图（MVC）；  
+14. [Thread](Thread/)-----------------多线程例子，三种写法，不包括QtConcurrent::run()；  
+15. [TreeViewModel](TreeViewModel/)-----------------树形视图（MVC），QtCreator源码；  
 

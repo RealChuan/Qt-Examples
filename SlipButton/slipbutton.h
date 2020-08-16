@@ -14,6 +14,10 @@ public:
     explicit SlipButton(QWidget* parent = nullptr);
     ~SlipButton() override;
 
+    QSize sizeHint() const override;
+    QSize minimumSizeHint() const override;
+
+public slots:
     void setCheckedBackgroundColor(const QColor &color);
     QColor checkedBackgroundColor() const;
 
@@ -22,9 +26,6 @@ public:
 
     void setButtonHeight(int height);
     void setMargin(int margin);
-
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
 
 protected:
     void paintEvent(QPaintEvent* event) override;

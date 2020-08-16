@@ -112,19 +112,18 @@ QColor ClockWidget::secondColor() const
 
 QSize ClockWidget::sizeHint() const
 {
-    return QSize(200, 200);
+    return QSize(500, 500);
 }
 
 QSize ClockWidget::minimumSizeHint() const
 {
-    return QSize(80, 80);
+    return QSize(300, 300);
 }
 
 void ClockWidget::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
     QPainter painter(this);
-    painter.setPen(Qt::NoPen);
     painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
     painter.translate(width() / 2, height() / 2);
     double linew = 2 * painter.pen().widthF() / painter.transform().m11();
