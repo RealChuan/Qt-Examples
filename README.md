@@ -1,5 +1,5 @@
 # Qt的一些简单常用示例     
-1. [Battery](Battery/)-----------------电池控件；  
+1. [Battery](Battery/)-----------------电池；  
 <table>
     <tr>
         <td ><center><img src="Battery/picture/AlarmBattery.png"></center><center>Alarm Battery</center></td >
@@ -19,13 +19,17 @@
    <center><img src="Chart/picture/Chart_1.png">图一二是动态曲线</center>  
    <center><img src="Chart/picture/Chart_2.png">图一二是动态曲线</center>  
 
-3. [Clock](/Clock)-----------------时钟控件；  
+3. [Clock](/Clock)-----------------时钟；  
 
     <center><img src="Clock/picture/Clock.png"></center>  
 
-4. [DragDrop](DragDrop/)-----------------简单控件拖拽，参考QT示例Drag and Drop Puzzle Example；  
+4. [DashBoard](/DashBoard)-----------------仪表盘；  
 
-5. [LogAsynchronous](LogAsynchronous/)-----------------异步日志，开辟一个线程专门往文件里写日志，前后端分离。  
+    <center><img src="DashBoard/picture/DashBoard.png"></center>
+
+5. [DragDrop](DragDrop/)-----------------简单控件拖拽，参考QT示例Drag and Drop Puzzle Example；  
+
+6. [LogAsynchronous](LogAsynchronous/)-----------------异步日志，开辟一个线程专门往文件里写日志，前后端分离。  
 
    1. 日志文件名：应用程序名（appname）.时间(time,精确到秒).主机hostname.进程ID（Tid）.log（.count），假如一天内写的单个日志大约接近1G，会自动加后缀（.1,.2.3...，以此类推）新建新的日志文件去写，每天0点依然会rollFile；  
       1. 正常文件名：LogAsynchronous.2020-04-26-20-29-03.Youth.11828.log；  
@@ -33,31 +37,30 @@
    2. 日志格式：时间（time，精确到毫秒）.线程ID（Pid）.日志级别（debug）.打印信息（msg）.文件（File）.行号（Line）。  
    1. 比如：2020-04-26 20:38:55.818 2052 [Debug] 123456789qwertyuioplkjhgfdsa 8412789-File:(..\logAsynchronous\main.cpp) Line:(19)；  
 
-6. [MulClient](MulClient/)-----------------多线程客户端，一个线程一个客户端（怎么可以绕开系统限制，模拟百万个客户端）；  
+7. [MulClient](MulClient/)-----------------多线程客户端，一个线程一个客户端（怎么可以绕开系统限制，模拟百万个客户端）；  
 
-7. [MulServer](MulServer/)-----------------多线程服务端，一个线程一个客户端处理（处理实时性很高的TCP通讯）；  
+8. [MulServer](MulServer/)-----------------多线程服务端，一个线程一个客户端处理（处理实时性很高的TCP通讯）；  
 
-8. [NavigationProgressBar](/NavigationProgressBar)-----------------导航进度栏;  
+9. [NavigationProgressBar](/NavigationProgressBar)-----------------导航进度栏;  
 
     <center><img src="NavigationProgressBar/picture/NavigationProgressBar.png"></center>  
 
-9. [ProgressArc](ProgressArc/)-----------------圆弧进度条；  
+10. [ProgressArc](ProgressArc/)-----------------圆弧进度条；  
 
     <center><img src="ProgressArc/picture/ProgressArc.png"></center>  
 
-10. [ReactorServer](ReactorServer/)-----------------多线程服务端，Reactor模式（Echo），TcpServer类作为mainReactor（Accepter），每个Thread里跑一个Subreactor，建立相应的信号槽，负载均衡使用轮询法（Round-Robin），由于Qt的事件循环机制和信号槽机制，可省去很多回调函数的写法（其实就是使用信号槽替代）；  
+11. [ReactorServer](ReactorServer/)-----------------多线程服务端，Reactor模式（Echo），TcpServer类作为mainReactor（Accepter），每个Thread里跑一个Subreactor，建立相应的信号槽，负载均衡使用轮询法（Round-Robin），由于Qt的事件循环机制和信号槽机制，可省去很多回调函数的写法（其实就是使用信号槽替代）；  
 
-11. [SqlTabview](SqlTabview/)-----------------SQLite数据库调用，模型方法；  
+12. [SqlTabview](SqlTabview/)-----------------SQLite数据库调用，模型方法；  
 
-12. [SlipButton](SlipButton/)-----------------滑动按钮；
+13. [SlipButton](SlipButton/)-----------------滑动按钮；
 <table>
     <tr>
         <td ><center><img src="SlipButton/picture/SlipButton_check.png"></center><center>滑动前</center></td >
         <td ><center><img src="SlipButton/picture/SlipButton_checked.png"></center><center>滑动后</center></td>
     </tr>
-</table>
-
-13. [TabViewModel](TabViewModel/)-----------------表格视图（MVC）；  
-14. [Thread](Thread/)-----------------多线程例子，三种写法，不包括QtConcurrent::run()；  
-15. [TreeViewModel](TreeViewModel/)-----------------树形视图（MVC），QtCreator源码；  
+</table>  
+14. [TabViewModel](TabViewModel/)-----------------表格视图（MVC）；  
+15. [Thread](Thread/)-----------------多线程例子，三种写法，不包括QtConcurrent::run()；  
+16. [TreeViewModel](TreeViewModel/)-----------------树形视图（MVC），QtCreator源码；  
 

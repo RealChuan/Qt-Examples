@@ -201,7 +201,6 @@ void ClockWidget::drawScale(QPainter *painter, const double linew)
 
 void ClockWidget::drawScaleNum(QPainter *painter)
 {
-    painter->save();
     double min = qMin(width(), height());
     double radius = min / 2.0 - min / 4.8;
     painter->setPen(d->foregroundColor);
@@ -223,7 +222,6 @@ void ClockWidget::drawScaleNum(QPainter *painter)
         int y = -radius * sina + textHeight / 4;
         painter->drawText(x, y, strValue);
     }
-    painter->restore();
 }
 
 void ClockWidget::drawHour(QPainter *painter)

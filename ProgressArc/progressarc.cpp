@@ -171,7 +171,6 @@ void ProgressArc::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
     QPainter painter(this);
-    painter.setPen(Qt::NoPen);
     painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 
     // 背景
@@ -192,6 +191,11 @@ void ProgressArc::paintEvent(QPaintEvent *event)
 
 void ProgressArc::onStartAnimation(const double value)
 {
+    if(value < d->minValue
+            || value > d->maxValue
+            || value == d->value)
+        return;
+
     int start = d->value;
     int end = value;
 
