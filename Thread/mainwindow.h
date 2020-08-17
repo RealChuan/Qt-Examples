@@ -15,13 +15,16 @@ public:
 private slots:
     void onStart(bool);
     void onDoSomeThing();
-    void setLable1(const QString&);
-    void setLable2(const QString&);
-    void setLable3(const QString&);
+    void onLabel1(const QString&);
+    void onLabel2(const QString&);
+    void onLabel3(const QString&);
+    void onLabel4(const QString&);
+    void onRunCurrent(const int index);
 
 private:
     void buildConnect();
     void setupUI();
-    MainWindowPrivate *d;
+
+    QScopedPointer<MainWindowPrivate> d;
 };
 #endif // MAINWINDOW_H

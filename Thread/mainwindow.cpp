@@ -4,19 +4,25 @@
 #include "thread3.h"
 
 #include <QtWidgets>
+#include <QtConcurrent>
+
+QLabel* createLabel(QWidget *parent)
+{
+    QLabel *label = new QLabel(parent);
+    label->setAlignment(Qt::AlignCenter);
+    return label;
+}
 
 class MainWindowPrivate{
 public:
     MainWindowPrivate(QWidget *parent)
-        :owner(parent)
-        ,count(0){
-        mainLabel = new QLabel(owner);
-        threadLabel1 = new QLabel(owner);
-        threadLabel1->setAlignment(Qt::AlignCenter);
-        threadLabel2 = new QLabel(owner);
-        threadLabel2->setAlignment(Qt::AlignCenter);
-        threadLabel3 = new QLabel(owner);
-        threadLabel3->setAlignment(Qt::AlignCenter);
+        : owner(parent)
+        , count(0){
+        mainLabel = createLabel(owner);
+        threadLabel1 = createLabel(owner);
+        threadLabel2 = createLabel(owner);
+        threadLabel3 = createLabel(owner);
+        threadLabel4 = createLabel(owner);
         startButton = new QPushButton(QObject::tr("Start Threads"), owner);
         startButton->setCheckable(true);
         doButton = new QPushButton(QObject::tr("Do Something"), owner);
@@ -27,12 +33,18 @@ public:
     QLabel *threadLabel1;
     QLabel *threadLabel2;
     QLabel *threadLabel3;
+    QLabel *threadLabel4;
     QPushButton *startButton;
     QPushButton *doButton;
     Thread1 *thread1;
     Thread2 *thread2;
     Thread3 *thread3;
     int count;
+
+    QFuture<void> wacher;
+    QMutex mutex;
+    QWaitCondition waitCondition;
+    volatile bool runing = true;
 };
 
 MainWindow::MainWindow(QWidget *parent)
@@ -45,7 +57,9 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete d;
+    d->runing = false;
+    d->waitCondition.wakeOne();
+    d->wacher.waitForFinished();
 }
 
 void MainWindow::onStart(bool checked)
@@ -56,9 +70,10 @@ void MainWindow::onStart(bool checked)
         d->thread3 = new Thread3(this);
 
         // Qt::DirectConnection直连，QLabel支持子线程中更新，（部分控件是支持在子线程中更新）
-        connect(d->thread1, &Thread1::message, this, &MainWindow::setLable1/*, Qt::DirectConnection*/);
-        connect(d->thread2, &Thread2::message, this, &MainWindow::setLable2, Qt::DirectConnection);
-        connect(d->thread3, &Thread3::message, this, &MainWindow::setLable3, Qt::DirectConnection);
+        connect(d->thread1, &Thread1::message, this, &MainWindow::onLabel1/*, Qt::DirectConnection*/);
+        connect(d->thread2, &Thread2::message, this, &MainWindow::onLabel2, Qt::DirectConnection);
+        connect(d->thread3, &Thread3::message, this, &MainWindow::onLabel3, Qt::DirectConnection);
+        d->wacher = QtConcurrent::run(this, &MainWindow::onRunCurrent, 4);
 
         d->thread1->start();
         d->thread2->start();
@@ -69,6 +84,8 @@ void MainWindow::onStart(bool checked)
         d->thread1->deleteLater();
         d->thread2->deleteLater();
         d->thread3->deleteLater();
+        d->runing = false;
+        d->waitCondition.wakeOne();
         d->startButton->setText(tr("Start Threads"));
         d->doButton->setEnabled(false);
     }
@@ -80,33 +97,56 @@ void MainWindow::onDoSomeThing()
     emit d->thread2->doSomeThing(2);
     emit d->thread3->doSomething(3);
     //d->thread3->doSomeThing(3);
+    d->waitCondition.wakeOne();
     QString str = tr("I am main thread(UI): %1, Count: %2").
-            arg(reinterpret_cast<int>(QThread::currentThreadId())).
+            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId())).
             arg(d->count);
     d->mainLabel->setText(str);
     d->count++;
     update();
 }
 
-void MainWindow::setLable1(const QString &str)
+void MainWindow::onLabel1(const QString &str)
 {
     QString buf = str + "\n" + tr("The current thread is: %1").
-            arg(reinterpret_cast<int>(QThread::currentThreadId()));
+            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
     d->threadLabel1->setText(buf);
 }
 
-void MainWindow::setLable2(const QString &str)
+void MainWindow::onLabel2(const QString &str)
 {
     QString buf = str + "\n" + tr("The current thread is: %1").
-            arg(reinterpret_cast<int>(QThread::currentThreadId()));
+            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
     d->threadLabel2->setText(buf);
 }
 
-void MainWindow::setLable3(const QString &str)
+void MainWindow::onLabel3(const QString &str)
 {
     QString buf = str + "\n" + tr("The current thread is: %1").
-            arg(reinterpret_cast<int>(QThread::currentThreadId()));
+            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
     d->threadLabel3->setText(buf);
+}
+
+void MainWindow::onLabel4(const QString &str)
+{
+    QString buf = str + "\n" + tr("The current thread is: %1").
+            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
+    d->threadLabel4->setText(buf);
+}
+
+void MainWindow::onRunCurrent(const int index)
+{
+    int count = 0;
+    d->runing = true;
+    while(d->runing){
+        QMutexLocker locker(&d->mutex);
+        d->waitCondition.wait(&d->mutex);
+        QString str = tr("I am thread %1: %2, Count: %3").arg(index).
+                arg(reinterpret_cast<qlonglong>(QThread::currentThreadId())).
+                arg(count);
+        count++;
+        onLabel4(str);
+    }
 }
 
 void MainWindow::buildConnect()
@@ -117,26 +157,25 @@ void MainWindow::buildConnect()
 
 void MainWindow::setupUI()
 {
-    QGridLayout *gLayout = new QGridLayout;
-    gLayout->addWidget(d->mainLabel, 0, 0);
-    gLayout->addWidget(d->threadLabel1, 0, 1);
-    gLayout->addWidget(d->threadLabel2, 1, 0);
-    gLayout->addWidget(d->threadLabel3, 1, 1);
-    gLayout->addWidget(d->startButton, 2, 0);
-    gLayout->addWidget(d->doButton, 2, 1);
+    QWidget *widget = new QWidget(this);
+    QGridLayout *layout = new QGridLayout(widget);
+    layout->addWidget(d->mainLabel, 0, 0, 1 ,2);
+    layout->addWidget(d->threadLabel1, 1, 0);
+    layout->addWidget(d->threadLabel2, 1, 1);
+    layout->addWidget(d->threadLabel3, 2, 0);
+    layout->addWidget(d->threadLabel4, 2, 1);
+    layout->addWidget(d->startButton, 3, 0);
+    layout->addWidget(d->doButton, 3, 1);
 
-    QFrame *frame = new QFrame(this);
-    frame->setLayout(gLayout);
-    setCentralWidget(frame);
+    setCentralWidget(widget);
     setMinimumSize(640, 480);
 
-    setStyleSheet("QLabel{\
-                  background-color: #787878;\
-                  border-radius: 4px;\
-                  font-family: \"Microsoft YaHei\";\
-                  font-weight:bold;\
-                  font-size:14px;\
-                  color: #FFFFFF;\
-                  }");
+    setStyleSheet("QLabel{"
+                  "background-color: #787878;"
+                  "border-radius: 4px;"
+                  "font-family: \"Microsoft YaHei\";"
+                  "font-weight:bold;"
+                  "font-size:14px;"
+                  "color: #FFFFFF;}");
 }
 

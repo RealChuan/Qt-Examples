@@ -61,6 +61,9 @@
     </tr>
 </table>  
 14. [TabViewModel](TabViewModel/)-----------------表格视图（MVC）；  
-15. [Thread](Thread/)-----------------多线程例子，三种写法，不包括QtConcurrent::run()；  
+15. [Thread](Thread/)-----------------多线程例子，四种写法，控件更新在子线程；  
+
+<center><img src="Thread/picture/Thread.png"></center>  
+
 16. [TreeViewModel](TreeViewModel/)-----------------树形视图（MVC），QtCreator源码；  
 
