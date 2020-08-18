@@ -24,14 +24,11 @@ public slots:
     void setUncheckedBackgroundColor(const QColor &color);
     QColor uncheckedBackgroundColor() const;
 
-    void setButtonHeight(int height);
-    void setMargin(int margin);
-
 protected:
     void paintEvent(QPaintEvent* event) override;
     void enterEvent(QEvent* event) override;
     void leaveEvent(QEvent* event) override;
-    void resizeEvent(QResizeEvent *event) override;
+    void resizeEvent(QResizeEvent* event) override;
 
 private slots:
     void onStartAnimation();
@@ -39,7 +36,8 @@ private slots:
     void setOffset(int offset);
 
 private:
-    inline const QSize constSize() const;
+    inline double widthMargin() const;
+    inline double heightMargin() const;
 
     QScopedPointer<SlipButtonPrivate> d;
 };

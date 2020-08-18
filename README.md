@@ -17,7 +17,7 @@
 2. [Chart](Chart/)-----------------可视化图表绘制，参考[ 使用 QChart 显示实时动态曲线 ](https://qtdebug.com/qtbook-paint-realtime-curve-qchart/ "qtdebug/公孙二狗") 和QChart相关示例；  
 
    <center><img src="Chart/picture/Chart_1.png">图一二是动态曲线</center>  
-   <center><img src="Chart/picture/Chart_2.png">图一二是动态曲线</center>  
+   <center><img src="Chart/picture/Chart_2.png">图一二是动态曲线， 图二坐标轴也会动态变化</center>  
 
 3. [Clock](/Clock)-----------------时钟；  
 

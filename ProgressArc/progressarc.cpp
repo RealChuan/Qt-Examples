@@ -7,8 +7,8 @@ struct ProgressArcPrivate{
     double minValue = 0;
     double maxValue = 100;
     double value = 0;
-    double startAngle = 0;
-    double endAngle = 360;
+    double startAngle = -90;
+    double endAngle = 270;
 
     QColor arcColor = QColor("#4da1ff");
     QColor textColor = QColor("#4da1ff");

@@ -3,16 +3,11 @@
 #include <QPropertyAnimation>
 #include <QtWidgets>
 
-#define ScaleFactor 1.8
-
 struct SlipButtonPrivate{
-    int height = 18;
-    int offset = height / 2;
-    int margin = 2;
+    int offset = 0;
     QColor uncheckBackgroundColor = QColor("#FFE0E0E0");
     QColor checkedBackgroundColor = QColor("#4da1ff");
     bool hover = false;
-    bool constSize = false;
     QPropertyAnimation *animation;
 };
 
@@ -32,16 +27,12 @@ SlipButton::~SlipButton()
 
 QSize SlipButton::sizeHint() const
 {
-    if(d->constSize)
-        return constSize();
-    return QSize(180, 100);
+    return QSize(100 * 1.8, 100);
 }
 
 QSize SlipButton::minimumSizeHint() const
 {
-    if(d->constSize)
-        return constSize();
-    return QSize(18 * ScaleFactor, 18);
+    return QSize(10 * 1.8, 10);
 }
 
 void SlipButton::setCheckedBackgroundColor(const QColor& color)
@@ -66,19 +57,6 @@ QColor SlipButton::uncheckedBackgroundColor() const
     return d->uncheckBackgroundColor;
 }
 
-void SlipButton::setButtonHeight(int height)
-{
-    d->constSize = true;
-    d->height = qMax(d->height, height);
-    onStartAnimation();
-}
-
-void SlipButton::setMargin(int margin)
-{
-    d->margin = qMin(qMax(0, margin), height() / 2 - 1);
-    update();
-}
-
 int SlipButton::offset() const
 {
     return d->offset;
@@ -90,9 +68,14 @@ void SlipButton::setOffset(int offset)
     update();
 }
 
-const QSize SlipButton::constSize() const
+double SlipButton::widthMargin() const
 {
-    return QSize(d->height * ScaleFactor, d->height);
+    return width() / 22.0;
+}
+
+double SlipButton::heightMargin() const
+{
+    return height() / 22.0;
 }
 
 void SlipButton::paintEvent(QPaintEvent* event)
@@ -103,32 +86,23 @@ void SlipButton::paintEvent(QPaintEvent* event)
     painter.setPen(Qt::NoPen);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    int w = - d->margin;
-    int h = - d->margin;
-    if(d->constSize){
-        w += constSize().width();
-        h += constSize().height();
-    }else{
-        w += width();
-        h += height();
-    }
+    double w = width() - widthMargin() * 2;
+    double h = height() - heightMargin() * 2;
 
     // 画背景
-    QRectF rectSlot = QRectF(0, 0, w, h);
+    QRectF rectSlot((width() - w) / 2, (height() - h) / 2, w, h);
     double slotRoundness = rectSlot.height() / 2;
     painter.setBrush(d->uncheckBackgroundColor);
     painter.drawRoundedRect(rectSlot, slotRoundness, slotRoundness);
 
     // 选中情况下，背景变蓝
-    const double radius = h / 2;
     if(isEnabled() && isChecked()){
-        QRectF rectSlotFill = rectSlot.adjusted(0, 0, -(w - offset()) + radius, 0);
+        QRectF rectSlotFill = rectSlot.adjusted(0, 0, offset() + h - (width() - widthMargin()), 0);
         painter.setBrush(d->checkedBackgroundColor);
         painter.drawRoundedRect(rectSlotFill, slotRoundness, slotRoundness);
     }
 
-    // hover 边框
-    QRectF rectThumb = QRectF(offset() - radius, 0, h, h);
+    QRectF rectThumb = QRectF(offset(), (height() - h) / 2, h, h);
     QColor colorThumbBorder = (d->hover) ? d->checkedBackgroundColor: QColor("#FFA8A8A8");
     painter.setBrush(colorThumbBorder);
     painter.drawEllipse(rectThumb);
@@ -155,27 +129,19 @@ void SlipButton::leaveEvent(QEvent* event)
 
 void SlipButton::resizeEvent(QResizeEvent *event)
 {
-    if(d->constSize)
-        return;
-    int h = event->size().height();
-    int w = event->size().width();
-    if(w < ScaleFactor * h)
-        h = w / ScaleFactor;
-    resize(h * ScaleFactor, h);
-    onStartAnimation();
+    QAbstractButton::resizeEvent(event);
+    if(isChecked()){
+        double h = height() - heightMargin() * 2;
+        setOffset(width() - widthMargin() - h);
+    }else
+        setOffset(widthMargin());
 }
 
 void SlipButton::onStartAnimation()
 {
-    int start = 0;
-    int end = 0;
-    if(d->constSize){
-        start = d->height / 2;
-        end = constSize().width() - d->height / 2;
-    }else{
-        start = height() / 2;
-        end = width() - height() / 2;
-    }
+    double h = height() - heightMargin() * 2;
+    double start = widthMargin();
+    double end = width() - start - h;
 
     if(!isChecked())
         qSwap(start, end);

@@ -7,13 +7,13 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     SlipButton *slipButton = new SlipButton(this);
-    //slipButton->setButtonHeight(50);
+    //slipButton->setFixedSize(50 * 1.8, 50);
 
     QWidget *widget = new QWidget(this);
     QVBoxLayout *layout = new QVBoxLayout(widget);
     layout->addWidget(slipButton);
     setCentralWidget(widget);
-    resize(240, 110);
+    resize(240, 140);
 }
 
 MainWindow::~MainWindow()

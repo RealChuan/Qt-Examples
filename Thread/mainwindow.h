@@ -19,9 +19,9 @@ private slots:
     void onLabel2(const QString&);
     void onLabel3(const QString&);
     void onLabel4(const QString&);
-    void onRunCurrent(const int index);
 
 private:
+    void onRunCurrent(const int index);
     void buildConnect();
     void setupUI();
 
