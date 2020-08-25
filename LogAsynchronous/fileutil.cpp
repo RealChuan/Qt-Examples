@@ -86,8 +86,9 @@ bool FileUtil::rollFile(int count)
             d->file.close();
         }
         d->file.setFileName(filename);
-        d->file.open(QIODevice::WriteOnly | QIODevice::Append |
-                     QIODevice::Unbuffered);
+        d->file.open(QIODevice::WriteOnly
+                     | QIODevice::Append
+                     | QIODevice::Unbuffered);
         d->stream.setDevice(&d->file);
         fprintf(stderr, "%s\n", filename.toLocal8Bit().constData());
         return true;
