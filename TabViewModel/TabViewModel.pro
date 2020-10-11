@@ -18,10 +18,15 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    sortfilterproxymodel.cpp \
+    studenttablemodel.cpp \
     stuedenttable.cpp
 
 HEADERS += \
     mainwindow.h \
+    sortfilterproxymodel.h \
+    student.h \
+    studenttablemodel.h \
     stuedenttable.h
 
 # Default rules for deployment.

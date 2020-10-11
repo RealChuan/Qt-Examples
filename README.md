@@ -58,18 +58,20 @@
 
 14. [SlipButton](SlipButton/)-----------------滑动按钮；  
 
-     <table>
-         <tr>
-             <td ><div align=center><img src="SlipButton/picture/SlipButton_check.png"></div></td >
-             <td ><div align=center><img src="SlipButton/picture/SlipButton_checked.png"></div></td>
-         </tr>
-     </table>  
+     另：更简单的实现：[有动画效果的 CheckBox](http://qtdebug.com/qtbook-animated-checkbox/)；  
+
+      <table>
+          <tr>
+              <td ><div align=center><img src="SlipButton/picture/SlipButton_check.png"></div></td >
+              <td ><div align=center><img src="SlipButton/picture/SlipButton_checked.png"></div></td>
+          </tr>
+      </table>  
 
 15. [TabViewModel](TabViewModel/)-----------------表格视图（MVC）；   
 
 16. [Thread](Thread/)-----------------多线程例子，四种写法，控件更新在子线程；  
 
-     <div align=center><img src="Thread/picture/Thread.png"></div>  
+      <div align=center><img src="Thread/picture/Thread.png"></div>  
 
 17. [TreeViewModel](TreeViewModel/)-----------------树形视图（MVC），QtCreator源码；  
 

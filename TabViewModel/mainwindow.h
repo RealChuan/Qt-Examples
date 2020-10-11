@@ -14,8 +14,8 @@ public:
     ~MainWindow();
 
 private slots:
-    void onAdd();
-    void onRemove();
+    void onInsertItem();
+    void onRemoveItem();
 
 private:
     void init();
