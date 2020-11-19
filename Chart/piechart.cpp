@@ -10,7 +10,6 @@ public:
         chart = new QChart;
         chart->setAnimationOptions(QChart::AllAnimations);
         chart->setTitle(QObject::tr("Pie Chart"));
-        chart->addSeries(pieSeries);
     }
     ChartView *owner;
     QChart *chart;
@@ -33,7 +32,7 @@ void PieChart::setupUI()
 {
     setRenderHint(QPainter::Antialiasing);
     setChart(d->chart);
-    PointList pointList = generateRandomDataPoints(5, 101);
+    PointList pointList = generateRandomDataPoints(5, 100);
     for(int i=0; i<pointList.size(); i++){
         QPieSlice *slice = d->pieSeries->append(tr("P%1").arg(i), pointList[i].y());
         if(i == 0){
@@ -43,4 +42,6 @@ void PieChart::setupUI()
             //slice->setExplodeDistanceFactor(0.5);
         }
     }
+
+    d->chart->addSeries(d->pieSeries);
 }
