@@ -23,8 +23,9 @@ public:
     quint16 Id() const { return m_id; }
     QString name() const { return m_name; }
     quint16 age() const { return m_age; }
-    QString  gender() const { return m_gender; }
+    QString gender() const { return m_gender; }
     quint16 achievement() const { return m_achievement; }
+    QString details() const { return QObject::tr("details"); }
 
 private:
     bool m_checked = false;
@@ -34,5 +35,8 @@ private:
     QString m_gender = "MALE";
     quint16 m_achievement= 0;
 };
+
+Q_DECLARE_METATYPE(Student);
+Q_DECLARE_METATYPE(Student*);
 
 #endif // STUDENT_H

@@ -1,7 +1,7 @@
 #include "studenttablemodel.h"
 #include "student.h"
 
-enum Property{ID, NAME, AGE, GENDER, ACHIEVEMENT};
+enum Property{ID, NAME, AGE, GENDER, ACHIEVEMENT, MENUBUTTON};
 
 QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
 {
@@ -28,8 +28,10 @@ QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
         case AGE: return stu->age();
         case GENDER: return stu->gender();
         case ACHIEVEMENT: return stu->achievement();
+        case MENUBUTTON: return tr("Details");
         }
-    }
+    case Qt::UserRole: return QVariant::fromValue<Student*>(stu);
+        }
     default: break;
     }
     return QVariant();
@@ -71,7 +73,7 @@ bool StuedentTableModel::setData(const QModelIndex &index, const QVariant &value
 
 QVariant StuedentTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    const QStringList names = {tr("ID"), tr("NAME"), tr("AGE"), tr("GENDER"), tr("ACHIEVEMENT")};
+    const QStringList names = {tr("ID"), tr("NAME"), tr("AGE"), tr("GENDER"), tr("ACHIEVEMENT"), tr("Details")};
     if(section < 0 || section >= names.size())
         return QVariant();
 

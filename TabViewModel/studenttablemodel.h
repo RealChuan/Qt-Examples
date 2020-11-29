@@ -10,7 +10,7 @@ class StuedentTableModel : public QAbstractTableModel
 public:
     explicit StuedentTableModel(QObject *parent = nullptr) : QAbstractTableModel(parent){}
     int rowCount(const QModelIndex&  = QModelIndex()) const { return m_students.count(); }
-    int columnCount(const QModelIndex&  = QModelIndex()) const { return 5; }
+    int columnCount(const QModelIndex&  = QModelIndex()) const { return 6; }
 
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const;
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
