@@ -1,6 +1,7 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include <QFuture>
 #include <QMainWindow>
 
 class MainWindow : public QMainWindow
@@ -13,6 +14,7 @@ public:
 private:
     void testLog();
 
+    QFuture<void> m_watcher;
     volatile bool m_running = true;
 };
 

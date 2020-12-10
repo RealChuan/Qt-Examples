@@ -10,7 +10,8 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     LogAsync *log = LogAsync::instance();
-    log->setLogLevel(QtDebugMsg); // 实际环境中可通过读取配置设置日志级别
+    log->setOrientation(LogAsync::Orientation::StdAndFile);
+    log->setLogLevel(QtDebugMsg);
     log->startWork();
 
     //    QElapsedTimer timer;

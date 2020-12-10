@@ -8,8 +8,11 @@ class LogAsync : public QThread
 {
     Q_OBJECT
 public:
+    enum Orientation { Std = 1, File, StdAndFile};
+
     static LogAsync* instance();
 
+    void setOrientation(Orientation);
     void setLogLevel(QtMsgType);    //日志级别
     void startWork();
     void stop();
