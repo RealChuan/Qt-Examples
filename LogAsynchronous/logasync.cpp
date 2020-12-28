@@ -27,8 +27,12 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 
     const QString dataTimeString(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
     const QString threadId(QString::number(qulonglong(QThread::currentThreadId())));
-    const QString contexInfo(QString("File(%1) Line(%2)").arg(QString(context.file),QString::number(context.line)));
-    const QString message = QString("%1 %2 [%3] %4 - %5\n").arg(dataTimeString, threadId, level, msg, contexInfo);
+    QString contexInfo;
+#ifndef QT_NO_DEBUG
+    contexInfo = QString("File:(%1) Line:(%2)").arg(context.file).arg(context.line);
+#endif
+    const QString message = QString("%1 %2 [%3] %4 - %5\n")
+                                .arg(dataTimeString, threadId, level, msg, contexInfo);
 
     switch (g_orientation) {
     case LogAsync::Orientation::Std:

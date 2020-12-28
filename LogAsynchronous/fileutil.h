@@ -14,11 +14,15 @@ public:
 public slots:
     void onWrite(const QString&);
 
+private slots:
+    void onFlush();
+
 private:
     void newDir(const QString &);
     QString getFileName(qint64 *now) const;
     bool rollFile(int);
     void autoDelFile();
+    void setTimer();
 
     QScopedPointer<FileUtilPrivate> d;
 };

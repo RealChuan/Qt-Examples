@@ -6,6 +6,7 @@
 #include <QProcess>
 #include <QDir>
 #include <QTextStream>
+#include <QTimer>
 
 #define ROLLSIZE 1000*1000*1000
 
@@ -24,16 +25,17 @@ public:
 };
 
 FileUtil::FileUtil(qint64 days, QObject *parent) : QObject(parent)
-  , d(new FileUtilPrivate(this))
+    , d(new FileUtilPrivate(this))
 {
     d->autoDelFileDays = days;
     newDir("log");
     rollFile(0);
+    setTimer();
 }
 
 FileUtil::~FileUtil()
 {
-    d->stream.flush();
+    onFlush();
 }
 
 void FileUtil::onWrite(const QString &msg)
@@ -54,6 +56,11 @@ void FileUtil::onWrite(const QString &msg)
     //d->file.write(msg.toLocal8Bit().constData());
 }
 
+void FileUtil::onFlush()
+{
+    d->stream.flush();
+}
+
 void FileUtil::newDir(const QString &path)
 {
     QDir dir;
@@ -66,7 +73,7 @@ QString FileUtil::getFileName(qint64* now) const
     *now = QDateTime::currentSecsSinceEpoch();
     QString data = QDateTime::fromSecsSinceEpoch(*now).toString("yyyy-MM-dd-hh-mm-ss");
     QString filename = QString("./log/%1.%2.%3.%4.log").arg(qAppName()).
-            arg(data).arg(QSysInfo::machineHostName()).arg(qApp->applicationPid());
+                       arg(data).arg(QSysInfo::machineHostName()).arg(qApp->applicationPid());
     return filename;
 }
 
@@ -111,4 +118,11 @@ void FileUtil::autoDelFile()
         if(birthTime <= pre)
             dir.remove(info.fileName());
     }
+}
+
+void FileUtil::setTimer()
+{
+    QTimer *timer = new QTimer(this);
+    connect(timer, &QTimer::timeout, this, &FileUtil::onFlush);
+    timer->start(5000); // 5秒刷新一次
 }
