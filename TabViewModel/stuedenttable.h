@@ -5,7 +5,7 @@
 #include <QStyledItemDelegate>
 #include <QTableView>
 
-class Student;
+struct Student;
 class StuedentTableModel;
 class StudentsTable : public QTableView
 {

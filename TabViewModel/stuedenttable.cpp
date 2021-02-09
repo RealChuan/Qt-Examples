@@ -1,7 +1,9 @@
 #include "stuedenttable.h"
 #include "studenttablemodel.h"
 #include "sortfilterproxymodel.h"
-#include "detailsbutton.h"
+#include "comboboxdelegate.h"
+#include "progressbardelegate.h"
+#include "buttondelegate.h"
 
 #include <QtWidgets>
 
@@ -11,18 +13,20 @@ StudentsTable::StudentsTable(QWidget *parent)
     , m_menu(new QMenu(this))
 {
     setShowGrid(true);
+    setWordWrap(false);
     setAlternatingRowColors(true);
     verticalHeader()->setVisible(false);
     verticalHeader()->setDefaultSectionSize(30);
     horizontalHeader()->setStretchLastSection(true);
     horizontalHeader()->setDefaultSectionSize(90);
     horizontalHeader()->setMinimumSectionSize(35);
+    horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
     setSelectionBehavior(QAbstractItemView::SelectItems);
     setSelectionMode(QAbstractItemView::SingleSelection);
     setContextMenuPolicy(Qt::DefaultContextMenu);
-    horizontalHeader()->setSectionResizeMode(QHeaderView::Interactive);
-    setItemDelegateForColumn(3, new EditDelegate(this));
+    setItemDelegateForColumn(3, new ComboBoxDelegate(this));
     setItemDelegateForColumn(5, new ButtonDelegate(this));
+    setItemDelegateForColumn(6, new ProgressBarDelegate(this));
 
     setSortingEnabled(true);
     SortFilterProxyModel *sortModel = new SortFilterProxyModel(this);

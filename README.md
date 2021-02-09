@@ -67,11 +67,15 @@
           </tr>
       </table>  
 
-15. [TabViewModel](TabViewModel/)-----------------表格视图（MVC）；   
+15. [TabViewModel](TabViewModel/)-----------------表格视图，DeleGate(Button and ProgressBar)（MVC）；   
+
+     套用了旧的样式（懒），具体可以自己调整；
+
+      <div align=center><img src="TabViewModel/picture/TabViewModelDelegate.png"></div> 
 
 16. [Thread](Thread/)-----------------多线程例子，四种写法，控件更新在子线程；  
 
-      <div align=center><img src="Thread/picture/Thread.png"></div>  
+        <div align=center><img src="Thread/picture/Thread.png"></div>  
 
 17. [TreeViewModel](TreeViewModel/)-----------------树形视图（MVC），QtCreator源码；  
 

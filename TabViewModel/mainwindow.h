@@ -3,7 +3,7 @@
 
 #include <QMainWindow>
 
-class Student;
+struct Student;
 class StudentsTable;
 class MainWindow : public QMainWindow
 {

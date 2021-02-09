@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setupUI();
     init();
+    resize(800, 300);
 }
 
 MainWindow::~MainWindow()
@@ -24,7 +25,7 @@ void MainWindow::onInsertItem()
 {
     int row = table->currentIndex().row();
     Student *stu = new Student;
-    stu->setID(quint16(students.size()));
+    stu->id = students.size();
 
     if(row < 0 || row >= students.size())
         students.append(stu);
@@ -46,11 +47,11 @@ void MainWindow::onRemoveItem()
 
 void MainWindow::init()
 {
-    students.append(new Student(0, "Jason",     15, "MALE",   66));
-    students.append(new Student(1, "Lily",      13, "FEMALE", 85));
-    students.append(new Student(2, "Odin",      16, "FEMALE", 76));
-    students.append(new Student(3, "Willion",   12, "MALE",   89));
-    students.append(new Student(4, "Nieo",      14, "MALE",   77));
+    students.append(new Student{true, 0, "Jason", 15, "MALE", 66, 10});
+    students.append(new Student{false, 1, "Lily", 13, "FEMALE", 85, 20});
+    students.append(new Student{true, 2, "Odin", 16, "FEMALE", 76, 30});
+    students.append(new Student{false, 3, "Willion", 12, "MALE", 89, 40});
+    students.append(new Student{true, 4, "Nieo", 14, "MALE", 77, 50});
     table->setStudents(students);
     table->selectRow(students.size() - 1);
 }
@@ -70,7 +71,6 @@ void MainWindow::setupUI()
     QFrame *frame = new QFrame(this);
     frame->setLayout(layout);
     setCentralWidget(frame);
-    setMinimumSize(600, 260);
 
     connect(table, &StudentsTable::insertItem, this, &MainWindow::onInsertItem);
     connect(table, &StudentsTable::removeItem, this, &MainWindow::onRemoveItem);
