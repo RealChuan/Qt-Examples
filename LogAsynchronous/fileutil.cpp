@@ -72,8 +72,9 @@ QString FileUtil::getFileName(qint64* now) const
 {
     *now = QDateTime::currentSecsSinceEpoch();
     QString data = QDateTime::fromSecsSinceEpoch(*now).toString("yyyy-MM-dd-hh-mm-ss");
-    QString filename = QString("./log/%1.%2.%3.%4.log").arg(qAppName()).
-                       arg(data).arg(QSysInfo::machineHostName()).arg(qApp->applicationPid());
+    QString filename = QString("./log/%1.%2.%3.%4.log")
+                           .arg(qAppName(), data, QSysInfo::machineHostName(),
+                                QString::number(qApp->applicationPid()));
     return filename;
 }
 
@@ -113,7 +114,7 @@ void FileUtil::autoDelFile()
     QDateTime cur = QDateTime::currentDateTime();
     QDateTime pre = cur.addDays(-d->autoDelFileDays);
 
-    for(QFileInfo info : list){
+    for(const QFileInfo &info : qAsConst(list)){
         QDateTime birthTime = info.lastModified();
         if(birthTime <= pre)
             dir.remove(info.fileName());

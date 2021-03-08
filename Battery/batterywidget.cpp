@@ -165,7 +165,7 @@ void BatteryWidget::drawValue(QPainter *painter, const QRectF &batteryRect)
     painter->setFont(font);
     painter->setPen(fontColoer);
     painter->setBrush(Qt::NoBrush);
-    painter->drawText(batteryRect, Qt::AlignHCenter | Qt::AlignVCenter, text);
+    painter->drawText(batteryRect, Qt::AlignCenter, text);
 }
 
 void BatteryWidget::drawHeader(QPainter *painter, const QRectF &batteryRect)

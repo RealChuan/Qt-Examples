@@ -224,8 +224,8 @@ void DashBoardWidget::paintEvent(QPaintEvent *event)
 void DashBoardWidget::onStartAnimation(const double value)
 {
     if(value < d->minValue
-            || value > d->maxValue
-            || value == d->value)
+        || value > d->maxValue
+        || value == d->value)
         return;
 
     int start = d->value;
@@ -311,7 +311,7 @@ void DashBoardWidget::drawScaleNum(QPainter *painter)
         double sina = qSin(startRad - i * deltaRad);
         double cosa = qCos(startRad - i * deltaRad);
         double value = 1.0 * i * ((d->maxValue - d->minValue) / d->scaleMajor)
-                + d->minValue;
+                       + d->minValue;
 
         QString strValue = QString("%1").arg(value, 0, 'f', 2);
         double textWidth = fontMetrics.width(strValue);
@@ -355,7 +355,7 @@ void DashBoardWidget::drawValue(QPainter *painter)
     painter->setFont(font);
 
     QString strValue = QString("%1").arg(d->value, 0, 'f', 2);
-    strValue = QString("%1 %2").arg(strValue).arg(d->unit);
+    strValue = QString("%1 %2").arg(strValue, d->unit);
     QRectF valueRect(-radius, radius / 2.5, radius * 2, radius / 3.5);
     painter->drawText(valueRect, Qt::AlignCenter, strValue);
 

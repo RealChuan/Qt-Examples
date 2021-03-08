@@ -14,11 +14,11 @@ DropListWidget::DropListWidget(QWidget *parent)
 void DropListWidget::setupUI()
 {
     menu = new QMenu(this);
-    menu->addAction(tr("delete"), [this]{
+    menu->addAction(tr("delete"), this, [this]{
         removeItemWidget(currentItem());
         delete currentItem();
     });
-    connect(this, &DropListWidget::customContextMenuRequested, [this]{
+    connect(this, &DropListWidget::customContextMenuRequested, this, [this]{
         if (!currentItem())
             return;
         menu->exec(QCursor::pos());

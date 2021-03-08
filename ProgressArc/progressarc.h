@@ -7,18 +7,18 @@ struct ProgressArcPrivate;
 class ProgressArc : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(double value READ value WRITE setValue)
-    Q_PROPERTY(QString title READ title WRITE setTitle)
-    Q_PROPERTY(bool percent READ percent WRITE setPercent)
-    Q_PROPERTY(double min READ min WRITE setMin)
-    Q_PROPERTY(double max READ max WRITE setmax)
-    Q_PROPERTY(double startAngle READ startAngle WRITE setStartAngle)
-    Q_PROPERTY(double endAngle READ endAngle WRITE setEndAngle)
-    Q_PROPERTY(QColor arcColor READ arcColor WRITE setArcColor)
-    Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
-    Q_PROPERTY(QColor titleColor READ titleColor WRITE setTitleColor)
-    Q_PROPERTY(QColor baseColor READ baseColor WRITE setBaseColor)
-    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
+    Q_PROPERTY(double value READ value WRITE setValue CONSTANT)
+    Q_PROPERTY(QString title READ title WRITE setTitle CONSTANT)
+    Q_PROPERTY(bool percent READ percent WRITE setPercent CONSTANT)
+    Q_PROPERTY(double min READ min WRITE setMin CONSTANT)
+    Q_PROPERTY(double max READ max WRITE setmax CONSTANT)
+    Q_PROPERTY(double startAngle READ startAngle WRITE setStartAngle CONSTANT)
+    Q_PROPERTY(double endAngle READ endAngle WRITE setEndAngle CONSTANT)
+    Q_PROPERTY(QColor arcColor READ arcColor WRITE setArcColor CONSTANT)
+    Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor CONSTANT)
+    Q_PROPERTY(QColor titleColor READ titleColor WRITE setTitleColor CONSTANT)
+    Q_PROPERTY(QColor baseColor READ baseColor WRITE setBaseColor CONSTANT)
+    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor CONSTANT)
 public:
     explicit ProgressArc(const QString &title, QWidget *parent = nullptr);
     ~ProgressArc();
@@ -26,7 +26,9 @@ public:
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
-public slots:
+    double value() const;
+    void setValue(const double value);
+
     void setTitle(const QString &title);
     QString title() const;
 
@@ -63,13 +65,11 @@ public slots:
 signals:
     void valueChanged(const double value);
 
-protected:
-    void paintEvent(QPaintEvent *event) override;
-
 private slots:
     void onStartAnimation(const double value);
-    double value() const;
-    void setValue(const double value);
+
+protected:
+    void paintEvent(QPaintEvent *event) override;
 
 private:
     void drawArc(QPainter *painter);

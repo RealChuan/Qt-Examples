@@ -18,7 +18,6 @@ public:
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
-public slots:
     void setBorderColor(const QColor& color);
     QColor borderColor() const;
 
@@ -27,16 +26,18 @@ public slots:
 
     void setAlarmColor(const QColor& color);
     QColor alarmColor() const;
+
+    void setValue(const int value);
+    int value() const;
+
 signals:
     void valueChanged(const int value);
 
-protected:
-    void paintEvent(QPaintEvent *event) override;
-
 private slots:
     void onStartAnimation(const int value);
-    int value() const;
-    void setValue(const int value);
+
+protected:
+    void paintEvent(QPaintEvent *event) override;
 
 private:
     void drawBorder(QPainter *painter, const QRectF &batteryRect, const double linew);

@@ -4,7 +4,8 @@
 
 static QAtomicInt totalCount = 0;
 
-SubReactor::SubReactor(QObject *parent) : QObject(parent)
+SubReactor::SubReactor(QObject *parent)
+    : QObject(parent)
 {
 }
 
@@ -28,7 +29,7 @@ void SubReactor::onNewConnect(qintptr socketfd)
     count++;
     totalCount.fetchAndAddOrdered(1);
     QString str = QString::number(totalCount) + tr(" Client online: ") +
-            tcpSocket->getInfo();
+                  tcpSocket->getInfo();
     emit message(str);
     emit maxCount(totalCount);
     emit clientCount(totalCount);
@@ -41,7 +42,7 @@ void SubReactor::onClose()
     count--;
     totalCount.fetchAndSubOrdered(1);
     QString str = tr("The client is offline. The current number is: ") +
-            QString::number(totalCount);
+                  QString::number(totalCount);
     emit message(str);
     emit clientCount(totalCount);
 }

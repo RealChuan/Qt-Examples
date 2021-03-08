@@ -14,7 +14,7 @@ public:
     QWidget *owner;
     QColor backgroundColor = QColor(80, 80, 80);
     QColor foregroundColor = QColor(254, 254, 254);
-    QColor currentBackgroundColor = QColor("#4da1ff");
+    QColor currentBackgroundColor = QColor(QLatin1String("#4da1ff"));
     int maxStep = 5;
     int step = 0;
     QStringList topInfo;

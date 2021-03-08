@@ -20,7 +20,6 @@ public:
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
-public slots:
     void setBorderColor(const QColor &color);
     QColor borderColor() const;
 

@@ -97,8 +97,7 @@ void HttpClient::download(const QString &url, const QString &savePath)
     QFile *file = new QFile(savePath, this);
     if (!file->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         file->close();
-        qWarning() << tr("[Error] Open File Error %1: %2").arg(savePath)
-                      .arg(file->errorString());
+        qWarning() << tr("[Error] Open File Error %1: %2").arg(savePath, file->errorString());
         return;
     }
     QNetworkRequest request = createRequest();
@@ -106,12 +105,12 @@ void HttpClient::download(const QString &url, const QString &savePath)
     if(!reply)
         return;
 
-    connect(reply, &QNetworkReply::readyRead, [=]{
+    connect(reply, &QNetworkReply::readyRead, this, [=]{
         if(reply->bytesAvailable() > 0)
             file->write(reply->readAll());
     });
 
-    connect(reply, &QNetworkReply::finished, [=]{
+    connect(reply, &QNetworkReply::finished, this, [=]{
         if(reply->bytesAvailable() > 0)
             file->write(reply->readAll());
         delete file;
@@ -143,8 +142,7 @@ void HttpClient::upload(const QString &url, const QStringList &paths)
         QFile *file = new QFile(path, multiPart);
 
         if(!file->open(QIODevice::ReadOnly)) {
-            qWarning() << tr("[Error] Open File Error %1: %2").arg(path)
-                          .arg(file->errorString());
+            qWarning() << tr("[Error] Open File Error %1: %2").arg(path, file->errorString());
             delete multiPart;
             return;
         }
@@ -153,7 +151,7 @@ void HttpClient::upload(const QString &url, const QStringList &paths)
         // 多个文件时，name 为服务器端获取文件的参数名，为 files
         // 注意: 服务器是 Java 的则用 form-data
         // 注意: 服务器是 PHP  的则用 multipart/form-data
-        QString disposition = QString("form-data; name=\"%1\"; filename=\"%2\"").arg(inputName).arg(file->fileName());
+        QString disposition = QString("form-data; name=\"%1\"; filename=\"%2\"").arg(inputName, file->fileName());
         QHttpPart filePart;
         filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(disposition));
         filePart.setBodyDevice(file);
@@ -259,7 +257,7 @@ void HttpClient::execUpload(QHttpMultiPart *multiPart)
     if(!reply)
         return;
     multiPart->setParent(reply); // delete the multiPart with the reply
-    connect(reply, &QNetworkReply::finished, [this, reply]{
+    connect(reply, &QNetworkReply::finished, this, [this, reply]{
         reply->deleteLater();
         emit finish();
     });
@@ -287,13 +285,13 @@ void HttpClient::execRequest()
         break;
     case POST:
         reply = d->manager->post(request, d->useJson ?
-                                     d->json.toUtf8()
-                                   : d->params.toString(QUrl::FullyEncoded).toUtf8());
+                                                     d->json.toUtf8()
+                                                     : d->params.toString(QUrl::FullyEncoded).toUtf8());
         break;
     case PUT:
         reply = d->manager->put(request, d->useJson ?
-                                    d->json.toUtf8()
-                                  : d->params.toString(QUrl::FullyEncoded).toUtf8());
+                                                    d->json.toUtf8()
+                                                    : d->params.toString(QUrl::FullyEncoded).toUtf8());
         break;
     case DELETE:
         reply = d->manager->deleteResource(request);
@@ -326,9 +324,9 @@ QNetworkRequest HttpClient::createRequest()
             QString value = paramItems.at(i).second;
 
             if (0 == i)
-                buffer += QString("params: %1=%2\n").arg(name).arg(value);
+                buffer += QString("params: %1=%2\n").arg(name, value);
             else
-                buffer += QString("        %1=%2\n").arg(name).arg(value);
+                buffer += QString("        %1=%2\n").arg(name, value);
         }
 
         if (!buffer.isEmpty())
@@ -355,7 +353,7 @@ QNetworkRequest HttpClient::createRequest()
 void HttpClient::buildConnect(QNetworkReply *reply)
 {
     if(!reply){
-        error(tr("reply is nullptr."));
+        emit error(tr("reply is nullptr."));
         return;
     }
     connect(reply, &QNetworkReply::readyRead, this, &HttpClient::slotReadyRead);

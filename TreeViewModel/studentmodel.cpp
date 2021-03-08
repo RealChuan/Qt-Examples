@@ -78,7 +78,7 @@ void TreeView::updateValueTree(const QVector<ClassPair> &cp)
             item->appendChild(child);
         }
     }
-    m_treeModel->layoutChanged();
+    emit m_treeModel->layoutChanged();
 }
 
 void TreeView::init()

@@ -5,14 +5,10 @@
 #include <QWaitCondition>
 #include <QMutex>
 
-static QtMsgType g_msgType = QtWarningMsg;
-static QMutex g_mutex;
-static LogAsync::Orientation g_orientation = LogAsync::Orientation::Std;
-
 // 消息处理函数
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    if(type < g_msgType)
+    if(type < LogAsync::instance()->logLevel())
         return;
 
     QString level;
@@ -34,16 +30,16 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     const QString message = QString("%1 %2 [%3] %4 - %5\n")
                                 .arg(dataTimeString, threadId, level, msg, contexInfo);
 
-    switch (g_orientation) {
+    switch (LogAsync::instance()->orientation()) {
     case LogAsync::Orientation::Std:
         fprintf(stderr, "%s", message.toLocal8Bit().constData());
         break;
     case LogAsync::Orientation::File:
-        LogAsync::instance()->appendBuf(message);
+        emit LogAsync::instance()->appendBuf(message);
         break;
     case LogAsync::Orientation::StdAndFile:
         fprintf(stderr, "%s", message.toLocal8Bit().constData());
-        LogAsync::instance()->appendBuf(message);
+        emit LogAsync::instance()->appendBuf(message);
         break;
     default:
         fprintf(stderr, "%s", message.toLocal8Bit().constData());
@@ -51,13 +47,14 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     }
 }
 
-class LogAsyncPrivate{
-public:
-    LogAsyncPrivate(QThread *owner) : owner(owner){}
-    QThread *owner;
+struct LogAsyncPrivate{
+    QtMsgType msgType = QtWarningMsg;
+    LogAsync::Orientation orientation = LogAsync::Orientation::Std;
     QWaitCondition waitCondition;
     QMutex mutex;
 };
+
+static QMutex g_mutex;
 
 LogAsync *LogAsync::instance()
 {
@@ -68,25 +65,35 @@ LogAsync *LogAsync::instance()
 
 void LogAsync::setOrientation(LogAsync::Orientation orientation)
 {
-    g_orientation = orientation;
+    d_ptr->orientation = orientation;
+}
+
+LogAsync::Orientation LogAsync::orientation()
+{
+    return d_ptr->orientation;
 }
 
 void LogAsync::setLogLevel(QtMsgType type)
 {
-    g_msgType = type;
+    d_ptr->msgType = type;
+}
+
+QtMsgType LogAsync::logLevel()
+{
+    return d_ptr->msgType;
 }
 
 void LogAsync::startWork()
 {
     start();
-    QMutexLocker lock(&d->mutex);
-    d->waitCondition.wait(&d->mutex);
+    QMutexLocker lock(&d_ptr->mutex);
+    d_ptr->waitCondition.wait(&d_ptr->mutex);
 }
 
 void LogAsync::stop()
 {
     if(isRunning()){
-        QThread::sleep(1);   // 最后一条日志格式化可能来不及进入信号槽
+        //QThread::sleep(1);   // 最后一条日志格式化可能来不及进入信号槽
         quit();
         wait();
     }
@@ -96,12 +103,12 @@ void LogAsync::run()
 {
     FileUtil fileUtil;
     connect(this, &LogAsync::appendBuf, &fileUtil, &FileUtil::onWrite);
-    d->waitCondition.wakeOne();
+    d_ptr->waitCondition.wakeOne();
     exec();
 }
 
 LogAsync::LogAsync(QObject *parent) : QThread(parent)
-    , d(new LogAsyncPrivate(this))
+    , d_ptr(new LogAsyncPrivate)
 {
     qInstallMessageHandler(messageHandler);
 }

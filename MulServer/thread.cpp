@@ -6,8 +6,9 @@
 
 static QAtomicInt count = 0;
 
-Thread::Thread(qintptr socketDescriptor, QObject *parent) : QThread(parent)
-  , socketfd(socketDescriptor)
+Thread::Thread(qintptr socketDescriptor, QObject *parent)
+    : QThread(parent)
+    , socketfd(socketDescriptor)
 {
 }
 
@@ -19,7 +20,7 @@ Thread::~Thread()
     }
     count.fetchAndSubOrdered(1);
     QString str = tr("The client is offline. The current number is: ") +
-            QString::number(count);
+                  QString::number(count);
     emit message(str);
     emit clientCount(count);
     qDebug() << str;

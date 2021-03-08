@@ -28,7 +28,9 @@ public:
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
-public slots:
+    double value() const;
+    void setValue(const double value);
+
     void setMin(const double min);
     double min() const;
 
@@ -71,13 +73,11 @@ public slots:
 signals:
     void valueChanged(const double value);
 
-protected:
-    void paintEvent(QPaintEvent *event) override;
-
 private slots:
     void onStartAnimation(const double value);
-    double value() const;
-    void setValue(const double value);
+
+protected:
+    void paintEvent(QPaintEvent *event) override;
 
 private:
     void drawArc(QPainter *painter);

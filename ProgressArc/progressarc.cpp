@@ -10,8 +10,8 @@ struct ProgressArcPrivate{
     double startAngle = -90;
     double endAngle = 270;
 
-    QColor arcColor = QColor("#4da1ff");
-    QColor textColor = QColor("#4da1ff");
+    QColor arcColor = QColor(QLatin1String("#4da1ff"));
+    QColor textColor = QColor(QLatin1String("#4da1ff"));
     QColor titleColor = QColor(80, 80, 80);
     QColor baseColor = QColor(179,179,179);
     QColor backgroundColor = Qt::transparent;
@@ -192,8 +192,8 @@ void ProgressArc::paintEvent(QPaintEvent *event)
 void ProgressArc::onStartAnimation(const double value)
 {
     if(value < d->minValue
-            || value > d->maxValue
-            || value == d->value)
+        || value > d->maxValue
+        || value == d->value)
         return;
 
     int start = d->value;

@@ -16,9 +16,9 @@ public:
     ~HttpClient();
 
 public slots:
-    void setHeaders(const HttpHeaders&);
+    void setHeaders(const HttpClient::HttpHeaders&);
     void setJson(const QString& json);
-    void setParams(const HttpParams& params);
+    void setParams(const HttpClient::HttpParams& params);
 
     void get(const QString &url);
     void post(const QString &url);
