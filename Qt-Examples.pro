@@ -7,6 +7,7 @@ SUBDIRS += \
     Clock \
     DashBoard \
     DragDrop \
+    GridViewModel \
     HttpClient \
     LogAsynchronous \
     MulClient \
