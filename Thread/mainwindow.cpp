@@ -53,6 +53,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setupUI();
     buildConnect();
+    resize(640, 480);
 }
 
 MainWindow::~MainWindow()
@@ -99,8 +100,8 @@ void MainWindow::onDoSomeThing()
     //d->thread3->doSomeThing(3);
     d->waitCondition.wakeOne();
     QString str = tr("I am main thread(UI): %1, Count: %2").
-            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId())).
-            arg(d->count);
+                  arg(reinterpret_cast<qlonglong>(QThread::currentThreadId())).
+                  arg(d->count);
     d->mainLabel->setText(str);
     d->count++;
     update();
@@ -109,28 +110,28 @@ void MainWindow::onDoSomeThing()
 void MainWindow::onLabel1(const QString &str)
 {
     QString buf = str + "\n" + tr("The current thread is: %1").
-            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
+                               arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
     d->threadLabel1->setText(buf);
 }
 
 void MainWindow::onLabel2(const QString &str)
 {
     QString buf = str + "\n" + tr("The current thread is: %1").
-            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
+                               arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
     d->threadLabel2->setText(buf);
 }
 
 void MainWindow::onLabel3(const QString &str)
 {
     QString buf = str + "\n" + tr("The current thread is: %1").
-            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
+                               arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
     d->threadLabel3->setText(buf);
 }
 
 void MainWindow::onLabel4(const QString &str)
 {
     QString buf = str + "\n" + tr("The current thread is: %1").
-            arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
+                               arg(reinterpret_cast<qlonglong>(QThread::currentThreadId()));
     d->threadLabel4->setText(buf);
 }
 
@@ -142,8 +143,8 @@ void MainWindow::onRunCurrent(const int index)
         QMutexLocker locker(&d->mutex);
         d->waitCondition.wait(&d->mutex);
         QString str = tr("I am thread %1: %2, Count: %3").arg(index).
-                arg(reinterpret_cast<qlonglong>(QThread::currentThreadId())).
-                arg(count);
+                      arg(reinterpret_cast<qlonglong>(QThread::currentThreadId())).
+                      arg(count);
         count++;
         onLabel4(str);
     }
@@ -168,14 +169,9 @@ void MainWindow::setupUI()
     layout->addWidget(d->doButton, 3, 1);
 
     setCentralWidget(widget);
-    setMinimumSize(640, 480);
 
-    setStyleSheet("QLabel{"
-                  "background-color: #787878;"
-                  "border-radius: 4px;"
-                  "font-family: \"Microsoft YaHei\";"
-                  "font-weight:bold;"
-                  "font-size:14px;"
-                  "color: #FFFFFF;}");
+    setStyleSheet("QLabel{background: #787878;border-radius: 4px;"
+                  "font-family: \"Microsoft YaHei\";font-weight:bold;"
+                  "font-size:14px;color: #FFFFFF;}");
 }
 

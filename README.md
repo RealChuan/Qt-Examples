@@ -7,13 +7,8 @@
     </tr>
 </table>
 
-2. [BubbleWindow](BubbleWindow/)-----------------气泡式对话框，也可作工具提示（ToolTip）；  
-<table>
-    <tr>
-        <td ><div align=center><img src="BubbleWindow/picture/Bubble.png">Bubble Window</div></td >
-        <td ><div align=center><img src="BubbleWindow/picture/Bubble_tip.png">Bubble Tip</div></td>
-    </tr>
-</table>
+2. [BubbleWindow](BubbleWindow/)-----------------气泡式对话框，也可作工具提示（ToolTip）；       
+<div align=center><img src="BubbleWindow/picture/Bubble.png"></div>  
 
 3. [Chart](Chart/)-----------------可视化图表绘制，参考[ 使用 QChart 显示实时动态曲线 ](https://qtdebug.com/qtbook-paint-realtime-curve-qchart/ "qtdebug/公孙二狗") 和QChart相关示例；  
 

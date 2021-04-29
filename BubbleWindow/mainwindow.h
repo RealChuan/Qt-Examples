@@ -11,12 +11,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
 
-private slots:
-    void onShowBubble();
-
 private:
     void setupUI();
-
-    QPushButton *button;
 };
 #endif // MAINWINDOW_H
