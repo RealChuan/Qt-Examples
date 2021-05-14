@@ -20,7 +20,7 @@ private slots:
 private:
     void init();
     void setupUI();
-    StudentsTable* table;
-    QList<Student*> students;
+    StudentsTable *m_table;
+    QList<Student *> m_students;
 };
 #endif // MAINWINDOW_H

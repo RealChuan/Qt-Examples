@@ -1,9 +1,9 @@
 #include "stuedenttable.h"
-#include "studenttablemodel.h"
-#include "sortfilterproxymodel.h"
+#include "buttondelegate.h"
 #include "comboboxdelegate.h"
 #include "progressbardelegate.h"
-#include "buttondelegate.h"
+#include "sortfilterproxymodel.h"
+#include "studenttablemodel.h"
 
 #include <QtWidgets>
 
@@ -43,7 +43,7 @@ void StudentsTable::setStudents(const QList<Student *> &students)
 
 void StudentsTable::contextMenuEvent(QContextMenuEvent *event)
 {
-    if(!currentIndex().isValid())
+    if (!currentIndex().isValid())
         return;
     m_menu->exec(mapToGlobal(event->pos()));
 }
@@ -52,5 +52,5 @@ void StudentsTable::initMenu()
 {
     m_menu->addAction(tr("insert"), this, &StudentsTable::insertItem);
     m_menu->addAction(tr("remove"), this, &StudentsTable::removeItem);
-    m_menu->addAction(tr("rename"), [this] { edit(currentIndex().siblingAtColumn(0));});
+    m_menu->addAction(tr("rename"), this, [this] { edit(currentIndex().siblingAtColumn(0)); });
 }

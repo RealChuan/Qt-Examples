@@ -3,22 +3,21 @@
 
 #include <QDateTime>
 #include <QWaitCondition>
-#include <QMutex>
 
 // 消息处理函数
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    if(type < LogAsync::instance()->logLevel())
+    if (type < LogAsync::instance()->logLevel())
         return;
 
     QString level;
-    switch(type){
-    case QtDebugMsg: level = QLatin1String("Debug"); break;
-    case QtWarningMsg: level = QLatin1String("Warning"); break;
-    case QtCriticalMsg: level = QLatin1String("Critica"); break;
-    case QtFatalMsg: level = QLatin1String("Fatal"); break;
-    case QtInfoMsg: level = QLatin1String("Info"); break;
-    default: level = QLatin1String("Unknown"); break;
+    switch (type) {
+    case QtDebugMsg: level = QString("%1").arg("Debug", -7); break;
+    case QtWarningMsg: level = QString("%1").arg("Warning", -7); break;
+    case QtCriticalMsg: level = QString("%1").arg("Critica", -7); break;
+    case QtFatalMsg: level = QString("%1").arg("Fatal", -7); break;
+    case QtInfoMsg: level = QString("%1").arg("Info", -7); break;
+    default: level = QString("%1").arg("Unknown", -7); break;
     }
 
     const QString dataTimeString(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
@@ -34,31 +33,28 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     case LogAsync::Orientation::Std:
         fprintf(stderr, "%s", message.toLocal8Bit().constData());
         break;
-    case LogAsync::Orientation::File:
-        emit LogAsync::instance()->appendBuf(message);
-        break;
+    case LogAsync::Orientation::File: emit LogAsync::instance()->appendBuf(message); break;
     case LogAsync::Orientation::StdAndFile:
         fprintf(stderr, "%s", message.toLocal8Bit().constData());
         emit LogAsync::instance()->appendBuf(message);
         break;
-    default:
-        fprintf(stderr, "%s", message.toLocal8Bit().constData());
-        break;
+    default: fprintf(stderr, "%s", message.toLocal8Bit().constData()); break;
     }
 }
 
-struct LogAsyncPrivate{
+struct LogAsyncPrivate
+{
     QtMsgType msgType = QtWarningMsg;
     LogAsync::Orientation orientation = LogAsync::Orientation::Std;
     QWaitCondition waitCondition;
     QMutex mutex;
 };
 
-static QMutex g_mutex;
+QMutex LogAsync::m_mutex;
 
 LogAsync *LogAsync::instance()
 {
-    QMutexLocker locker(&g_mutex);
+    QMutexLocker locker(&m_mutex);
     static LogAsync log;
     return &log;
 }
@@ -92,7 +88,7 @@ void LogAsync::startWork()
 
 void LogAsync::stop()
 {
-    if(isRunning()){
+    if (isRunning()) {
         //QThread::sleep(1);   // 最后一条日志格式化可能来不及进入信号槽
         quit();
         wait();
@@ -107,7 +103,8 @@ void LogAsync::run()
     exec();
 }
 
-LogAsync::LogAsync(QObject *parent) : QThread(parent)
+LogAsync::LogAsync(QObject *parent)
+    : QThread(parent)
     , d_ptr(new LogAsyncPrivate)
 {
     qInstallMessageHandler(messageHandler);

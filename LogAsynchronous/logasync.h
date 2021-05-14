@@ -1,6 +1,7 @@
 #ifndef LOGASYNC_H
 #define LOGASYNC_H
 
+#include <QMutex>
 #include <QThread>
 
 struct LogAsyncPrivate;
@@ -8,9 +9,9 @@ class LogAsync : public QThread
 {
     Q_OBJECT
 public:
-    enum Orientation { Std = 1, File, StdAndFile};
+    enum Orientation { Std = 1, File, StdAndFile };
 
-    static LogAsync* instance();
+    static LogAsync *instance();
 
     void setOrientation(Orientation);
     Orientation orientation();
@@ -22,7 +23,7 @@ public:
     void stop();
 
 signals:
-    void appendBuf(const QString&);
+    void appendBuf(const QString &);
 
 protected:
     void run() override;
@@ -31,6 +32,7 @@ private:
     LogAsync(QObject *parent = nullptr);
     ~LogAsync() override;
 
+    static QMutex m_mutex;
     QScopedPointer<LogAsyncPrivate> d_ptr;
 };
 

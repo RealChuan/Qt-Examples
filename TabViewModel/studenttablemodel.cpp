@@ -1,30 +1,29 @@
 #include "studenttablemodel.h"
 #include "student.h"
 
-enum Property{ID, NAME, AGE, GENDER, ACHIEVEMENT, MENUBUTTON, PROCESS};
+enum Property { ID, NAME, AGE, GENDER, ACHIEVEMENT, MENUBUTTON, PROCESS };
 
 QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
 {
-    if(!index.isValid())
+    if (!index.isValid())
         return false;
 
     int row = index.row();
     int col = index.column();
 
-    Student *stu = m_students[row];
+    Student *stu = m_students.at(row);
     switch (role) {
+    case Qt::TextAlignmentRole: return Qt::AlignCenter;
     case Qt::CheckStateRole:
         switch (col) {
         case ID: return stu->checked;
         default: break;
         }
         break;
-    case Qt::TextAlignmentRole:
-        return QVariant(Qt::AlignCenter);
     case Qt::DisplayRole:
-    case Qt::EditRole: {    //双击为空需添加
+    case Qt::EditRole: { //双击为空需添加
         switch (col) {
-        case ID:  return stu->id;
+        case ID: return stu->id;
         case NAME: return stu->name;
         case AGE: return stu->age;
         case GENDER: return stu->gender;
@@ -47,7 +46,7 @@ QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
 
 bool StuedentTableModel::setData(const QModelIndex &index, const QVariant &value, int role)
 {
-    if(!index.isValid())
+    if (!index.isValid())
         return false;
 
     int row = index.row();
@@ -70,7 +69,7 @@ bool StuedentTableModel::setData(const QModelIndex &index, const QVariant &value
         case NAME: stu->name = value.toString(); break;
         case AGE: stu->age = value.toUInt(); break;
         case GENDER: stu->gender = value.toString(); break;
-        case ACHIEVEMENT:stu->achievement = value.toUInt(); break;
+        case ACHIEVEMENT: stu->achievement = value.toUInt(); break;
         case PROCESS: stu->process = value.toUInt(); break;
         }
         emit dataChanged(index, index);
@@ -82,11 +81,17 @@ bool StuedentTableModel::setData(const QModelIndex &index, const QVariant &value
 
 QVariant StuedentTableModel::headerData(int section, Qt::Orientation orientation, int role) const
 {
-    const QStringList names = {tr("ID"), tr("NAME"), tr("AGE"), tr("GENDER"), tr("ACHIEVEMENT"), tr("DETAILS"), tr("PROCESS")};
-    if(section < 0 || section >= names.size())
+    const QStringList names = {tr("ID"),
+                               tr("NAME"),
+                               tr("AGE"),
+                               tr("GENDER"),
+                               tr("ACHIEVEMENT"),
+                               tr("DETAILS"),
+                               tr("PROCESS")};
+    if (section < 0 || section >= names.size())
         return QVariant();
 
-    if(orientation == Qt::Horizontal && role == Qt::DisplayRole)
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
         return names.at(section);
     return QVariant();
 }
@@ -95,7 +100,7 @@ Qt::ItemFlags StuedentTableModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags flags = QAbstractTableModel::flags(index);
     flags |= Qt::ItemIsEditable;
-    if(index.column() == ID)
+    if (index.column() == ID)
         flags |= Qt::ItemIsUserCheckable;
     return flags;
 }
