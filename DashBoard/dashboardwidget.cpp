@@ -310,11 +310,10 @@ void DashBoardWidget::drawScaleNum(QPainter *painter)
     for (int i = 0; i <= d->scaleMajor; i++) {
         double sina = qSin(startRad - i * deltaRad);
         double cosa = qCos(startRad - i * deltaRad);
-        double value = 1.0 * i * ((d->maxValue - d->minValue) / d->scaleMajor)
-                       + d->minValue;
+        double value = 1.0 * i * ((d->maxValue - d->minValue) / d->scaleMajor) + d->minValue;
 
         QString strValue = QString("%1").arg(value, 0, 'f', 2);
-        double textWidth = fontMetrics.width(strValue);
+        double textWidth = fontMetrics.horizontalAdvance(strValue);
         double textHeight = fontMetrics.height();
         int x = radius * cosa - textWidth / 2;
         int y = -radius * sina + textHeight / 4;

@@ -74,7 +74,7 @@ void MainWindow::onStart(bool checked)
         connect(d->thread1, &Thread1::message, this, &MainWindow::onLabel1/*, Qt::DirectConnection*/);
         connect(d->thread2, &Thread2::message, this, &MainWindow::onLabel2, Qt::DirectConnection);
         connect(d->thread3, &Thread3::message, this, &MainWindow::onLabel3, Qt::DirectConnection);
-        d->wacher = QtConcurrent::run(this, &MainWindow::onRunCurrent, 4);
+        d->wacher = QtConcurrent::run(&MainWindow::onRunCurrent, this, 4);
 
         d->thread1->start();
         d->thread2->start();

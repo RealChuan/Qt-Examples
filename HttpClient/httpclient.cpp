@@ -5,24 +5,21 @@
 #include <QHttpMultiPart>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QUrlQuery>
 #include <QThread>
+#include <QUrlQuery>
 
-enum Method{
-    GET,
-    POST,
-    PUT,
-    DELETE
-};
+enum Method { GET, POST, PUT, DELETE };
 
-class HttpClientPrivate{
+class HttpClientPrivate
+{
 public:
     HttpClientPrivate(QObject *parent)
-        : owner(parent){
+        : owner(parent)
+    {
         manager = new QNetworkAccessManager(owner);
     }
     QObject *owner;
-    QNetworkAccessManager* manager;
+    QNetworkAccessManager *manager;
     HttpClient::HttpHeaders headers;
     QString url;
     QUrlQuery params;
@@ -35,12 +32,9 @@ public:
 HttpClient::HttpClient(QObject *parent)
     : QObject(parent)
     , d(new HttpClientPrivate(this))
-{
-}
+{}
 
-HttpClient::~HttpClient()
-{
-}
+HttpClient::~HttpClient() {}
 
 void HttpClient::setHeaders(const HttpClient::HttpHeaders &headers)
 {
@@ -49,13 +43,12 @@ void HttpClient::setHeaders(const HttpClient::HttpHeaders &headers)
 
 void HttpClient::setJson(const QString &json)
 {
-    d->json = true;
     d->json = json;
 }
 
 void HttpClient::setParams(const HttpClient::HttpParams &params)
 {
-    for(HttpParams::const_iterator iter = params.begin(); iter != params.end(); iter++)
+    for (HttpParams::const_iterator iter = params.begin(); iter != params.end(); iter++)
         d->params.addQueryItem(iter.key(), iter.value().toString());
 }
 
@@ -85,11 +78,11 @@ void HttpClient::remove(const QString &url)
 
 void HttpClient::download(const QString &url, const QString &savePath)
 {
-    if(url.isEmpty() || !QUrl(url).isValid())
+    if (url.isEmpty() || !QUrl(url).isValid())
         return;
     d->url = url;
 
-    if(QFileInfo::exists(savePath)){
+    if (QFileInfo::exists(savePath)) {
         qWarning() << tr("[Error] File already exists: %1.").arg(savePath);
         return;
     }
@@ -102,16 +95,16 @@ void HttpClient::download(const QString &url, const QString &savePath)
     }
     QNetworkRequest request = createRequest();
     QNetworkReply *reply = d->manager->get(request);
-    if(!reply)
+    if (!reply)
         return;
 
-    connect(reply, &QNetworkReply::readyRead, this, [=]{
-        if(reply->bytesAvailable() > 0)
+    connect(reply, &QNetworkReply::readyRead, this, [=] {
+        if (reply->bytesAvailable() > 0)
             file->write(reply->readAll());
     });
 
-    connect(reply, &QNetworkReply::finished, this, [=]{
-        if(reply->bytesAvailable() > 0)
+    connect(reply, &QNetworkReply::finished, this, [=] {
+        if (reply->bytesAvailable() > 0)
             file->write(reply->readAll());
         delete file;
         reply->deleteLater();
@@ -130,18 +123,19 @@ void HttpClient::upload(const QString &url, const QString &path)
 
 void HttpClient::upload(const QString &url, const QStringList &paths)
 {
-    if(paths.isEmpty())
+    if (paths.isEmpty())
         return;
     QHttpMultiPart *multiPart = initMultiPart(url);
 
-    QString inputName = paths.size() == 1 ? "file" : "files"; // 一个文件时为 file，多个文件时为 files
+    QString inputName = paths.size() == 1 ? "file"
+                                          : "files"; // 一个文件时为 file，多个文件时为 files
 
     for (const QString &path : paths) {
         if (path.isEmpty())
             continue;
         QFile *file = new QFile(path, multiPart);
 
-        if(!file->open(QIODevice::ReadOnly)) {
+        if (!file->open(QIODevice::ReadOnly)) {
             qWarning() << tr("[Error] Open File Error %1: %2").arg(path, file->errorString());
             delete multiPart;
             return;
@@ -151,7 +145,8 @@ void HttpClient::upload(const QString &url, const QStringList &paths)
         // 多个文件时，name 为服务器端获取文件的参数名，为 files
         // 注意: 服务器是 Java 的则用 form-data
         // 注意: 服务器是 PHP  的则用 multipart/form-data
-        QString disposition = QString("form-data; name=\"%1\"; filename=\"%2\"").arg(inputName, file->fileName());
+        QString disposition = QString("form-data; name=\"%1\"; filename=\"%2\"")
+                                  .arg(inputName, file->fileName());
         QHttpPart filePart;
         filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(disposition));
         filePart.setBodyDevice(file);
@@ -163,7 +158,7 @@ void HttpClient::upload(const QString &url, const QStringList &paths)
 
 void HttpClient::upload(const QString &url, const QByteArray &data)
 {
-    if(data.isEmpty())
+    if (data.isEmpty())
         return;
 
     QHttpMultiPart *multiPart = initMultiPart(url);
@@ -180,11 +175,11 @@ void HttpClient::upload(const QString &url, const QByteArray &data)
 void HttpClient::slotReadyRead()
 {
     qDebug() << "slotReadyRead";
-    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-    if(!reply)
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply)
         return;
 
-    if(reply->bytesAvailable() <= 0)
+    if (reply->bytesAvailable() <= 0)
         return;
 
     QByteArray buf = reply->readAll();
@@ -195,11 +190,11 @@ void HttpClient::slotReadyRead()
 void HttpClient::slotReplyFinish()
 {
     qDebug() << "slotReplyFinish";
-    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-    if(!reply)
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply)
         return;
 
-    if(reply->bytesAvailable() > 0)
+    if (reply->bytesAvailable() > 0)
         emit readyReady(reply->readAll());
 
     reply->deleteLater();
@@ -210,11 +205,11 @@ void HttpClient::slotReplyFinish()
 
 void HttpClient::slotError(QNetworkReply::NetworkError replyError)
 {
-    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-    if(!reply)
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply)
         return;
 
-    if(replyError == QNetworkReply::NoError)
+    if (replyError == QNetworkReply::NoError)
         return;
 
     emit error(reply->errorString());
@@ -222,22 +217,22 @@ void HttpClient::slotError(QNetworkReply::NetworkError replyError)
 
 void HttpClient::slotSslErrors(const QList<QSslError> &errors)
 {
-    QNetworkReply *reply = qobject_cast<QNetworkReply*>(sender());
-    if(!reply)
+    QNetworkReply *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply)
         return;
     qDebug() << errors;
 }
 
 QHttpMultiPart *HttpClient::initMultiPart(const QString &url)
 {
-    if(url.isEmpty() || !QUrl(url).isValid())
+    if (url.isEmpty() || !QUrl(url).isValid())
         return nullptr;
     d->url = url;
 
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType, this);
-    QList<QPair<QString, QString> > paramItems = d->params.queryItems();
+    QList<QPair<QString, QString>> paramItems = d->params.queryItems();
     for (int i = 0; i < paramItems.size(); ++i) {
-        QString name  = paramItems.at(i).first;
+        QString name = paramItems.at(i).first;
         QString value = paramItems.at(i).second;
 
         QHttpPart textPart;
@@ -254,10 +249,10 @@ void HttpClient::execUpload(QHttpMultiPart *multiPart)
 {
     QNetworkRequest request = createRequest();
     QNetworkReply *reply = d->manager->post(request, multiPart);
-    if(!reply)
+    if (!reply)
         return;
     multiPart->setParent(reply); // delete the multiPart with the reply
-    connect(reply, &QNetworkReply::finished, this, [this, reply]{
+    connect(reply, &QNetworkReply::finished, this, [this, reply] {
         reply->deleteLater();
         emit finish();
     });
@@ -268,7 +263,7 @@ void HttpClient::execUpload(QHttpMultiPart *multiPart)
 
 void HttpClient::startRequest(const QString &url)
 {
-    if(url.isEmpty() || !QUrl(url).isValid())
+    if (url.isEmpty() || !QUrl(url).isValid())
         return;
     d->url = url;
     execRequest();
@@ -280,22 +275,18 @@ void HttpClient::execRequest()
     QNetworkReply *reply = nullptr;
 
     switch (d->method) {
-    case GET:
-        reply = d->manager->get(request);
-        break;
+    case GET: reply = d->manager->get(request); break;
     case POST:
-        reply = d->manager->post(request, d->useJson ?
-                                                     d->json.toUtf8()
-                                                     : d->params.toString(QUrl::FullyEncoded).toUtf8());
+        reply = d->manager->post(request,
+                                 d->useJson ? d->json.toUtf8()
+                                            : d->params.toString(QUrl::FullyEncoded).toUtf8());
         break;
     case PUT:
-        reply = d->manager->put(request, d->useJson ?
-                                                    d->json.toUtf8()
-                                                    : d->params.toString(QUrl::FullyEncoded).toUtf8());
+        reply = d->manager->put(request,
+                                d->useJson ? d->json.toUtf8()
+                                           : d->params.toString(QUrl::FullyEncoded).toUtf8());
         break;
-    case DELETE:
-        reply = d->manager->deleteResource(request);
-        break;
+    case DELETE: reply = d->manager->deleteResource(request); break;
     default: return;
     }
 
@@ -306,7 +297,7 @@ QNetworkRequest HttpClient::createRequest()
 {
     bool get = d->method == GET;
     bool withForm = !get && !d->useJson; // PUT、POST 或者 DELETE 请求，且 useJson 为 false
-    bool withJson = !get && d->useJson; // PUT、POST 或者 DELETE 请求，且 useJson 为 true
+    bool withJson = !get && d->useJson;  // PUT、POST 或者 DELETE 请求，且 useJson 为 true
 
     if (get && !d->params.isEmpty()) {
         d->url += "?" + d->params.toString(QUrl::FullyEncoded);
@@ -320,7 +311,7 @@ QNetworkRequest HttpClient::createRequest()
 
         // 按键值对的方式输出参数
         for (int i = 0; i < paramItems.size(); ++i) {
-            QString name  = paramItems.at(i).first;
+            QString name = paramItems.at(i).first;
             QString value = paramItems.at(i).second;
 
             if (0 == i)
@@ -352,7 +343,7 @@ QNetworkRequest HttpClient::createRequest()
 
 void HttpClient::buildConnect(QNetworkReply *reply)
 {
-    if(!reply){
+    if (!reply) {
         emit error(tr("reply is nullptr."));
         return;
     }

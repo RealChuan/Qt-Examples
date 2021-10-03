@@ -1,6 +1,7 @@
 #include "dynamicchart.h"
 
-class DynamicChartPrivate{
+class DynamicChartPrivate
+{
 public:
     DynamicChartPrivate(ChartView *parent)
         : owner(parent)
@@ -43,7 +44,7 @@ DynamicChart::~DynamicChart()
 void DynamicChart::timerEvent(QTimerEvent *event)
 {
     if (event->timerId() == d->timerId) {
-        int newData = qrand() % (100 + 1);
+        int newData = QRandomGenerator::global()->generate() % (100 + 1);
         dataReceived(newData);
     }
 }
@@ -65,15 +66,15 @@ void DynamicChart::dataReceived(int value)
     int less = 10 - d->data.size();
 
     for (int i = 0; i < d->data.size(); ++i) {
-        d->splineSeries->append(less*dx+i*dx, d->data.at(i));
-        d->scatterSeries->append(less*dx+i*dx, d->data.at(i));
+        d->splineSeries->append(less * dx + i * dx, d->data.at(i));
+        d->scatterSeries->append(less * dx + i * dx, d->data.at(i));
     }
 }
 
 void DynamicChart::startChart()
 {
     d->timerId = startTimer(1000);
-    qsrand(QDateTime::currentDateTime().toTime_t());
+    //QRandomGenerator::global()->seed(QDateTime::currentSecsSinceEpoch());
 }
 
 void DynamicChart::setupChart()

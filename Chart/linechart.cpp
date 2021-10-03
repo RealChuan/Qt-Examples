@@ -80,7 +80,7 @@ void LineChart::mouseMoveEvent(QMouseEvent *event)
 
 void LineChart::wheelEvent(QWheelEvent *event)
 {
-    int nd = event->delta() / 8;
+    int nd = event->angleDelta().rx() / 8;
     double scale =1.0 / pow(0.9, nd / 15.0f);
     d->chart->zoom(scale);
     update();

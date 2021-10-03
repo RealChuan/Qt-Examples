@@ -15,12 +15,12 @@ void ProgressBarDelegate::paint(QPainter *painter,
     QStyledItemDelegate::paint(painter, viewOption, index);
 
     int value = index.model()->data(index).toUInt();
-    if(value < 0)
+    if (value < 0)
         value = 0;
-    else if(value > 100)
+    else if (value > 100)
         value = 100;
     int w = qMin(option.rect.width(), option.rect.height()) / 10.0;
-    QStyleOptionProgressBarV2 progressBarOption;
+    QStyleOptionProgressBar progressBarOption;
     progressBarOption.initFrom(option.widget);
     progressBarOption.rect = option.rect.adjusted(w, w, -w, -w);
     progressBarOption.minimum = 0;
@@ -36,7 +36,7 @@ void ProgressBarDelegate::paint(QPainter *painter,
         painter->setBrush(option.palette.highlightedText());
     }
 
-    QProgressBar progressBar;// qss 生效
+    QProgressBar progressBar; // qss 生效
     qApp->style()->drawControl(QStyle::CE_ProgressBar, &progressBarOption, painter, &progressBar);
 
     painter->restore();

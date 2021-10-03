@@ -214,9 +214,9 @@ void ClockWidget::drawScaleNum(QPainter *painter)
     for (int i = 0; i < 12; i++) {
         double sina = qSin(startRad - i * deltaRad);
         double cosa = qCos(startRad - i * deltaRad);
-        QString strValue = QString("%1").arg(i + 1);
+        QString strValue = QString::number(i + 1);
 
-        double textWidth = fontMetrics.width(strValue);
+        double textWidth = fontMetrics.horizontalAdvance(strValue);
         double textHeight = fontMetrics.height();
         int x = radius * cosa - textWidth / 2;
         int y = -radius * sina + textHeight / 4;

@@ -114,7 +114,7 @@ void SlipButton::paintEvent(QPaintEvent* event)
     painter.drawEllipse(rectThumb);
 }
 
-void SlipButton::enterEvent(QEvent* event)
+void SlipButton::enterEvent(QEnterEvent *event)
 {
     QAbstractButton::enterEvent(event);
     setCursor(Qt::PointingHandCursor);

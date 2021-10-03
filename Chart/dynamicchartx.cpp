@@ -51,7 +51,7 @@ DynamicChartX::~DynamicChartX()
 void DynamicChartX::timerEvent(QTimerEvent *event)
 {
     if (event->timerId() == d->timerId) {
-        int newData = qrand() % (100 + 1);
+        int newData = QRandomGenerator::global()->generate() % (100 + 1);
         dataReceived(newData);
     }
 }
@@ -76,7 +76,7 @@ void DynamicChartX::dataReceived(int value)
 void DynamicChartX::startChart()
 {
     d->timerId = startTimer(1000);
-    qsrand(QDateTime::currentDateTime().toTime_t());
+    //QRandomGenerator::global()->seed(QDateTime::currentSecsSinceEpoch());
 }
 
 void DynamicChartX::setupChart()

@@ -1,10 +1,12 @@
 #include "datetimechart.h"
 #include "normalchartdata.h"
 
-class DateTimeChartPrivate{
+class DateTimeChartPrivate
+{
 public:
     DateTimeChartPrivate(ChartView *parent)
-        :owner(parent){
+        : owner(parent)
+    {
         dateTimeAxisX = new QDateTimeAxis(owner);
         dateTimeAxisX->setFormat("yyyy-MM");
         //dateTimeAxisX->setTitleText(QObject::tr("Date"));
@@ -20,8 +22,8 @@ public:
         PointList pointList = generateRandomDataPoints(5, 101);
         int year = 2020;
         int mouth = 1;
-        foreach(const QPointF &p, pointList){
-            QDateTime momentInTime(QDate(year, mouth , 15));
+        for (const QPointF &p : qAsConst(pointList)) {
+            QDateTime momentInTime(QDate(year, mouth, 15), QTime());
             scatterSeries->append(momentInTime.toMSecsSinceEpoch(), p.y());
             lineSeries->append(momentInTime.toMSecsSinceEpoch(), p.y());
             year++;
@@ -49,8 +51,8 @@ public:
 };
 
 DateTimeChart::DateTimeChart(QWidget *parent)
-    :ChartView(parent)
-    ,d(new DateTimeChartPrivate(this))
+    : ChartView(parent)
+    , d(new DateTimeChartPrivate(this))
 {
     setupUI();
 }

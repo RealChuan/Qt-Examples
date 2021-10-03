@@ -3,14 +3,17 @@
 
 #include <QtWidgets>
 
-class MainWindowPrivate{
+class MainWindowPrivate
+{
 public:
     MainWindowPrivate(QWidget *owner)
-        :owner(owner){
+        : owner(owner)
+    {
         ipEdit = new QLineEdit(owner);
         ipEdit->setText("127.0.0.1");
-        QRegExp regExp("^((2[0-4]\\d|25[0-5]|[01]?\\d\\d?)\\.){3}(2[0-4]\\d|25[0-5]|[01]?\\d\\d?)$");
-        QValidator *validator = new QRegExpValidator(regExp, ipEdit);
+        QRegularExpression regExp(
+            "^((2[0-4]\\d|25[0-5]|[01]?\\d\\d?)\\.){3}(2[0-4]\\d|25[0-5]|[01]?\\d\\d?)$");
+        QRegularExpressionValidator *validator = new QRegularExpressionValidator(regExp, ipEdit);
         ipEdit->setValidator(validator);
         portSpinBox = new QSpinBox(owner);
         portSpinBox->setRange(1, 65536);
@@ -37,7 +40,7 @@ public:
     QPushButton *connectBtn;
     QTextEdit *messageEdit;
 
-    QMap<int, TcpClientThread*> clientMap;
+    QMap<int, TcpClientThread *> clientMap;
     QTimer *sendTime;
 };
 
@@ -57,34 +60,35 @@ MainWindow::~MainWindow()
 
 void MainWindow::onConnect(bool state)
 {
-    if(state){
+    if (state) {
         d->connectBtn->setChecked(false);
         QString ip = d->ipEdit->text();
-        if(ip.isEmpty()){
+        if (ip.isEmpty()) {
             warningBox(tr("Please fill in the correct IP address!"), d->ipEdit);
             return;
         }
         int port = d->portSpinBox->value();
-        if(port <= 0 || port > 65536){
+        if (port <= 0 || port > 65536) {
             warningBox(tr("Please fill in the correct port address!"), d->portSpinBox);
             return;
         }
         int num = d->numSpinBox->value();
-        if(num <= 0){
-            warningBox(tr("Please fill in the correct number of clients (sub threads)!"), d->numSpinBox);
+        if (num <= 0) {
+            warningBox(tr("Please fill in the correct number of clients (sub threads)!"),
+                       d->numSpinBox);
             return;
         }
         int time = d->timeSpinBox->value();
-        if(time <= 0){
+        if (time <= 0) {
             warningBox(tr("Please enter the correct timeout!"), d->numSpinBox);
             return;
         }
         clearAll();
         d->sendTime->setInterval(time);
-        for(int i=0; i<num; i++){
+        for (int i = 0; i < num; i++) {
             TcpClientThread *thread = new TcpClientThread(ip, quint16(port), i, this);
             d->clientMap.insert(i, thread);
-            QString str = QString::number(i+1) + tr(" Clients (threads) start running");
+            QString str = QString::number(i + 1) + tr(" Clients (threads) start running");
             d->messageEdit->append(str);
             connect(thread, &TcpClientThread::quitThread, this, &MainWindow::removeOne);
             thread->start();
@@ -93,7 +97,7 @@ void MainWindow::onConnect(bool state)
         changeControlState(false);
         d->connectBtn->setText(tr("Connected"));
         d->connectBtn->setChecked(true);
-    }else{
+    } else {
         d->sendTime->stop();
         clearAll();
         changeControlState(true);
@@ -106,9 +110,9 @@ void MainWindow::onWrite()
 {
     QString str = QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz");
     QByteArray buf = str.toLatin1() + " Hello World!";
-    QMap<int, TcpClientThread*>::iterator it;
-    for(it = d->clientMap.begin(); it != d->clientMap.end(); it++){
-        if(it.value()->isRunning())
+    QMap<int, TcpClientThread *>::iterator it;
+    for (it = d->clientMap.begin(); it != d->clientMap.end(); it++) {
+        if (it.value()->isRunning())
             emit it.value()->writeToServer(buf);
     }
 }
@@ -116,7 +120,7 @@ void MainWindow::onWrite()
 void MainWindow::removeOne(const int index)
 {
     delete d->clientMap.take(index);
-    if(d->clientMap.isEmpty()){
+    if (d->clientMap.isEmpty()) {
         d->sendTime->stop();
         changeControlState(true);
         d->connectBtn->setText(tr("Connect"));
@@ -170,8 +174,8 @@ void MainWindow::changeControlState(bool state)
 
 void MainWindow::clearAll()
 {
-    if(d->clientMap.isEmpty()) return;
+    if (d->clientMap.isEmpty())
+        return;
     qDeleteAll(d->clientMap);
     d->clientMap.clear();
 }
-
