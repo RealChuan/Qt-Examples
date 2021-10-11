@@ -10,18 +10,39 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     if (type < LogAsync::instance()->logLevel())
         return;
 
+    FILE *stdPrint = stdout;
     QString level;
     switch (type) {
-    case QtDebugMsg: level = QString("%1").arg("Debug", -7); break;
-    case QtWarningMsg: level = QString("%1").arg("Warning", -7); break;
-    case QtCriticalMsg: level = QString("%1").arg("Critica", -7); break;
-    case QtFatalMsg: level = QString("%1").arg("Fatal", -7); break;
-    case QtInfoMsg: level = QString("%1").arg("Info", -7); break;
+    case QtDebugMsg:
+        level = QString("%1").arg("Debug", -7);
+        stdPrint = stdout;
+        break;
+    case QtWarningMsg:
+        level = QString("%1").arg("Warning", -7);
+        stdPrint = stderr;
+        break;
+    case QtCriticalMsg:
+        level = QString("%1").arg("Critica", -7);
+        stdPrint = stderr;
+        break;
+    case QtFatalMsg:
+        level = QString("%1").arg("Fatal", -7);
+        stdPrint = stderr;
+        break;
+    case QtInfoMsg:
+        level = QString("%1").arg("Info", -7);
+        stdPrint = stdout;
+        break;
     default: level = QString("%1").arg("Unknown", -7); break;
     }
 
     const QString dataTimeString(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
-    const QString threadId(QString::number(qulonglong(QThread::currentThreadId())));
+    const QString threadId = QString("%1").arg(qulonglong(QThread::currentThreadId()),
+                                               5,
+                                               10,
+                                               QLatin1Char('0'));
+    // By default, this information is recorded only in debug builds.
+    // You can overwrite this explicitly by defining QT_MESSAGELOGCONTEXT or QT_NO_MESSAGELOGCONTEXT.
     QString contexInfo;
 #ifndef QT_NO_DEBUG
     contexInfo = QString("File:(%1) Line:(%2)").arg(context.file).arg(context.line);
@@ -31,14 +52,19 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 
     switch (LogAsync::instance()->orientation()) {
     case LogAsync::Orientation::Std:
-        fprintf(stderr, "%s", message.toLocal8Bit().constData());
+        fprintf(stdPrint, "%s", message.toLocal8Bit().constData());
+        ::fflush(stdPrint);
         break;
     case LogAsync::Orientation::File: emit LogAsync::instance()->appendBuf(message); break;
     case LogAsync::Orientation::StdAndFile:
-        fprintf(stderr, "%s", message.toLocal8Bit().constData());
+        fprintf(stdPrint, "%s", message.toLocal8Bit().constData());
+        ::fflush(stdPrint);
         emit LogAsync::instance()->appendBuf(message);
         break;
-    default: fprintf(stderr, "%s", message.toLocal8Bit().constData()); break;
+    default:
+        fprintf(stdPrint, "%s", message.toLocal8Bit().constData());
+        ::fflush(stdPrint);
+        break;
     }
 }
 

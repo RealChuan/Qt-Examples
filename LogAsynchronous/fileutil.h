@@ -3,7 +3,7 @@
 
 #include <QObject>
 
-class FileUtilPrivate;
+struct FileUtilPrivate;
 class FileUtil : public QObject
 {
     Q_OBJECT
@@ -12,19 +12,18 @@ public:
     ~FileUtil();
 
 public slots:
-    void onWrite(const QString&);
+    void onWrite(const QString &);
 
 private slots:
     void onFlush();
 
 private:
-    void newDir(const QString &);
     QString getFileName(qint64 *now) const;
     bool rollFile(int);
     void autoDelFile();
     void setTimer();
 
-    QScopedPointer<FileUtilPrivate> d;
+    QScopedPointer<FileUtilPrivate> d_ptr;
 };
 
 #endif // FILEUTIL_H
