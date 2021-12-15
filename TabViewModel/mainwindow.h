@@ -3,7 +3,8 @@
 
 #include <QMainWindow>
 
-struct Student;
+#include "student.h"
+
 class StudentsTable;
 class MainWindow : public QMainWindow
 {
@@ -21,6 +22,6 @@ private:
     void init();
     void setupUI();
     StudentsTable *m_table;
-    QList<Student *> m_students;
+    QVector<Student> m_students;
 };
 #endif // MAINWINDOW_H

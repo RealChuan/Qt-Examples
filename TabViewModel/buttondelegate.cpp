@@ -10,7 +10,7 @@ ButtonDelegate::ButtonDelegate(QObject *parent)
     : QStyledItemDelegate(parent)
     , m_buttonPtr(new QStyleOptionButton)
 {
-
+    
 }
 
 void ButtonDelegate::paint(QPainter *painter,
@@ -54,20 +54,18 @@ bool ButtonDelegate::editorEvent(QEvent *event,
         if (option.rect.adjusted(w, w, -w, -w).contains(mouseEvent->pos())) {
             m_buttonPtr->state &= (~QStyle::State_Sunken);
 
-            Student* stu = model->data(index, Qt::UserRole).value<Student*>();
-            if(stu){
-                QString details = tr("This Student id = %1, name = %2, age = %3, "
-                                     "gender = %4, achievement = %5")
-                                      .arg(stu->id)
-                                      .arg(stu->name)
-                                      .arg(stu->age)
-                                      .arg(stu->gender)
-                                      .arg(stu->achievement);
-                QDialog dialog;
-                QHBoxLayout *layout = new QHBoxLayout(&dialog);
-                layout->addWidget(new QLabel(details, &dialog));
-                dialog.exec();
-            }
+            Student stu = model->data(index, Qt::UserRole).value<Student>();
+            QString details = tr("This Student id = %1, name = %2, age = %3, "
+                                 "gender = %4, achievement = %5")
+                                  .arg(stu.id())
+                                  .arg(stu.name())
+                                  .arg(stu.age())
+                                  .arg(stu.gender())
+                                  .arg(stu.achievement());
+            QDialog dialog;
+            QHBoxLayout *layout = new QHBoxLayout(&dialog);
+            layout->addWidget(new QLabel(details, &dialog));
+            dialog.exec();
         }
     }
     break;

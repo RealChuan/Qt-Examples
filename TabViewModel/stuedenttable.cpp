@@ -36,7 +36,7 @@ StudentsTable::StudentsTable(QWidget *parent)
     initMenu();
 }
 
-void StudentsTable::setStudents(const QList<Student *> &students)
+void StudentsTable::setStudents(const QVector<Student> &students)
 {
     m_stuModel->setStudents(students);
 }

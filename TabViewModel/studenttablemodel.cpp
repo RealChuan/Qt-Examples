@@ -1,5 +1,4 @@
 #include "studenttablemodel.h"
-#include "student.h"
 
 enum Property { ID, NAME, AGE, GENDER, ACHIEVEMENT, MENUBUTTON, PROCESS };
 
@@ -11,25 +10,25 @@ QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
     int row = index.row();
     int col = index.column();
 
-    Student *stu = m_students.at(row);
+    Student stu = m_students.at(row);
     switch (role) {
     case Qt::TextAlignmentRole: return Qt::AlignCenter;
     case Qt::CheckStateRole:
         switch (col) {
-        case ID: return stu->checked;
+        case ID: return stu.checked();
         default: break;
         }
         break;
     case Qt::DisplayRole:
     case Qt::EditRole: { //双击为空需添加
         switch (col) {
-        case ID: return stu->id;
-        case NAME: return stu->name;
-        case AGE: return stu->age;
-        case GENDER: return stu->gender;
-        case ACHIEVEMENT: return stu->achievement;
+        case ID: return stu.id();
+        case NAME: return stu.name();
+        case AGE: return stu.age();
+        case GENDER: return stu.gender();
+        case ACHIEVEMENT: return stu.achievement();
         case MENUBUTTON: return tr("Detail");
-        case PROCESS: return stu->process;
+        case PROCESS: return stu.process();
         default: break;
         }
     case Qt::UserRole: {
@@ -52,12 +51,12 @@ bool StuedentTableModel::setData(const QModelIndex &index, const QVariant &value
     int row = index.row();
     int col = index.column();
 
-    Student *stu = m_students[row];
+    Student stu = m_students.at(row);
     switch (role) {
     case Qt::CheckStateRole:
         switch (col) {
         case ID:
-            stu->checked = !stu->checked;
+            stu.setChecked(!stu.checked());
             emit dataChanged(index, index);
             return true;
         default: break;
@@ -65,12 +64,12 @@ bool StuedentTableModel::setData(const QModelIndex &index, const QVariant &value
         break;
     case Qt::EditRole:
         switch (col) {
-        case ID: stu->id = value.toUInt(); break;
-        case NAME: stu->name = value.toString(); break;
-        case AGE: stu->age = value.toUInt(); break;
-        case GENDER: stu->gender = value.toString(); break;
-        case ACHIEVEMENT: stu->achievement = value.toUInt(); break;
-        case PROCESS: stu->process = value.toUInt(); break;
+        case ID: stu.setId(value.toUInt()); break;
+        case NAME: stu.setName(value.toString()); break;
+        case AGE: stu.seAge(value.toUInt()); break;
+        case GENDER: stu.setGender(value.toString()); break;
+        case ACHIEVEMENT: stu.seAchievement(value.toUInt()); break;
+        case PROCESS: stu.seProcess(value.toUInt()); break;
         }
         emit dataChanged(index, index);
         return true;
@@ -105,7 +104,7 @@ Qt::ItemFlags StuedentTableModel::flags(const QModelIndex &index) const
     return flags;
 }
 
-void StuedentTableModel::setStudents(const QList<Student *> &students)
+void StuedentTableModel::setStudents(const QVector<Student> &students)
 {
     beginResetModel();
     m_students = students;

@@ -3,7 +3,8 @@
 
 #include <QAbstractTableModel>
 
-struct Student;
+#include "student.h"
+
 class StuedentTableModel : public QAbstractTableModel
 {
     Q_OBJECT
@@ -18,10 +19,10 @@ public:
     bool setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole);
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const;
     Qt::ItemFlags flags(const QModelIndex &index) const;
-    void setStudents(const QList<Student *> &students);
+    void setStudents(const QVector<Student> &students);
 
 private:
-    QList<Student *> m_students;
+    QVector<Student> m_students;
 };
 
 #endif // STUDENTTABLEMODEL_H

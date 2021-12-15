@@ -5,7 +5,8 @@
 #include <QStyledItemDelegate>
 #include <QTableView>
 
-struct Student;
+#include "student.h"
+
 class StuedentTableModel;
 class StudentsTable : public QTableView
 {
@@ -13,7 +14,7 @@ class StudentsTable : public QTableView
 public:
     StudentsTable(QWidget *parent = nullptr);
 
-    void setStudents(const QList<Student *> &students);
+    void setStudents(const QVector<Student> &students);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event) override;

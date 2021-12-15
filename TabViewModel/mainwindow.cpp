@@ -15,17 +15,13 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    if (!m_students.isEmpty()) {
-        qDeleteAll(m_students);
-        m_students.clear();
-    }
 }
 
 void MainWindow::onInsertItem()
 {
     int row = m_table->currentIndex().row();
-    Student *stu = new Student;
-    stu->id = m_students.size();
+    Student stu;
+    stu.setId(m_students.size());
 
     if (row < 0 || row >= m_students.size())
         m_students.append(stu);
@@ -41,17 +37,17 @@ void MainWindow::onRemoveItem()
     if (!index.isValid())
         return;
     int row = index.row();
-    delete m_students.takeAt(row);
+    m_students.takeAt(row);
     m_table->setStudents(m_students);
 }
 
 void MainWindow::init()
 {
-    m_students.append(new Student{true, 0, "Jason", 15, "MALE", 66, 10});
-    m_students.append(new Student{false, 1, "Lily", 13, "FEMALE", 85, 20});
-    m_students.append(new Student{true, 2, "Odin", 16, "FEMALE", 76, 30});
-    m_students.append(new Student{false, 3, "Willion", 12, "MALE", 89, 40});
-    m_students.append(new Student{true, 4, "Nieo", 14, "MALE", 77, 50});
+    m_students.append(Student(true, 0, "Jason", 15, "MALE", 66, 10));
+    m_students.append(Student(false, 1, "Lily", 13, "FEMALE", 85, 20));
+    m_students.append(Student(true, 2, "Odin", 16, "FEMALE", 76, 3));
+    m_students.append(Student(false, 3, "Willion", 12, "MALE", 89, 40));
+    m_students.append(Student(true, 4, "Nieo", 14, "MALE", 77, 50));
     m_table->setStudents(m_students);
     m_table->selectRow(m_students.size() - 1);
 }
@@ -61,7 +57,6 @@ void MainWindow::setupUI()
     QPushButton *addBtn = new QPushButton(tr("Add"), this);
     QPushButton *removeBtn = new QPushButton(tr("Remove"), this);
     m_table = new StudentsTable(this);
-    ;
     QHBoxLayout *hLayout = new QHBoxLayout;
     hLayout->addStretch(1);
     hLayout->addWidget(addBtn);
