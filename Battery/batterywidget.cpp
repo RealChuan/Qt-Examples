@@ -6,7 +6,8 @@
 #include <QWheelEvent>
 #include <QtMath>
 
-struct BatteryWidgetPrivate{
+struct BatteryWidget::BatteryWidgetPrivate
+{
     QColor borderColor = QColor(80, 80, 80);
     QColor powerColor = QColor(65, 205, 82);
     QColor alarmColor = QColor(250, 118, 113);
@@ -17,9 +18,9 @@ struct BatteryWidgetPrivate{
 
 BatteryWidget::BatteryWidget(QWidget *parent)
     : QWidget(parent)
-    , d(new BatteryWidgetPrivate)
+    , d_ptr(new BatteryWidgetPrivate)
 {
-    d->animation = new QPropertyAnimation(this, "value", this);
+    d_ptr->animation = new QPropertyAnimation(this, "value", this);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     connect(this, &BatteryWidget::valueChanged, this, &BatteryWidget::onStartAnimation);
 }
@@ -30,35 +31,35 @@ BatteryWidget::~BatteryWidget()
 
 void BatteryWidget::setBorderColor(const QColor &color)
 {
-    d->borderColor = color;
+    d_ptr->borderColor = color;
     update();
 }
 
 QColor BatteryWidget::borderColor() const
 {
-    return d->borderColor;
+    return d_ptr->borderColor;
 }
 
 void BatteryWidget::setPowerColor(const QColor &color)
 {
-    d->powerColor = color;
+    d_ptr->powerColor = color;
     update();
 }
 
 QColor BatteryWidget::powerColor() const
 {
-    return d->powerColor;
+    return d_ptr->powerColor;
 }
 
 void BatteryWidget::setAlarmColor(const QColor &color)
 {
-    d->alarmColor = color;
+    d_ptr->alarmColor = color;
     update();
 }
 
 QColor BatteryWidget::alarmColor() const
 {
-    return d->alarmColor;
+    return d_ptr->alarmColor;
 }
 
 QSize BatteryWidget::sizeHint() const
@@ -98,40 +99,40 @@ void BatteryWidget::paintEvent(QPaintEvent *event)
 
 void BatteryWidget::onStartAnimation(const int value)
 {
-    if(value == d->value)
+    if (value == d_ptr->value)
         return;
 
-    int start = d->value;
+    int start = d_ptr->value;
     int end = value;
 
-    d->animation->setStartValue(start);
-    d->animation->setEndValue(end);
-    d->animation->start();
+    d_ptr->animation->setStartValue(start);
+    d_ptr->animation->setEndValue(end);
+    d_ptr->animation->start();
 }
 
 int BatteryWidget::value() const
 {
-    return d->value;
+    return d_ptr->value;
 }
 
 void BatteryWidget::setValue(const int value)
 {
-    if(value == d->value)
+    if (value == d_ptr->value)
         return;
 
     if(value < 0)
-        d->value = 0;
+        d_ptr->value = 0;
     else if(value > 100)
-        d->value = 100;
+        d_ptr->value = 100;
     else
-        d->value = value;
+        d_ptr->value = value;
 
     update();
 }
 
 void BatteryWidget::drawBorder(QPainter *painter, const QRectF &batteryRect, const double linew)
 {
-    painter->setPen(QPen(d->borderColor, linew));
+    painter->setPen(QPen(d_ptr->borderColor, linew));
     painter->setBrush(Qt::NoBrush);
     double borderRadius = batteryRect.height() / 30;
     painter->drawRoundedRect(batteryRect, borderRadius, borderRadius);
@@ -139,15 +140,13 @@ void BatteryWidget::drawBorder(QPainter *painter, const QRectF &batteryRect, con
 
 void BatteryWidget::drawPower(QPainter *painter, const QRectF &batteryRect, const double linew)
 {
-    QColor powerColoer = d->value > d->alarmValue ?
-                d->powerColor : d->alarmColor;
+    QColor powerColoer = d_ptr->value > d_ptr->alarmValue ? d_ptr->powerColor : d_ptr->alarmColor;
     double margin = qMin(width(), height()) / 50.0;
     margin = qMax(margin, linew);
     qreal unit = (batteryRect.width() - (margin * 2)) / 100;
     QPointF topLeft(batteryRect.topLeft().x() + margin,
                     batteryRect.topLeft().y() + margin);
-    QPointF bottomRight(d->value * unit + margin + 5,
-                        batteryRect.bottomRight().y() - margin);
+    QPointF bottomRight(d_ptr->value * unit + margin + 5, batteryRect.bottomRight().y() - margin);
     QRectF rect(topLeft, bottomRight);
     double bgRadius = rect.height() / 30;
     painter->setPen(Qt::NoPen);
@@ -157,9 +156,8 @@ void BatteryWidget::drawPower(QPainter *painter, const QRectF &batteryRect, cons
 
 void BatteryWidget::drawValue(QPainter *painter, const QRectF &batteryRect)
 {
-    QColor fontColoer = d->value > d->alarmValue ?
-                QColor(64, 65, 66) : d->alarmColor;
-    QString text = QString("%1%").arg(d->value);
+    QColor fontColoer = d_ptr->value > d_ptr->alarmValue ? QColor(64, 65, 66) : d_ptr->alarmColor;
+    QString text = QString("%1%").arg(d_ptr->value);
     QFont font("Microsoft YaHei", batteryRect.width() / 5);
     font.setLetterSpacing(QFont::AbsoluteSpacing, batteryRect.width() / 25);
     painter->setFont(font);
@@ -175,6 +173,6 @@ void BatteryWidget::drawHeader(QPainter *painter, const QRectF &batteryRect)
     QRectF headRect(headRectTopLeft, headRectBottomRight);
     double headRadius = headRect.height() / 30;
     painter->setPen(Qt::NoPen);
-    painter->setBrush(d->borderColor);
+    painter->setBrush(d_ptr->borderColor);
     painter->drawRoundedRect(headRect, headRadius, headRadius);
 }

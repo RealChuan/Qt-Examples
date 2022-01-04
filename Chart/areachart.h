@@ -3,16 +3,17 @@
 
 #include "chartview.h"
 
-class AreaChartPrivate;
 class AreaChart : public ChartView
 {
 public:
-    AreaChart(QWidget *parent = nullptr);
+    explicit AreaChart(QWidget *parent = nullptr);
     ~AreaChart();
 
 private:
     void setupUI();
-    AreaChartPrivate *d;
+
+    class AreaChartPrivate;
+    QScopedPointer<AreaChartPrivate> d_ptr;
 };
 
 #endif // AREACHART_H

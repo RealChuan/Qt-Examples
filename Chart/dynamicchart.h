@@ -3,11 +3,10 @@
 
 #include "chartview.h"
 
-class DynamicChartPrivate;
 class DynamicChart : public ChartView
 {
 public:
-    DynamicChart(QWidget *parent = nullptr);
+    explicit DynamicChart(QWidget *parent = nullptr);
     ~DynamicChart() override;
 
 protected:
@@ -17,7 +16,9 @@ private:
     void dataReceived(int value);
     void startChart();
     void setupChart();
-    DynamicChartPrivate *d;
+
+    class DynamicChartPrivate;
+    QScopedPointer<DynamicChartPrivate> d_ptr;
 };
 
 #endif // DYNAMICCHART_H

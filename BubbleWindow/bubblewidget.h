@@ -3,14 +3,13 @@
 
 #include <QWidget>
 
-class BubbleWidgetPrivate;
 class BubbleWidget : public QWidget
 {
     Q_OBJECT
 public:
     enum Direction{ Left, Right, Top, Bottom };
 
-    BubbleWidget(QWidget *parent = nullptr);
+    explicit BubbleWidget(QWidget *parent = nullptr);
     ~BubbleWidget() override;
 
     void setPen(const QPen &pen);
@@ -46,6 +45,7 @@ protected:
 private:
     void setupUI();
 
+    class BubbleWidgetPrivate;
     QScopedPointer<BubbleWidgetPrivate> d_ptr;
 };
 

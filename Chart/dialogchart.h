@@ -7,7 +7,7 @@
 class DialogChart : public QDialog
 {
 public:
-    DialogChart(QGraphicsScene *scene, QWidget *parent = nullptr);
+    explicit DialogChart(QGraphicsScene *scene, QWidget *parent = nullptr);
 
 protected:
     void resizeEvent(QResizeEvent *) override;

@@ -8,7 +8,8 @@ struct Triangle{
     BubbleWidget::Direction direct = BubbleWidget::Direction::Top;
 };
 
-class BubbleWidgetPrivate{
+class BubbleWidget::BubbleWidgetPrivate
+{
 public:
     BubbleWidgetPrivate(QWidget *parent)
         : owner(parent){

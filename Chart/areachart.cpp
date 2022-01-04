@@ -1,7 +1,8 @@
 #include "areachart.h"
 #include "normalchartdata.h"
 
-class AreaChartPrivate{
+class AreaChart::AreaChartPrivate
+{
 public:
     AreaChartPrivate(ChartView *parent)
         :owner(parent){
@@ -24,23 +25,22 @@ public:
 };
 
 AreaChart::AreaChart(QWidget *parent)
-    :ChartView(parent)
-    ,d(new AreaChartPrivate(this))
+    : ChartView(parent)
+    , d_ptr(new AreaChartPrivate(this))
 {
     setupUI();
 }
 
 AreaChart::~AreaChart()
 {
-    delete d;
 }
 
 void AreaChart::setupUI()
 {
     setRenderHint(QPainter::Antialiasing);
-    setChart(d->chart);
+    setChart(d_ptr->chart);
     PointList pointList = generateRandomDataPoints(5, 101);
-    d->scatterSeries->replace(pointList);
+    d_ptr->scatterSeries->replace(pointList);
     QLineSeries *upperSeries = new QLineSeries(this);
     QLineSeries *lowerSeries = new QLineSeries(this);
     upperSeries->replace(pointList);
@@ -48,6 +48,6 @@ void AreaChart::setupUI()
         pointList[i].setY(0);
     }
     lowerSeries->replace(pointList);
-    d->areaSeries->setUpperSeries(upperSeries);
-    d->areaSeries->setLowerSeries(lowerSeries);
+    d_ptr->areaSeries->setUpperSeries(upperSeries);
+    d_ptr->areaSeries->setLowerSeries(lowerSeries);
 }

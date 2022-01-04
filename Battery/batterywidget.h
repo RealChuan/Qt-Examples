@@ -3,7 +3,6 @@
 
 #include <QWidget>
 
-struct BatteryWidgetPrivate;
 class BatteryWidget : public QWidget
 {
     Q_OBJECT
@@ -45,7 +44,8 @@ private:
     void drawValue(QPainter *painter, const QRectF &batteryRect);
     void drawHeader(QPainter *painter, const QRectF &batteryRect);
 
-    QScopedPointer<BatteryWidgetPrivate> d;
+    struct BatteryWidgetPrivate;
+    QScopedPointer<BatteryWidgetPrivate> d_ptr;
 };
 
 #endif // BATTERYWIDGET_H

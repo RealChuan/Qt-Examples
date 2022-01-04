@@ -1,4 +1,5 @@
 TEMPLATE = subdirs
+CONFIG += ordered
 
 SUBDIRS += \
     Battery \
@@ -15,8 +16,13 @@ SUBDIRS += \
     NavigationProgressBar \
     ProgressArc \
     ReactorServer \
+    SimpleUdp \
     SlipButton \
     SqlTabview \
     TabViewModel \
     Thread \
     TreeViewModel
+
+OTHER_FILES += \
+    LICENSE \
+    README.md

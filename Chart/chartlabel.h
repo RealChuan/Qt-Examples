@@ -6,7 +6,7 @@
 class ChartLabel : public QGraphicsItem
 {
 public:
-    ChartLabel(QChart *parent);
+    explicit ChartLabel(QChart *parent);
 };
 
 #endif // CHARTLABEL_H

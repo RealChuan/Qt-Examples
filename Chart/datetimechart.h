@@ -3,16 +3,17 @@
 
 #include "chartview.h"
 
-class DateTimeChartPrivate;
 class DateTimeChart : public ChartView
 {
 public:
-    DateTimeChart(QWidget *parent = nullptr);
+    explicit DateTimeChart(QWidget *parent = nullptr);
     ~DateTimeChart();
 
 private:
     void setupUI();
-    DateTimeChartPrivate *d;
+
+    class DateTimeChartPrivate;
+    QScopedPointer<DateTimeChartPrivate> d_ptr;
 };
 
 #endif // DATETIMECHART_H

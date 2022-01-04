@@ -1,7 +1,7 @@
 #include "datetimechart.h"
 #include "normalchartdata.h"
 
-class DateTimeChartPrivate
+class DateTimeChart::DateTimeChartPrivate
 {
 public:
     DateTimeChartPrivate(ChartView *parent)
@@ -52,18 +52,17 @@ public:
 
 DateTimeChart::DateTimeChart(QWidget *parent)
     : ChartView(parent)
-    , d(new DateTimeChartPrivate(this))
+    , d_ptr(new DateTimeChartPrivate(this))
 {
     setupUI();
 }
 
 DateTimeChart::~DateTimeChart()
 {
-    delete d;
 }
 
 void DateTimeChart::setupUI()
 {
     setRenderHint(QPainter::Antialiasing);
-    setChart(d->chart);
+    setChart(d_ptr->chart);
 }

@@ -43,7 +43,7 @@ class QChart;
 class Callout : public QGraphicsItem
 {
 public:
-    Callout(QChart *parent);
+    explicit Callout(QChart *parent);
 
     void setText(const QString &text);
     void setAnchor(QPointF point);

@@ -6,7 +6,7 @@
 class ChartView : public QChartView
 {
 public:
-    ChartView(QWidget *parent = nullptr);
+    explicit ChartView(QWidget *parent = nullptr);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;

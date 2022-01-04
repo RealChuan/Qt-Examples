@@ -1,6 +1,6 @@
 #include "dynamicchart.h"
 
-class DynamicChartPrivate
+class DynamicChart::DynamicChartPrivate
 {
 public:
     DynamicChartPrivate(ChartView *parent)
@@ -30,7 +30,7 @@ public:
 
 DynamicChart::DynamicChart(QWidget *parent)
     : ChartView(parent)
-    , d(new DynamicChartPrivate(this))
+    , d_ptr(new DynamicChartPrivate(this))
 {
     setupChart();
     startChart();
@@ -38,12 +38,11 @@ DynamicChart::DynamicChart(QWidget *parent)
 
 DynamicChart::~DynamicChart()
 {
-    delete d;
 }
 
 void DynamicChart::timerEvent(QTimerEvent *event)
 {
-    if (event->timerId() == d->timerId) {
+    if (event->timerId() == d_ptr->timerId) {
         int newData = QRandomGenerator::global()->generate() % (100 + 1);
         dataReceived(newData);
     }
@@ -51,34 +50,34 @@ void DynamicChart::timerEvent(QTimerEvent *event)
 
 void DynamicChart::dataReceived(int value)
 {
-    d->data << value;
+    d_ptr->data << value;
 
-    while (d->data.size() > 30) {
-        d->data.removeFirst();
+    while (d_ptr->data.size() > 30) {
+        d_ptr->data.removeFirst();
     }
 
     if (!isVisible())
         return;
 
-    d->splineSeries->clear();
-    d->scatterSeries->clear();
+    d_ptr->splineSeries->clear();
+    d_ptr->scatterSeries->clear();
     int dx = 100 / 10;
-    int less = 10 - d->data.size();
+    int less = 10 - d_ptr->data.size();
 
-    for (int i = 0; i < d->data.size(); ++i) {
-        d->splineSeries->append(less * dx + i * dx, d->data.at(i));
-        d->scatterSeries->append(less * dx + i * dx, d->data.at(i));
+    for (int i = 0; i < d_ptr->data.size(); ++i) {
+        d_ptr->splineSeries->append(less * dx + i * dx, d_ptr->data.at(i));
+        d_ptr->scatterSeries->append(less * dx + i * dx, d_ptr->data.at(i));
     }
 }
 
 void DynamicChart::startChart()
 {
-    d->timerId = startTimer(1000);
+    d_ptr->timerId = startTimer(1000);
     //QRandomGenerator::global()->seed(QDateTime::currentSecsSinceEpoch());
 }
 
 void DynamicChart::setupChart()
 {
     setRenderHint(QPainter::Antialiasing);
-    setChart(d->chart);
+    setChart(d_ptr->chart);
 }
