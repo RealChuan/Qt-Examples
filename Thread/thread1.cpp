@@ -1,18 +1,17 @@
 #include "thread1.h"
 
 Thread1::Thread1(QObject *parent)
-    :QThread(parent)
-    ,started(true)
-    ,count(0)
-{
-}
+    : QThread(parent)
+    , started(true)
+    , count(0)
+{}
 
 Thread1::~Thread1()
 {
     started = false;
     blockSignals(true);
     condition.wakeOne();
-    if(isRunning()){
+    if (isRunning()) {
         quit();
         wait();
     }
@@ -25,12 +24,13 @@ void Thread1::wakeUpThread()
 
 void Thread1::run()
 {
-    while(started){
+    while (started) {
         QMutexLocker lock(&mutex);
         condition.wait(&mutex);
-        QString str = tr("I am thread 1: %1, Count: %2").
-                arg(reinterpret_cast<int>(QThread::currentThreadId())).
-                arg(count);
+        const QString str = tr("I am thread 1: %1, Count: %2")
+                                .arg(QString::number(
+                                         (reinterpret_cast<qint64>(QThread::currentThreadId()))),
+                                     QString::number(count));
         emit message(str);
         count++;
     }

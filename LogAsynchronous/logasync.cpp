@@ -37,7 +37,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     }
 
     const QString dataTimeString(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
-    const QString threadId = QString("%1").arg(qulonglong(QThread::currentThreadId()),
+    const QString threadId = QString("%1").arg(qint64(QThread::currentThreadId()),
                                                5,
                                                10,
                                                QLatin1Char('0'));

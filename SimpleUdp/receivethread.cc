@@ -6,7 +6,7 @@
 
 struct ReceiveThread::ReceiveThreadPrivate
 {
-    const quint16 recvPort = 6001;
+    const quint16 recvPort = 6000;
     volatile bool runing = true;
 };
 

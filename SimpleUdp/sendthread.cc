@@ -50,7 +50,7 @@ void SendThread::run()
             for (const QNetworkAddressEntry &entry : qAsConst(entryList)) {
                 const QHostAddress broadcastAdress = entry.broadcast();
                 if (broadcastAdress == QHostAddress::Null
-                    /*|| broadcastAdress == QHostAddress::LocalHost*/) {
+                    || broadcastAdress == QHostAddress::LocalHost) {
                     continue;
                 }
                 sendUdpSocket->writeDatagram(buf, broadcastAdress, d_ptr->sendPort);

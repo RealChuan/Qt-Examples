@@ -1,0 +1,39 @@
+name: Build Ubuntu
+
+on: 
+  push:
+    paths-ignore: # 下列文件的变更不触发部署，可以自行添加
+        - 'LICENSE'
+        - '.gitignore'
+        - 'README.md'
+  pull_request:
+    paths-ignore: # 下列文件的变更不触发部署，可以自行添加
+        - 'LICENSE'
+        - '.gitignore'
+        - 'README.md'
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        qt_ver: [6.2.2]
+        qt_arch: [gcc_64]
+    steps:
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v2
+        with:
+          version: ${{ matrix.qt_ver }}
+          install-deps: 'true'
+          modules: 'addons.qtcharts addons.qtnetworkauth'
+          cached: 'false'
+      - name: ubuntu install GL library
+        run: sudo apt-get install -y libglew-dev libglfw3-dev
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 1
+      - name: build ubuntu
+        run: |
+          qmake
+          make

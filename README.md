@@ -57,6 +57,8 @@
 
 ## 十五、[SimpleUdp](SimpleUdp/)——简单UDP例子，广播和接收；
 
+防火墙白名单。
+
 ## 十六、[SlipButton](SlipButton/)——滑动按钮；  
 
  另：更简单的实现：[有动画效果的 CheckBox](http://qtdebug.com/qtbook-animated-checkbox/)；  
