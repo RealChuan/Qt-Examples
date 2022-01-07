@@ -23,6 +23,7 @@ SUBDIRS += \
     Thread \
     TreeViewModel
 
-OTHER_FILES += \
+DISTFILES += \
+    $$files(Scripts/*.py)\
     LICENSE \
     README.md

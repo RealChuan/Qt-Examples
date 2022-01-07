@@ -7,11 +7,13 @@ on:
         - 'LICENSE'
         - '.gitignore'
         - 'README.md'
+        - 'Scripts/**'
   pull_request:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
         - 'LICENSE'
         - '.gitignore'
         - 'README.md'
+        - 'Scripts/**'
 jobs:
   build:
     name: Build

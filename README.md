@@ -84,3 +84,8 @@
 
 ## 二十、[TreeViewModel](TreeViewModel/)——树形视图（MVC），QtCreator源码；  
 
+## 二十一、[Scripts](Scripts/)——脚本
+
+1. build_macos.py——macos Release编译脚本；
+2. build_windows.py——windows Release编译脚本；
+
