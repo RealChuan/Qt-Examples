@@ -53,13 +53,17 @@
 
  <div align=center><img src="ProgressArc/picture/ProgressArc.png"></div>  
 
-## 十四、[ReactorServer](ReactorServer/)——多线程服务端，Reactor模式（Echo）；   
+## 十四、[ProgressBar](ProgressBar)——QProgressBar圆角替代方案；
 
-## 十五、[SimpleUdp](SimpleUdp/)——简单UDP例子，广播和接收；
+<div align=center><img src="ProgressBar/picture/ProgressBar.png"></div>  
+
+## 十五、[ReactorServer](ReactorServer/)——多线程服务端，Reactor模式（Echo）；   
+
+## 十六、[SimpleUdp](SimpleUdp/)——简单UDP例子，广播和接收；
 
 防火墙白名单。
 
-## 十六、[SlipButton](SlipButton/)——滑动按钮；  
+## 十七、[SlipButton](SlipButton/)——滑动按钮；  
 
  另：更简单的实现：[有动画效果的 CheckBox](http://qtdebug.com/qtbook-animated-checkbox/)；  
 
@@ -70,21 +74,21 @@
       </tr>
   </table>  
 
-## 十七、[SqlTabview](SqlTabview/)——SQLite数据库调用，模型方法； 
+## 十八、[SqlTabview](SqlTabview/)——SQLite数据库调用，模型方法； 
 
-## 十八、[TabViewModel](TabViewModel/)——表格视图，DeleGate(Button and ProgressBar)（MVC）；   
+## 十九、[TabViewModel](TabViewModel/)——表格视图，DeleGate(Button and ProgressBar)（MVC）；   
 
  套用了旧的样式（懒），具体可以自己调整；
 
   <div align=center><img src="TabViewModel/picture/TabViewModelDelegate.png"></div> 
 
-## 十九、[Thread](Thread/)——多线程例子，四种写法，控件更新在子线程；  
+## 二十、[Thread](Thread/)——多线程例子，四种写法，控件更新在子线程；  
 
   <div align=center><img src="Thread/picture/Thread.png"></div>   
 
-## 二十、[TreeViewModel](TreeViewModel/)——树形视图（MVC），QtCreator源码；  
+## 二十一、[TreeViewModel](TreeViewModel/)——树形视图（MVC），QtCreator源码；  
 
-## 二十一、[Scripts](Scripts/)——脚本
+## 二十二、[Scripts](Scripts/)——脚本
 
 1. build_macos.py——macos Release编译脚本；
 2. build_windows.py——windows Release编译脚本；

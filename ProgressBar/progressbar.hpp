@@ -1,35 +1,35 @@
-#ifndef PROGRESSARC_H
-#define PROGRESSARC_H
+#ifndef PROGRESSBAR_HPP
+#define PROGRESSBAR_HPP
 
-#include <QWidget>
+#include <QtCore/qglobal.h>
+#if QT_VERSION >= 0x050000
+#include <QtWidgets/QWidget>
+#else
+#include <QtGui/QWidget>
+#endif
 
-class ProgressArc : public QWidget
+class ProgressBar : public QWidget
 {
     Q_OBJECT
     Q_PROPERTY(double value READ value WRITE setValue CONSTANT)
-    Q_PROPERTY(QString title READ title WRITE setTitle CONSTANT)
     Q_PROPERTY(bool percent READ percent WRITE setPercent CONSTANT)
     Q_PROPERTY(double min READ min WRITE setMin CONSTANT)
     Q_PROPERTY(double max READ max WRITE setmax CONSTANT)
-    Q_PROPERTY(double startAngle READ startAngle WRITE setStartAngle CONSTANT)
-    Q_PROPERTY(double endAngle READ endAngle WRITE setEndAngle CONSTANT)
-    Q_PROPERTY(QColor arcColor READ arcColor WRITE setArcColor CONSTANT)
+    Q_PROPERTY(double radius READ radius WRITE setRadius CONSTANT)
+    Q_PROPERTY(double autoRadius READ autoRadius WRITE setAutoRadius CONSTANT)
+    Q_PROPERTY(QColor chunkColor READ chunkColor WRITE setChunkColor CONSTANT)
     Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor CONSTANT)
-    Q_PROPERTY(QColor titleColor READ titleColor WRITE setTitleColor CONSTANT)
     Q_PROPERTY(QColor baseColor READ baseColor WRITE setBaseColor CONSTANT)
     Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor CONSTANT)
 public:
-    explicit ProgressArc(const QString &title, QWidget *parent = nullptr);
-    ~ProgressArc();
+    explicit ProgressBar(QWidget *parent = nullptr);
+    ~ProgressBar();
 
     QSize sizeHint() const override;
     QSize minimumSizeHint() const override;
 
-    double value() const;
     void setValue(const double value);
-
-    void setTitle(const QString &title);
-    QString title() const;
+    double value() const;
 
     void setPercent(const bool percent);
     bool percent() const;
@@ -40,20 +40,17 @@ public:
     void setmax(const double max);
     double max() const;
 
-    void setStartAngle(const double startAngle);
-    double startAngle() const;
+    void setRadius(const double radius);
+    double radius() const;
 
-    void setEndAngle(const double endAngle);
-    double endAngle() const;
+    void setAutoRadius(bool autoRadius);
+    double autoRadius() const;
 
-    void setArcColor(const QColor &color);
-    QColor arcColor() const;
+    void setChunkColor(const QColor &color);
+    QColor chunkColor() const;
 
     void setTextColor(const QColor &color);
     QColor textColor() const;
-
-    void setTitleColor(const QColor &color);
-    QColor titleColor() const;
 
     void setBaseColor(const QColor &color);
     QColor baseColor() const;
@@ -71,11 +68,11 @@ protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    void drawArc(QPainter *painter);
+    void drawProgressBar(QPainter *painter);
     void drawText(QPainter *painter);
 
-    struct ProgressArcPrivate;
-    QScopedPointer<ProgressArcPrivate> d_ptr;
+    struct ProgressBarPrivate;
+    QScopedPointer<ProgressBarPrivate> d_ptr;
 };
 
-#endif // PROGRESSARC_H
+#endif // PROGRESSBAR_HPP

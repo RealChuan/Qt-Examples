@@ -15,6 +15,7 @@ SUBDIRS += \
     MulServer \
     NavigationProgressBar \
     ProgressArc \
+    ProgressBar \
     ReactorServer \
     SimpleUdp \
     SlipButton \
