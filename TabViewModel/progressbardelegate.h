@@ -3,14 +3,20 @@
 
 #include <QStyledItemDelegate>
 
+class QProgressBar;
+
 class ProgressBarDelegate : public QStyledItemDelegate
 {
 public:
-    ProgressBarDelegate(QObject* parent = nullptr) : QStyledItemDelegate(parent) {}
+    explicit ProgressBarDelegate(QObject *parent = nullptr);
+    ~ProgressBarDelegate();
 
     void paint(QPainter *painter,
                const QStyleOptionViewItem &option,
                const QModelIndex &index) const;
+
+private:
+    QScopedPointer<QProgressBar> m_progressBarPtr;
 };
 
 #endif // PROGRESSBARDELEGATE_H

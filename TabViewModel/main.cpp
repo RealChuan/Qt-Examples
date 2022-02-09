@@ -8,7 +8,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
     // 套用了旧的样式，具体细节自己调整
-    const QString filePath("D:/Mine/CODE/Qt/AppTools/app-subdir/bin-64/debug/qss/Common.css");
+    const QString filePath("D:/Mine/CODE/Qt/Qt-App/resource/qss/base/Common.css");
     if(QFile::exists(filePath)){
         QFile file(filePath);
         if(file.open(QFile::ReadOnly)){

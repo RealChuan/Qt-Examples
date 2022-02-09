@@ -43,11 +43,28 @@ void MainWindow::onRemoveItem()
 
 void MainWindow::init()
 {
-    m_students.append(Student(true, 0, "Jason", 15, "MALE", 66, 10));
-    m_students.append(Student(false, 1, "Lily", 13, "FEMALE", 85, 20));
-    m_students.append(Student(true, 2, "Odin", 16, "FEMALE", 76, 3));
-    m_students.append(Student(false, 3, "Willion", 12, "MALE", 89, 40));
-    m_students.append(Student(true, 4, "Nieo", 14, "MALE", 77, 50));
+    m_students.append(Student(true,
+                              0,
+                              "Jason",
+                              15,
+                              "MALE",
+                              66,
+                              10,
+                              "R<span style='color:#F25643;'>RichText1</span>xxxxxxxxxxxxx"));
+    m_students.append(Student(
+        false, 1, "Lily", 13, "FEMALE", 85, 20, "R<span style='color:#F25643;'>RichText2</span>x"));
+    m_students.append(Student(
+        true, 2, "Odin", 16, "FEMALE", 76, 30, "R<span style='color:#F25643;'>RichText3</span>x"));
+    m_students.append(Student(false,
+                              3,
+                              "Willion",
+                              12,
+                              "MALE",
+                              89,
+                              40,
+                              "R<span style='color:#F25643;'>RichText4</span>yyyyyyyyyyyy"));
+    m_students.append(Student(
+        true, 4, "Nieo", 14, "MALE", 77, 50, "R<span style='color:#F25643;'>RichText5</span>x"));
     m_table->setStudents(m_students);
     m_table->selectRow(m_students.size() - 1);
 }

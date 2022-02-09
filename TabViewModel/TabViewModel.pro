@@ -21,6 +21,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     progressbardelegate.cpp \
+    richtextitemdelegate.cc \
     sortfilterproxymodel.cpp \
     studenttablemodel.cpp \
     stuedenttable.cpp
@@ -30,6 +31,7 @@ HEADERS += \
     comboboxdelegate.h \
     mainwindow.h \
     progressbardelegate.h \
+    richtextitemdelegate.hpp \
     sortfilterproxymodel.h \
     student.h \
     studenttablemodel.h \

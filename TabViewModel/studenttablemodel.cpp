@@ -1,6 +1,6 @@
 #include "studenttablemodel.h"
 
-enum Property { ID, NAME, AGE, GENDER, ACHIEVEMENT, MENUBUTTON, PROCESS };
+enum Property { ID, NAME, AGE, GENDER, ACHIEVEMENT, MENUBUTTON, PROCESS, RICHTEXT };
 
 QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
 {
@@ -19,6 +19,8 @@ QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
         default: break;
         }
         break;
+    case Qt::WhatsThisRole:
+    case Qt::ToolTipRole:
     case Qt::DisplayRole:
     case Qt::EditRole: { //双击为空需添加
         switch (col) {
@@ -29,6 +31,7 @@ QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
         case ACHIEVEMENT: return stu.achievement();
         case MENUBUTTON: return tr("Detail");
         case PROCESS: return stu.process();
+        case RICHTEXT: return stu.richText();
         default: break;
         }
     case Qt::UserRole: {
@@ -66,10 +69,11 @@ bool StuedentTableModel::setData(const QModelIndex &index, const QVariant &value
         switch (col) {
         case ID: stu.setId(value.toUInt()); break;
         case NAME: stu.setName(value.toString()); break;
-        case AGE: stu.seAge(value.toUInt()); break;
+        case AGE: stu.setAge(value.toUInt()); break;
         case GENDER: stu.setGender(value.toString()); break;
-        case ACHIEVEMENT: stu.seAchievement(value.toUInt()); break;
-        case PROCESS: stu.seProcess(value.toUInt()); break;
+        case ACHIEVEMENT: stu.setAchievement(value.toUInt()); break;
+        case PROCESS: stu.setProcess(value.toUInt()); break;
+        case RICHTEXT: stu.setRichText(value.toString()); break;
         }
         emit dataChanged(index, index);
         return true;
@@ -86,12 +90,14 @@ QVariant StuedentTableModel::headerData(int section, Qt::Orientation orientation
                                tr("GENDER"),
                                tr("ACHIEVEMENT"),
                                tr("DETAILS"),
-                               tr("PROCESS")};
-    if (section < 0 || section >= names.size())
+                               tr("PROCESS"),
+                               tr("RICHTEXT")};
+    if (section < 0 || section >= names.size()) {
         return QVariant();
-
-    if (orientation == Qt::Horizontal && role == Qt::DisplayRole)
+    }
+    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
         return names.at(section);
+    }
     return QVariant();
 }
 
@@ -99,8 +105,9 @@ Qt::ItemFlags StuedentTableModel::flags(const QModelIndex &index) const
 {
     Qt::ItemFlags flags = QAbstractTableModel::flags(index);
     flags |= Qt::ItemIsEditable;
-    if (index.column() == ID)
+    if (index.column() == ID) {
         flags |= Qt::ItemIsUserCheckable;
+    }
     return flags;
 }
 
