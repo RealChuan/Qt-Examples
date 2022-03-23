@@ -95,9 +95,16 @@ QVariant StuedentTableModel::headerData(int section, Qt::Orientation orientation
     if (section < 0 || section >= names.size()) {
         return QVariant();
     }
-    if (orientation == Qt::Horizontal && role == Qt::DisplayRole) {
-        return names.at(section);
+    if (orientation == Qt::Horizontal) {
+        switch (role) {
+        case Qt::TextAlignmentRole: return Qt::AlignCenter;
+        case Qt::WhatsThisRole:
+        case Qt::ToolTipRole:
+        case Qt::DisplayRole: return names.at(section);
+        default: break;
+        }
     }
+
     return QVariant();
 }
 

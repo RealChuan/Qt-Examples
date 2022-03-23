@@ -17,13 +17,13 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: windows-latest
+    runs-on: windows-2019
     strategy:
       # 矩阵配置
       matrix:
         include:        
           # 6.2.2 参考 https://mirrors.cloud.tencent.com/qt/online/qtsdkrepository/windows_x86/desktop/qt6_622/
-          - qt_ver: 6.2.2
+          - qt_ver: 6.2.4
             qt_arch: win64_msvc2019_64
             msvc_arch: x64
             qt_arch_install: msvc2019_64

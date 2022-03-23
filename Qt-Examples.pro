@@ -8,6 +8,7 @@ SUBDIRS += \
     Clock \
     DashBoard \
     DragDrop \
+    FlowLayout \
     GridViewModel \
     HttpClient \
     LogAsynchronous \
