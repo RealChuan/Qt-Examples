@@ -5,8 +5,8 @@
 
 struct SlipButtonPrivate{
     int offset = 0;
-    QColor uncheckBackgroundColor = QColor("#FFE0E0E0");
-    QColor checkedBackgroundColor = QColor("#4da1ff");
+    QColor uncheckBackgroundColor = QColor(QLatin1String("#FFE0E0E0"));
+    QColor checkedBackgroundColor = QColor(QLatin1String("#4da1ff"));
     bool hover = false;
     QPropertyAnimation *animation;
 };
@@ -27,12 +27,12 @@ SlipButton::~SlipButton()
 
 QSize SlipButton::sizeHint() const
 {
-    return QSize(100 * 1.8, 100);
+    return QSize(20, 20);
 }
 
 QSize SlipButton::minimumSizeHint() const
 {
-    return QSize(10 * 1.8, 10);
+    return QSize(20, 20);
 }
 
 void SlipButton::setCheckedBackgroundColor(const QColor& color)
@@ -103,12 +103,14 @@ void SlipButton::paintEvent(QPaintEvent* event)
     }
 
     QRectF rectThumb = QRectF(offset(), (height() - h) / 2, h, h);
-    QColor colorThumbBorder = (d->hover) ? d->checkedBackgroundColor: QColor("#FFA8A8A8");
+    rectThumb.adjust(2, 2, -2, -2);
+    QColor colorThumbBorder = (d->hover) ? d->checkedBackgroundColor
+                                         : QColor(QLatin1String("#FFA8A8A8"));
     painter.setBrush(colorThumbBorder);
     painter.drawEllipse(rectThumb);
 
     // 按钮圆点
-    QColor colorThumb = isEnabled() ? QColor(Qt::white) : QColor("#FFE0E0E0");
+    QColor colorThumb = isEnabled() ? QColor(Qt::white) : QColor(QLatin1String("#FFE0E0E0"));
     painter.setBrush(colorThumb);
     rectThumb.adjust(1.1, 1.1, -1.1, -1.1);
     painter.drawEllipse(rectThumb);
