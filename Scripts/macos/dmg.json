@@ -1,0 +1,42 @@
+{
+	"title": "MyApplication",
+	"icon-size": 100,
+	"background": "",
+	"icon": "app.icns",
+	"window": {
+		"position": {
+			"x": 200,
+			"y": 400
+		},
+		"size": {
+			"width": 600,
+			"height": 360
+		}
+	},
+	"contents": [
+		{
+			"x": 200,
+			"y": 180,
+			"type": "file",
+			"path": "MyApplication.app"
+		},
+		{
+			"x": 400,
+			"y": 180,
+			"type": "link",
+			"path": "/Applications"
+		},
+		{
+			"x": 500,
+			"y": 500,
+			"type": "position",
+			"path": "/.VolumeIcon.icns"
+		},
+		{
+			"x": 500,
+			"y": 500,
+			"type": "position",
+			"path": "/.background"
+		}
+	]
+}

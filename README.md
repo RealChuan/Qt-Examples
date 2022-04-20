@@ -94,6 +94,14 @@
 
 ## 二十三、[Scripts](Scripts/)——脚本
 
-1. build_macos.py——macos Release编译脚本；
-2. build_windows.py——windows Release编译脚本；
+1. [macos](Scripts/macos/)——macos 通用编译打dmg包脚本（`python`/`dmgbuild`）；
+
+2. [widnows](Scripts/windows)——windows 通用编译打包安装脚本（Innosetup）；
+
+   1. `Innosetup` `signtool`
+
+      ```
+      sha256="C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.18362.0\\x86\\signtool.exe" sign /f C:\\work\\certificate\\xxxxx.pfx /p password /fd SHA256 /tr http://timestamp.digicert.com/scripts/timestamp.dll /td SHA256 $f
+      ```
+
 

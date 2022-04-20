@@ -5,12 +5,12 @@ import sys
 
 build_list = [
     {
-        'qmake': r'C:\Qt\6.2.2\msvc2019_64\bin\qmake.exe',
+        'qmake': r'C:\Qt\6.3.0\msvc2019\bin\qmake.exe',
         'qmake_params': r'"CONFIG+=qtquickcompiler"',
         'jom': r'C:\Qt\Tools\QtCreator\bin\jom\jom.exe',
-        'env_bat': r'C:\"Program Files (x86)"\"Microsoft Visual Studio"\2019\Community\VC\Auxiliary\Build\vcvarsall.bat amd64',
-        'project': r'D:\Mine\CODE\Qt\Qt-App\Qt-App.pro',
-        'build_directory': r'D:\Mine\CODE\Qt\build-Qt-App-Desktop_Qt_6_2_2_MSVC2019_64bit-Release'
+        'env_bat': r'C:\"Program Files (x86)"\"Microsoft Visual Studio"\2019\Community\VC\Auxiliary\Build\vcvarsall.bat amd64_x86',
+        'project': r'C:\work\MyApplication\MyApplication.pro',
+        'build_directory': r'C:\work\build-MyApplication-Desktop_Qt_5_15_2_MSVC2019_32bit-Release'
     }
 ]
 
@@ -36,7 +36,7 @@ class Builder:
             self.project + ' -spec win32-msvc ' + self.qmake_params
         return True if execute(create_qmake_cmd_line) else False
 
-    def execute_jom_cmd_line(self):
+    def execute_make_cmd_line(self):
         cmd_line = '{0} -j4'.format(self.jom)
         return True if execute(cmd_line) else False
 
@@ -61,27 +61,26 @@ class Builder:
         return True
 
     def build(self):
-        # 1.cd to project_build path
         os.chdir(self.build_directory)
         print('Starting build [{0}]'.format(
             os.path.splitext(self.project_name)[0]))
-        # 2.init env
+
         isOk = True
         status = self.init_env()
         isOk = isOk and status
         print('Init env:   ', 'Success' if status else 'Failed')
-        # 3.execute qmake clean
+
         status = self.execute_make_clean_cmd_line()
         isOk = isOk and status
         print('Make clean: ', 'Success' if status else 'Failed')
-        # 4.execute qmake
+
         status = self.execute_qmake_cmd_line()
         isOk = isOk and status
         print('QMake:      ', 'Success' if status else 'Failed')
-        # 5.execute jom
-        status = self.execute_jom_cmd_line()
+
+        status = self.execute_make_cmd_line()
         isOk = isOk and status
-        print('Make:       ', 'Success' if status else 'Failed')
+        print('Jom:       ', 'Success' if status else 'Failed')
 
         print('End build   ', 'Success' if isOk else 'Failed')
         return isOk
@@ -114,16 +113,7 @@ def build(build_list):
             exit(-1)
 
 
-def deploy(deployqt_path, executable_program_path):
-    deployqt_cmd_line = '{0} --force --no-translations {1}'.format(
-        deployqt_path, executable_program_path)
-    ret = execute(deployqt_cmd_line)
-    print('Deploy Executable Program: ', 'Success' if ret else 'Failed')
-
-
 if __name__ == '__main__':
     print('[{0}] Start deploy...'.format(datetime.datetime.now()))
     build(build_list)
-    deploy(r'C:\Qt\5.15.2\msvc2019_64\bin\windeployqt.exe',
-           r'D:\Mine\CODE\Qt\build-Qt-App-Desktop_Qt_6_2_2_MSVC2019_64bit-Release\Qt-App.exe')
     print('[{0}] Deploy success!!!'.format(datetime.datetime.now()))

@@ -26,6 +26,9 @@ SUBDIRS += \
     TreeViewModel
 
 DISTFILES += \
-    $$files(Scripts/*.py)\
+    $$files(Scripts/windows/*.py)\
+    $$files(Scripts/windows/*.iss)\
+    $$files(Scripts/macos/*.py)\
+    $$files(Scripts/macos/*.json)\
     LICENSE \
     README.md
