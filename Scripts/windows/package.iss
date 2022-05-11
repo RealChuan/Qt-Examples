@@ -146,11 +146,16 @@ Source: "..\packet\libssl-1_1.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\packet\msvcr100.dll"; DestDir: "{app}"; Flags: ignoreversion
 
 [Registry]
-Root: HKA; Subkey: "Software\Classes\{#MyAppAssocExt}\OpenWithProgids"; ValueType: string; ValueName: "{#MyAppAssocKey}"; ValueData: ""; Flags: uninsdeletevalue
-Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}"; ValueType: string; ValueName: ""; ValueData: "{#MyAppAssocName}"; Flags: uninsdeletekey
-Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\DefaultIcon"; ValueType: string; ValueName: ""; ValueData: "{app}\{#MyAppExeName},0"
-Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\shell\open\command"; ValueType: string; ValueName: ""; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
-Root: HKA; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".myp"; ValueData: ""
+Root: "HKA"; Subkey: "Software\Classes\{#MyAppAssocExt}\OpenWithProgids"; ValueType: string; ValueName: "{#MyAppAssocKey}"; Flags: uninsdeletevalue
+Root: "HKA"; Subkey: "Software\Classes\{#MyAppAssocKey}"; ValueType: string; ValueData: "{#MyAppAssocName}"; Flags: uninsdeletekey
+Root: "HKA"; Subkey: "Software\Classes\{#MyAppAssocKey}\DefaultIcon"; ValueType: string; ValueData: "{app}\{#MyAppExeName},0"
+Root: "HKA"; Subkey: "Software\Classes\{#MyAppAssocKey}\shell\open\command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""
+Root: "HKA"; Subkey: "Software\Classes\Applications\{#MyAppExeName}\SupportedTypes"; ValueType: string; ValueName: ".myp"
+; Add shortcuts to devices and drives
+Root: "HKLM"; Subkey: "SOFTWARE\Classes\CLSID\{{0BE93683-9BEF-43DA-B9BF-D84C620AD69F}"; ValueType: string; ValueData: "{#MyAppName}"; Flags: uninsdeletekey
+Root: "HKLM"; Subkey: "SOFTWARE\Classes\CLSID\{{0BE93683-9BEF-43DA-B9BF-D84C620AD69F}\DefaultIcon"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"""; Flags: uninsdeletekey
+Root: "HKLM"; Subkey: "SOFTWARE\Classes\CLSID\{{0BE93683-9BEF-43DA-B9BF-D84C620AD69F}\shell\Open\Command"; ValueType: string; ValueData: """{app}\{#MyAppExeName}"" ""%1"""; Flags: uninsdeletekey
+Root: "HKCU"; Subkey: "SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{{0BE93683-9BEF-43DA-B9BF-D84C620AD69F}"; ValueType: string; ValueData: "{#MyAppName}"; Flags: uninsdeletekey
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
