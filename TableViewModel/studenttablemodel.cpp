@@ -1,5 +1,8 @@
 #include "studenttablemodel.h"
 
+#include <QApplication>
+#include <QStyle>
+
 enum Property { ID, NAME, AGE, GENDER, ACHIEVEMENT, MENUBUTTON, PROCESS, RICHTEXT };
 
 QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
@@ -14,9 +17,13 @@ QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
     switch (role) {
     case Qt::TextAlignmentRole: return Qt::AlignCenter;
     case Qt::CheckStateRole:
-        switch (col) {
-        case ID: return stu.checked();
-        default: break;
+        if (ID == col) {
+            return stu.checked() ? Qt::Checked : Qt::Unchecked;
+        }
+        break;
+    case Qt::DecorationRole:
+        if (ID == col) {
+            return qApp->style()->standardIcon(QStyle::SP_ComputerIcon);
         }
         break;
     case Qt::WhatsThisRole:
@@ -34,12 +41,7 @@ QVariant StuedentTableModel::data(const QModelIndex &index, int role) const
         case RICHTEXT: return stu.richText();
         default: break;
         }
-    case Qt::UserRole: {
-        switch (col) {
-        case MENUBUTTON: return QVariant::fromValue(stu);
-        default: break;
-        }
-    }
+    case Qt::UserRole: return QVariant::fromValue(stu);
     }
     default: break;
     }
@@ -57,12 +59,10 @@ bool StuedentTableModel::setData(const QModelIndex &index, const QVariant &value
     Student stu = m_students.at(row);
     switch (role) {
     case Qt::CheckStateRole:
-        switch (col) {
-        case ID:
-            stu.setChecked(!stu.checked());
+        if (ID == col) {
+            stu.setChecked(value.toInt());
             emit dataChanged(index, index);
             return true;
-        default: break;
         }
         break;
     case Qt::EditRole:

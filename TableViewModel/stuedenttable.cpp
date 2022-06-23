@@ -35,6 +35,7 @@ StudentsTable::StudentsTable(QWidget *parent)
     setItemDelegateForColumn(6, new ProgressBarDelegate(this));
     setItemDelegateForColumn(7, new RichTextItemDelegate(this));
     setSortingEnabled(true);
+    setIconSize(QSize(20, 20));
 
     initMenu();
 }

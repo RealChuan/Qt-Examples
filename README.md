@@ -80,17 +80,20 @@
 
 ## 十九、[SqlTabview](SqlTabview/)——SQLite数据库调用，模型方法； 
 
-## 二十、[TabViewModel](TabViewModel/)——表格视图，DeleGate(Button and ProgressBar)（MVC）；   
+## 二十、[TableViewModel](TableViewModel/)——表格视图，DeleGate(Button and ProgressBar)（MVC）；   
 
  套用了旧的样式（懒），具体可以自己调整；
 
-  <div align=center><img src="TabViewModel/picture/TabViewModelDelegate.png"></div> 
+  <div align=center><img src="TableViewModel/picture/TabViewModelDelegate.png"></div> 
 
 ## 二十一、[Thread](Thread/)——多线程例子，四种写法，控件更新在子线程；  
 
   <div align=center><img src="Thread/picture/Thread.png"></div>   
 
 ## 二十二、[TreeViewModel](TreeViewModel/)——树形视图（MVC），QtCreator源码；  
+
+<div align=center><img src="TreeViewModel/picture/TreeView.png"></div>  
+<div align=center><img src="TreeViewModel/picture/ListView.png"></div>  
 
 ## 二十三、[Scripts](Scripts/)——脚本
 

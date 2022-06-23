@@ -21,7 +21,7 @@ SUBDIRS += \
     SimpleUdp \
     SlipButton \
     SqlTabview \
-    TabViewModel \
+    TableViewModel \
     Thread \
     TreeViewModel
 
