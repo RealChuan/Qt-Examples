@@ -1,0 +1,65 @@
+name: QMake Build
+
+on: 
+  push:
+    paths-ignore: # 下列文件的变更不触发部署，可以自行添加
+        - 'LICENSE'
+        - '.gitignore'
+        - 'README.md'
+        - 'Scripts/**'
+  pull_request:
+    paths-ignore: # 下列文件的变更不触发部署，可以自行添加
+        - 'LICENSE'
+        - '.gitignore'
+        - 'README.md'
+        - 'Scripts/**'
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config: 
+        - {
+            os: windows-2019,
+            qt_ver: 6.3.0,
+            qt_arch: win64_msvc2019_64,
+            msvc_arch: x64
+          }
+        - {
+            os: macos-latest,
+            qt_ver: 6.3.0,
+            qt_arch: clang_64,
+          }
+        - {
+            os: ubuntu-latest,
+            qt_ver: 6.3.0,
+            qt_arch: gcc_64
+          }
+    steps:
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: ${{ matrix.config.qt_ver }}
+          arch: ${{ matrix.config.qt_arch }}
+          install-deps: 'true'
+          modules: 'addons.qtcharts addons.qtnetworkauth'
+          cached: 'true'
+      - name: ubuntu install GL library
+        if: startsWith(matrix.config.os, 'ubuntu')
+        run: sudo apt-get install -y libglew-dev libglfw3-dev
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: msvc-build
+        if: startsWith(matrix.config.os, 'windows')
+        shell: cmd
+        run: |
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.config.msvc_arch }}
+          qmake
+          nmake
+      - name: build macos
+        if: startsWith(matrix.config.os, 'macos') || startsWith(matrix.config.os, 'ubuntu')
+        run: |
+          qmake
+          make
