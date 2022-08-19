@@ -4,8 +4,8 @@ set(PROJECT_SOURCES
         mainwindow.h
         buttondelegate.h
         buttondelegate.cpp
-        comboboxDelegate.h
-        comboboxDelegate.cpp
+        comboboxdelegate.h
+        comboboxdelegate.cpp
         progressbardelegate.h
         progressbardelegate.cpp
         richtextitemdelegate.hpp

@@ -1,0 +1,104 @@
+name: CMake Build
+
+on: 
+  push:
+    paths-ignore: # 下列文件的变更不触发部署，可以自行添加
+        - 'LICENSE'
+        - '.gitignore'
+        - 'README.md'
+        - 'Scripts/**'
+  pull_request:
+    paths-ignore: # 下列文件的变更不触发部署，可以自行添加
+        - 'LICENSE'
+        - '.gitignore'
+        - 'README.md'
+        - 'Scripts/**'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ${{ matrix.config.os }}
+    strategy:
+      matrix:
+        config: 
+        - {
+            os: windows-2019,
+            qt_ver: 6.3.0,
+            qt_arch: win64_msvc2019_64,
+            msvc_arch: x64,
+            build_type: "Release",
+            generators: "Visual Studio 16 2019"
+          }
+        - {
+            os: macos-latest,
+            qt_ver: 6.3.0,
+            qt_arch: clang_64,
+            build_type: "Release", 
+            generators: "Ninja"
+          }
+        - {
+            os: ubuntu-latest,
+            qt_ver: 6.3.0,
+            qt_arch: gcc_64,
+            build_type: "Release",
+            generators: "Ninja"
+          }
+
+    steps:
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: ${{ matrix.config.qt_ver }}
+          arch: ${{ matrix.config.qt_arch }}
+          install-deps: 'true'
+          modules: 'addons.qtcharts addons.qtnetworkauth'
+          cache: 'true'
+      - name: Install dependencies on macos
+        if: startsWith(matrix.config.os, 'macos')
+        run: |
+          brew install ninja
+          ninja --version
+          cmake --version
+      - name: ubuntu install GL library
+        if: startsWith(matrix.config.os, 'ubuntu')
+        run: |
+          sudo apt-get install -y libglew-dev libglfw3-dev ninja-build
+          ninja --version
+          cmake --version
+          gcc --version
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 1
+      - name: Configure Windows
+        if: startsWith(matrix.config.os, 'windows')
+        env:
+          CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
+        shell: bash
+        run: |
+          mkdir build
+          mkdir instdir
+          cmake \
+            -S . \
+            -B . \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
+            -G "${{ matrix.config.generators }}" \
+            -A x64 \
+            -DCMAKE_INSTALL_PREFIX:PATH=instdir
+      - name: Configure macos or ubuntu
+        if: startsWith(matrix.config.os, 'macos') || startsWith(matrix.config.os, 'ubuntu')
+        env:
+          CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
+        shell: bash
+        run: |
+          mkdir build
+          mkdir instdir
+          cmake \
+            -S . \
+            -B . \
+            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
+            -G "${{ matrix.config.generators }}" \
+            -DCMAKE_INSTALL_PREFIX:PATH=instdir
+      - name: Build
+        shell: bash
+        run: |
+          cmake --build . --config ${{ matrix.config.build_type }}
