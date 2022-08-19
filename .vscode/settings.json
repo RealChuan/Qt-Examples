@@ -1,9 +1,5 @@
 {
     "cmake.environment": {
-        "PATH": "C:\\Qt\\6.3.1\\msvc2019_64\\bin;"
-    },
-    "files.associations": {
-        "qtcharts": "cpp",
-        "qsqlerror": "cpp"
+        "PATH": "C:\\Qt\\6.3.0\\msvc2019_64\\bin;"
     }
 }

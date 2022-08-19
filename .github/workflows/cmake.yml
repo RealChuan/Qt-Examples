@@ -59,7 +59,7 @@ jobs:
           brew install ninja
           ninja --version
           cmake --version
-      - name: ubuntu install GL library
+      - name: Install dependencies on ubuntu
         if: startsWith(matrix.config.os, 'ubuntu')
         run: |
           sudo apt-get install -y libglew-dev libglfw3-dev ninja-build
