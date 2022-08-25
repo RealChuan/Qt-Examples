@@ -23,7 +23,8 @@ SUBDIRS += \
     SqlTabview \
     TableViewModel \
     Thread \
-    TreeViewModel
+    TreeViewModel \
+    Validator
 
 DISTFILES += \
     $$files(Scripts/windows/*.py)\

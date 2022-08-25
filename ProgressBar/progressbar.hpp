@@ -11,16 +11,16 @@
 class ProgressBar : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(double value READ value WRITE setValue CONSTANT)
-    Q_PROPERTY(bool percent READ percent WRITE setPercent CONSTANT)
-    Q_PROPERTY(double min READ min WRITE setMin CONSTANT)
-    Q_PROPERTY(double max READ max WRITE setmax CONSTANT)
-    Q_PROPERTY(double radius READ radius WRITE setRadius CONSTANT)
-    Q_PROPERTY(double autoRadius READ autoRadius WRITE setAutoRadius CONSTANT)
-    Q_PROPERTY(QColor chunkColor READ chunkColor WRITE setChunkColor CONSTANT)
-    Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor CONSTANT)
-    Q_PROPERTY(QColor baseColor READ baseColor WRITE setBaseColor CONSTANT)
-    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor CONSTANT)
+    Q_PROPERTY(double value READ value WRITE setValue)
+    Q_PROPERTY(bool percent READ percent WRITE setPercent)
+    Q_PROPERTY(double min READ min WRITE setMin)
+    Q_PROPERTY(double max READ max WRITE setmax)
+    Q_PROPERTY(double radius READ radius WRITE setRadius)
+    Q_PROPERTY(double autoRadius READ autoRadius WRITE setAutoRadius)
+    Q_PROPERTY(QColor chunkColor READ chunkColor WRITE setChunkColor)
+    Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
+    Q_PROPERTY(QColor baseColor READ baseColor WRITE setBaseColor)
+    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
 public:
     explicit ProgressBar(QWidget *parent = nullptr);
     ~ProgressBar();

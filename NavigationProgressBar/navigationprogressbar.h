@@ -7,11 +7,12 @@ class NavigationProgressBarPrivate;
 class NavigationProgressBar : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(QStringList messageList READ messageList WRITE setMessageList CONSTANT)
-    Q_PROPERTY(int step READ step WRITE setStep CONSTANT)
-    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor CONSTANT)
-    Q_PROPERTY(QColor currentBackgroundColor READ currentBackgroundColor WRITE setCurrentBackgroundColor CONSTANT)
-    Q_PROPERTY(QColor foregroundColor READ foregroundColor WRITE setForegroundColor CONSTANT)
+    Q_PROPERTY(QStringList messageList READ messageList WRITE setMessageList)
+    Q_PROPERTY(int step READ step WRITE setStep)
+    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
+    Q_PROPERTY(
+        QColor currentBackgroundColor READ currentBackgroundColor WRITE setCurrentBackgroundColor)
+    Q_PROPERTY(QColor foregroundColor READ foregroundColor WRITE setForegroundColor)
 public:
     explicit NavigationProgressBar(QWidget *parent = nullptr);
     ~NavigationProgressBar();
