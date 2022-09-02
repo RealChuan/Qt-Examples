@@ -17,50 +17,43 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ${{ matrix.config.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        config: 
-        - {
-            os: windows-2019,
-            qt_ver: 6.3.0,
-            qt_arch: win64_msvc2019_64,
-            msvc_arch: x64,
-            build_type: "Release",
-            generators: "Visual Studio 16 2019"
-          }
-        - {
-            os: macos-latest,
-            qt_ver: 6.3.0,
-            qt_arch: clang_64,
-            build_type: "Release", 
-            generators: "Ninja"
-          }
-        - {
-            os: ubuntu-latest,
-            qt_ver: 6.3.0,
-            qt_arch: gcc_64,
-            build_type: "Release",
-            generators: "Ninja"
-          }
+        os:
+          - windows-latest
+          - macos-latest
+          - ubuntu-latest
+        qt_ver: 
+          - 6.3.0
+        build_type:
+          - "Release"
+        generators:
+          - "Ninja"
 
     steps:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: ${{ matrix.config.qt_ver }}
-          arch: ${{ matrix.config.qt_arch }}
+          version: ${{ matrix.qt_ver }}
           install-deps: 'true'
           modules: 'addons.qtcharts addons.qtnetworkauth'
           cache: 'true'
+      - name: Install dependencies on windows
+        if: startsWith(matrix.os, 'windows')
+        run: |
+          choco install ninja
+          ninja --version
+          cmake --version
       - name: Install dependencies on macos
-        if: startsWith(matrix.config.os, 'macos')
+        if: startsWith(matrix.os, 'macos')
         run: |
           brew install ninja
           ninja --version
           cmake --version
       - name: Install dependencies on ubuntu
-        if: startsWith(matrix.config.os, 'ubuntu')
+        if: startsWith(matrix.os, 'ubuntu')
         run: |
           sudo apt-get install -y libglew-dev libglfw3-dev ninja-build
           ninja --version
@@ -69,36 +62,35 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1
-      - name: Configure Windows
-        if: startsWith(matrix.config.os, 'windows')
-        env:
-          CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
+      - name: Mkdir
         shell: bash
         run: |
           mkdir build
           mkdir instdir
+      - name: Configure Windows
+        if: startsWith(matrix.os, 'windows')
+        env:
+          CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
+        shell: bash
+        run: |
           cmake \
             -S . \
-            -B . \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
-            -G "${{ matrix.config.generators }}" \
+            -B ./build \
             -A x64 \
             -DCMAKE_INSTALL_PREFIX:PATH=instdir
       - name: Configure macos or ubuntu
-        if: startsWith(matrix.config.os, 'macos') || startsWith(matrix.config.os, 'ubuntu')
+        if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
         env:
           CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
         shell: bash
         run: |
-          mkdir build
-          mkdir instdir
           cmake \
             -S . \
-            -B . \
-            -DCMAKE_BUILD_TYPE=${{ matrix.config.build_type }} \
-            -G "${{ matrix.config.generators }}" \
+            -B ./build \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -G "${{ matrix.generators }}" \
             -DCMAKE_INSTALL_PREFIX:PATH=instdir
       - name: Build
         shell: bash
         run: |
-          cmake --build . --config ${{ matrix.config.build_type }}
+          cmake --build ./build --config ${{ matrix.build_type }}

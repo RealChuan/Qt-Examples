@@ -16,50 +16,40 @@ on:
 jobs:
   build:
     name: Build
-    runs-on: ${{ matrix.config.os }}
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        config: 
-        - {
-            os: windows-2019,
-            qt_ver: 6.3.0,
-            qt_arch: win64_msvc2019_64,
-            msvc_arch: x64
-          }
-        - {
-            os: macos-latest,
-            qt_ver: 6.3.0,
-            qt_arch: clang_64,
-          }
-        - {
-            os: ubuntu-latest,
-            qt_ver: 6.3.0,
-            qt_arch: gcc_64
-          }
+        os:
+          - windows-2019
+          - macos-latest
+          - ubuntu-latest
+        qt_ver: 
+          - 6.3.0
+
     steps:
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
         with:
-          version: ${{ matrix.config.qt_ver }}
-          arch: ${{ matrix.config.qt_arch }}
+          version: ${{ matrix.qt_ver }}
           install-deps: 'true'
           modules: 'addons.qtcharts addons.qtnetworkauth'
           cache: 'true'
       - name: ubuntu install GL library
-        if: startsWith(matrix.config.os, 'ubuntu')
+        if: startsWith(matrix.os, 'ubuntu')
         run: sudo apt-get install -y libglew-dev libglfw3-dev
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1
       - name: msvc-build
-        if: startsWith(matrix.config.os, 'windows')
+        if: startsWith(matrix.os, 'windows')
         shell: cmd
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" ${{ matrix.config.msvc_arch }}
+          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
           qmake
           nmake
       - name: build macos or ubuntu
-        if: startsWith(matrix.config.os, 'macos') || startsWith(matrix.config.os, 'ubuntu')
+        if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
         run: |
           qmake
           make
