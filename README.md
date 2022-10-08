@@ -1,6 +1,6 @@
 # Qt的一些简单常用示例
 
-## 一、[Battery](Battery/)——电池；
+## 1. [Battery](Battery/)——电池；
 
 <table>
     <tr>
@@ -9,66 +9,70 @@
     </tr>
 </table>
 
-## 二、[BubbleWindow](BubbleWindow/)——气泡式对话框，也可作工具提示（ToolTip）；
+## 2. [BubbleWindow](BubbleWindow/)——气泡式对话框，也可作工具提示（ToolTip）；
 
 <div align=center><img src="BubbleWindow/picture/Bubble.png"></div>
 
-## 三、[Chart](Chart/)——可视化图表绘制，参考[ 使用 QChart 显示实时动态曲线 ](https://qtdebug.com/qtbook-paint-realtime-curve-qchart/ "qtdebug/公孙二狗") 和QChart相关示例；
+## 3. [Chart](Chart/)——可视化图表绘制，参考[ 使用 QChart 显示实时动态曲线 ](https://qtdebug.com/qtbook-paint-realtime-curve-qchart/ "qtdebug/公孙二狗") 和QChart相关示例；
 
 <div align=center><img src="Chart/picture/Chart_1.png">图一二是动态曲线</div>  
 <div align=center><img src="Chart/picture/Chart_2.png">图一二是动态曲线， 图二坐标轴也会动态变化</div>
 
-## 四、[Clock](/Clock)——时钟；
+## 4. [CheckBoxStandardItem](/CheckBoxStandardItem)——可勾选StandardItem;
+
+<div align=center><img src="CheckBoxStandardItem/picture/checkBoxStandardItem.png"></div>
+
+## 5. [Clock](/Clock)——时钟；
 
 <div align=center><img src="Clock/picture/Clock.png"></div>
 
-## 五、[DashBoard](/DashBoard)——仪表盘；
+## 6. [DashBoard](/DashBoard)——仪表盘；
 
 <div align=center><img src="DashBoard/picture/DashBoard.png"></div>
 
-## 六、[FlowLayout](FlowLayout/)——流式布局，来自QT示例Flow Layout Example；
+## 7. [FlowLayout](FlowLayout/)——流式布局，来自QT示例Flow Layout Example；
 
 <div align=center><img src="FlowLayout/picture/FlowLayout.png"></div>
 
-## 七、[DragDrop](DragDrop/)——简单控件拖拽，参考QT示例Drag and Drop Puzzle Example；
+## 8. [DragDrop](DragDrop/)——简单控件拖拽，参考QT示例Drag and Drop Puzzle Example；
 
-## 八、[HttpClient ](/HttpClient)——http客户端；
+## 9. [HttpClient ](/HttpClient)——http客户端；
 
-## 九、[GridViewModel ](/GridViewModel)——基于QListView的自适应宫图；
+## 10. [GridViewModel ](/GridViewModel)——基于QListView的自适应宫图；
 
 <div align=center><img src="GridViewModel/picture/GridView.png"></div>
 
-## 十、[LogAsynchronous](LogAsynchronous/)——异步日志，开辟一个线程专门往文件里写日志，前后端分离。
+## 11. [LogAsynchronous](LogAsynchronous/)——异步日志，开辟一个线程专门往文件里写日志，前后端分离。
 
 1. 日志文件名：应用程序名（appname）.时间(time,精确到秒).主机hostname.进程ID（Tid）.log（.count），假如一天内写的单个日志大约接近1G，会自动加后缀（.1,.2.3...，以此类推）新建新的日志文件去写，每天0点依然会rollFile；
    1. 正常文件名：LogAsynchronous.2020-04-26-20-29-03.Youth.11828.log；
    2. 当日写日志接近1G，新建的文件名：LogAsynchronous.2020-04-26-20-38-55.Youth.11828.log.1；
 2. 日志格式：时间（time，精确到毫秒）.线程ID（Pid）.日志级别（debug）.打印信息（msg）.文件（File）.行号（Line）。
-    1. 比如：2020-04-26 20:38:55.818 2052 [Debug] 123456789qwertyuioplkjhgfdsa 8412789-File:(..\logAsynchronous\main.cpp) Line:(19)；  
+   1. 比如：2020-04-26 20:38:55.818 2052 [Debug] 123456789qwertyuioplkjhgfdsa 8412789-File:(..\logAsynchronous\main.cpp) Line:(19)；
 
-## 十一、[MulClient](MulClient/)——多线程客户端，一个线程一个客户端（怎么可以绕开系统限制，模拟百万个客户端）；
+## 12. [MulClient](MulClient/)——多线程客户端，一个线程一个客户端（怎么可以绕开系统限制，模拟百万个客户端）；
 
-## 十二、[MulServer](MulServer/)——多线程服务端，一个线程一个客户端处理（处理实时性很高的TCP通讯）；
+## 13. [MulServer](MulServer/)——多线程服务端，一个线程一个客户端处理（处理实时性很高的TCP通讯）；
 
-## 十三、[NavigationProgressBar](/NavigationProgressBar)——导航进度栏;
+## 14. [NavigationProgressBar](/NavigationProgressBar)——导航进度栏;
 
 <div align=center><img src="NavigationProgressBar/picture/NavigationProgressBar.png"></div>
 
-## 十四、[ProgressArc](ProgressArc/)——圆弧进度条；
+## 15. [ProgressArc](ProgressArc/)——圆弧进度条；
 
 <div align=center><img src="ProgressArc/picture/ProgressArc.png"></div>
 
-## 十五、[ProgressBar](ProgressBar)——QProgressBar圆角替代方案；
+## 16. [ProgressBar](ProgressBar)——QProgressBar圆角替代方案；
 
 <div align=center><img src="ProgressBar/picture/ProgressBar.png"></div>
 
-## 十六、[ReactorServer](ReactorServer/)——多线程服务端，Reactor模式（Echo）；
+## 17. [ReactorServer](ReactorServer/)——多线程服务端，Reactor模式（Echo）；
 
-## 十七、[SimpleUdp](SimpleUdp/)——简单UDP例子，广播和接收；
+## 18. [SimpleUdp](SimpleUdp/)——简单UDP例子，广播和接收；
 
 防火墙白名单。
 
-## 十八、[SlipButton](SlipButton/)——滑动按钮；
+## 19. [SlipButton](SlipButton/)——滑动按钮；
 
  另：更简单的实现：[有动画效果的 CheckBox](http://qtdebug.com/qtbook-animated-checkbox/)；
 
@@ -79,26 +83,26 @@
       </tr>
   </table>
 
-## 十九、[SqlTabview](SqlTabview/)——SQLite数据库调用，模型方法；
+## 20. [SqlTabview](SqlTabview/)——SQLite数据库调用，模型方法；
 
-## 二十、[TableViewModel](TableViewModel/)——表格视图，DeleGate(Button and ProgressBar)（MVC）；
+## 21. [TableViewModel](TableViewModel/)——表格视图，DeleGate(Button and ProgressBar)（MVC）；
 
  套用了旧的样式（懒），具体可以自己调整；
 
 <div align=center><img src="TableViewModel/picture/TabViewModelDelegate.png"></div>
 
-## 二十一、[Thread](Thread/)——多线程例子，四种写法，控件更新在子线程；
+## 22. [Thread](Thread/)——多线程例子，四种写法，控件更新在子线程；
 
 <div align=center><img src="Thread/picture/Thread.png"></div>
 
-## 二十二、[TreeViewModel](TreeViewModel/)——树形视图（MVC），QtCreator源码；
+## 23. [TreeViewModel](TreeViewModel/)——树形视图（MVC），QtCreator源码；
 
 <div align=center><img src="TreeViewModel/picture/TreeView.png"></div>  
 <div align=center><img src="TreeViewModel/picture/ListView.png"></div>
 
-## 二十三、[Validator](Validator/)——加强版IntValidator（QIntValidator）和DoubleValidator（QDoubleValidator）
+## 24. [Validator](Validator/)——加强版IntValidator（QIntValidator）和DoubleValidator（QDoubleValidator）
 
-## 二十四、[Scripts](Scripts/)——打包脚本
+## 25. [Scripts](Scripts/)——打包脚本
 
 1. [macos](Scripts/macos/)——macos 通用编译打dmg包脚本（`python`/`dmgbuild`）；
 2. [widnows](Scripts/windows)——windows 通用编译打包安装脚本（Innosetup）；

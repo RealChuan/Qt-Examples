@@ -5,6 +5,7 @@ SUBDIRS += \
     Battery \
     BubbleWindow \
     Chart \
+    CheckBoxStandardItem \
     Clock \
     DashBoard \
     DragDrop \

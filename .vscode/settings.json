@@ -1,5 +1,5 @@
 {
     "cmake.environment": {
-        "PATH": "C:\\Qt\\6.3.0\\msvc2019_64\\bin;"
+        "PATH": "C:\\Qt\\6.4.0\\msvc2019_64\\bin;"
     }
 }

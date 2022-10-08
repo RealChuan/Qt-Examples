@@ -4,7 +4,7 @@ project(Qt-Examples VERSION 0.1 LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-set(CMAKE_PREFIX_PATH "C:\\Qt\\6.3.0\\msvc2019_64")
+set(CMAKE_PREFIX_PATH "C:\\Qt\\6.4.0\\msvc2019_64")
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -16,15 +16,12 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 COMPONENTS Widgets REQUIRED)
-find_package(Qt6 REQUIRED COMPONENTS Charts)
-find_package(Qt6 REQUIRED COMPONENTS Network)
-find_package(Qt6 REQUIRED COMPONENTS Concurrent)
-find_package(Qt6 REQUIRED COMPONENTS Sql)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Charts Network Concurrent Sql)
 
 add_subdirectory(Battery)
 add_subdirectory(BubbleWindow)
 add_subdirectory(Chart)
+add_subdirectory(CheckBoxStandardItem)
 add_subdirectory(Clock)
 add_subdirectory(DashBoard)
 add_subdirectory(DragDrop)

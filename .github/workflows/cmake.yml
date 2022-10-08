@@ -26,7 +26,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
         qt_ver: 
-          - 6.3.0
+          - 6.4.0
         build_type:
           - "Release"
         generators:
