@@ -16,6 +16,7 @@ SUBDIRS += \
     MulClient \
     MulServer \
     NavigationProgressBar \
+    PasswordLineEdit \
     ProgressArc \
     ProgressBar \
     ReactorServer \
