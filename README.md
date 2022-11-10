@@ -100,9 +100,7 @@
 
 <div align=center><img src="TableViewModel/picture/TabViewModelDelegate.png"></div>
 
-## 23. [Thread](Thread/)——多线程例子，四种写法，控件更新在子线程；
-
-<div align=center><img src="Thread/picture/Thread.png"></div>
+## 23. [Thread](Thread/)——多线程例子，6种写法；
 
 ## 24. [TreeViewModel](TreeViewModel/)——树形视图（MVC），QtCreator源码；
 
