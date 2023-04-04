@@ -9,13 +9,13 @@ class HttpClientThread : public QThread
 {
     Q_OBJECT
 public:
-    HttpClientThread(QObject *parent = nullptr);
-    ~HttpClientThread();
+    explicit HttpClientThread(QObject *parent = nullptr);
+    ~HttpClientThread() override;
 
 signals:
-    void setHeaders(const HttpClient::HttpHeaders&);
-    void setJson(const QString& json);
-    void setParams(const HttpClient::HttpParams& params);
+    void setHeaders(const HttpClient::HttpHeaders &);
+    void setJson(const QString &json);
+    void setParams(const HttpClient::HttpParams &params);
 
     void get(const QString &url);
     void post(const QString &url);
@@ -31,8 +31,8 @@ signals:
     void upload(const QString &url, const QByteArray &data);
 
     //-------------------------------------------------------------
-    void error(const QString&);
-    void readyReady(const QByteArray&);
+    void error(const QString &);
+    void readyReady(const QByteArray &);
     void downloadProgress(qint64 bytesSent, qint64 bytesTotal);
     void uploadProgress(qint64 bytesSent, qint64 bytesTotal);
     void finish();

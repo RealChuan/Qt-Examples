@@ -9,14 +9,14 @@ class FileInfo;
 class FileItem : public TreeItem
 {
 public:
-    FileItem(const QFileInfo &fileInfo, bool depth = false);
-    ~FileItem();
+    explicit FileItem(const QFileInfo &fileInfo, bool depth = false);
+    ~FileItem() override;
 
-    QVariant data(int column, int role) const override;
-    bool setData(int column, const QVariant &data, int role) override;
-    Qt::ItemFlags flags(int column) const override;
+    [[nodiscard]] auto data(int column, int role) const -> QVariant override;
+    auto setData(int column, const QVariant &data, int role) -> bool override;
+    [[nodiscard]] auto flags(int column) const -> Qt::ItemFlags override;
 
-    FileInfo fileInfo() const;
+    [[nodiscard]] auto fileInfo() const -> FileInfo;
 
 private:
     void init();

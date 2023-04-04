@@ -20,46 +20,46 @@ class ProgressArc : public QWidget
     Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
 public:
     explicit ProgressArc(const QString &title, QWidget *parent = nullptr);
-    ~ProgressArc();
+    ~ProgressArc() override;
 
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
+    [[nodiscard]] auto sizeHint() const -> QSize override;
+    [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
-    double value() const;
+    [[nodiscard]] auto value() const -> double;
     void setValue(const double value);
 
     void setTitle(const QString &title);
-    QString title() const;
+    [[nodiscard]] auto title() const -> QString;
 
     void setPercent(const bool percent);
-    bool percent() const;
+    [[nodiscard]] auto percent() const -> bool;
 
     void setMin(const double min);
-    double min() const;
+    [[nodiscard]] auto min() const -> double;
 
     void setmax(const double max);
-    double max() const;
+    [[nodiscard]] auto max() const -> double;
 
     void setStartAngle(const double startAngle);
-    double startAngle() const;
+    [[nodiscard]] auto startAngle() const -> double;
 
     void setEndAngle(const double endAngle);
-    double endAngle() const;
+    [[nodiscard]] auto endAngle() const -> double;
 
     void setArcColor(const QColor &color);
-    QColor arcColor() const;
+    [[nodiscard]] auto arcColor() const -> QColor;
 
     void setTextColor(const QColor &color);
-    QColor textColor() const;
+    [[nodiscard]] auto textColor() const -> QColor;
 
     void setTitleColor(const QColor &color);
-    QColor titleColor() const;
+    [[nodiscard]] auto titleColor() const -> QColor;
 
     void setBaseColor(const QColor &color);
-    QColor baseColor() const;
+    [[nodiscard]] auto baseColor() const -> QColor;
 
     void setBackgroundColor(const QColor &color);
-    QColor backgroundColor() const;
+    [[nodiscard]] auto backgroundColor() const -> QColor;
 
 signals:
     void valueChanged(const double value);

@@ -12,8 +12,9 @@ GridView::GridView(QWidget *parent)
 void GridView::onSelectChanged()
 {
     QItemSelectionModel *selModel = selectionModel();
-    if(!selModel)
+    if (!selModel) {
         return;
+    }
     qDebug() << selModel->selectedIndexes();
 }
 
@@ -32,5 +33,8 @@ void GridView::setupUI()
 
 void GridView::buildConnect()
 {
-    connect(selectionModel(), &QItemSelectionModel::selectionChanged, this, &GridView::onSelectChanged);
+    connect(selectionModel(),
+            &QItemSelectionModel::selectionChanged,
+            this,
+            &GridView::onSelectChanged);
 }

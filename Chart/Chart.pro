@@ -18,7 +18,6 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     areachart.cpp \
     callout.cpp \
-    chartlabel.cpp \
     chartview.cpp \
     datetimechart.cpp \
     dialogchart.cpp \
@@ -34,7 +33,6 @@ SOURCES += \
 HEADERS += \
     areachart.h \
     callout.h \
-    chartlabel.h \
     chartview.h \
     datetimechart.h \
     dialogchart.h \

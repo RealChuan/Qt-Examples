@@ -3,7 +3,7 @@
 
 class TcpClientThreadPrivate{
 public:
-    TcpClientThreadPrivate(QThread *parent = nullptr)
+    explicit TcpClientThreadPrivate(QThread *parent = nullptr)
         : owner(parent){}
     QThread *owner;
     QString ip = "127.0.0.1";

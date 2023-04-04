@@ -10,7 +10,7 @@ class ListView : public TreeView
     Q_OBJECT
 public:
     explicit ListView(QWidget *parent = nullptr);
-    ~ListView();
+    ~ListView() override;
 
     void setDatas(const QFileInfoList &fileInfos);
 

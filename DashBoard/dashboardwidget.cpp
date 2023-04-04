@@ -4,7 +4,8 @@
 #include <QPropertyAnimation>
 #include <QtMath>
 
-struct DashBoardWidgetPrivate{
+struct DashBoardWidget::DashBoardWidgetPrivate
+{
     double maxValue = 100;
     double minValue = 0;
     double startAngle = -50;
@@ -26,168 +27,166 @@ struct DashBoardWidgetPrivate{
 
 DashBoardWidget::DashBoardWidget(QWidget *parent)
     : QWidget(parent)
-    , d(new DashBoardWidgetPrivate)
+    , d_ptr(new DashBoardWidgetPrivate)
 {
-    d->animation = new QPropertyAnimation(this, "value", this);
+    d_ptr->animation = new QPropertyAnimation(this, "value", this);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     connect(this, &DashBoardWidget::valueChanged, this, &DashBoardWidget::onStartAnimation);
 }
 
-DashBoardWidget::~DashBoardWidget()
+DashBoardWidget::~DashBoardWidget() = default;
+
+auto DashBoardWidget::sizeHint() const -> QSize
 {
+    return {300, 300};
 }
 
-QSize DashBoardWidget::sizeHint() const
+auto DashBoardWidget::minimumSizeHint() const -> QSize
 {
-    return QSize(300, 300);
-}
-
-QSize DashBoardWidget::minimumSizeHint() const
-{
-    return QSize(200, 200);
+    return {200, 200};
 }
 
 void DashBoardWidget::setMin(const double min)
 {
-    d->minValue = min;
+    d_ptr->minValue = min;
     update();
 }
 
-double DashBoardWidget::min() const
+auto DashBoardWidget::min() const -> double
 {
-    return d->minValue;
+    return d_ptr->minValue;
 }
 
 void DashBoardWidget::setmax(const double max)
 {
-    d->maxValue = max;
+    d_ptr->maxValue = max;
     update();
 }
 
-double DashBoardWidget::max() const
+auto DashBoardWidget::max() const -> double
 {
-    return d->maxValue;
+    return d_ptr->maxValue;
 }
 
 void DashBoardWidget::setStartAngle(const double startAngle)
 {
-    d->startAngle = startAngle;
+    d_ptr->startAngle = startAngle;
     update();
 }
 
-double DashBoardWidget::startAngle() const
+auto DashBoardWidget::startAngle() const -> double
 {
-    return d->startAngle;
+    return d_ptr->startAngle;
 }
 
 void DashBoardWidget::setEndAngle(const double endAngle)
 {
-    d->endAngle = endAngle;
+    d_ptr->endAngle = endAngle;
     update();
 }
 
-double DashBoardWidget::endAngle() const
+auto DashBoardWidget::endAngle() const -> double
 {
-    return d->endAngle;
+    return d_ptr->endAngle;
 }
 
 void DashBoardWidget::setScaleMajor(const int scale)
 {
-    d->scaleMajor = scale;
+    d_ptr->scaleMajor = scale;
     update();
 }
 
-int DashBoardWidget::scaleMajor() const
+auto DashBoardWidget::scaleMajor() const -> int
 {
-    return d->scaleMajor;
+    return d_ptr->scaleMajor;
 }
 
 void DashBoardWidget::setScaleMinor(const int scale)
 {
-    d->scaleMinor = scale;
+    d_ptr->scaleMinor = scale;
     update();
 }
 
-int DashBoardWidget::scaleMinor() const
+auto DashBoardWidget::scaleMinor() const -> int
 {
-    return d->scaleMinor;
+    return d_ptr->scaleMinor;
 }
 
 void DashBoardWidget::setUnit(const QString &unit)
 {
-    d->unit = unit;
+    d_ptr->unit = unit;
     update();
 }
 
-QString DashBoardWidget::unit() const
+auto DashBoardWidget::unit() const -> QString
 {
-    return d->unit;
+    return d_ptr->unit;
 }
 
 void DashBoardWidget::setText(const QString &text)
 {
-    d->text = text;
+    d_ptr->text = text;
     update();
 }
 
-QString DashBoardWidget::text() const
+auto DashBoardWidget::text() const -> QString
 {
-    return d->text;
+    return d_ptr->text;
 }
 
 void DashBoardWidget::setArcColor(const QColor &color)
 {
-    d->arcColor = color;
+    d_ptr->arcColor = color;
     update();
 }
 
-QColor DashBoardWidget::arcColor() const
+auto DashBoardWidget::arcColor() const -> QColor
 {
-    return d->arcColor;
+    return d_ptr->arcColor;
 }
 
 void DashBoardWidget::setScaleColor(const QColor &color)
 {
-    d->scaleColor = color;
+    d_ptr->scaleColor = color;
     update();
 }
 
-QColor DashBoardWidget::scaleColor() const
+auto DashBoardWidget::scaleColor() const -> QColor
 {
-    return d->scaleColor;
+    return d_ptr->scaleColor;
 }
 
 void DashBoardWidget::setPointerColor(const QColor &color)
 {
-    d->pointerColor = color;
+    d_ptr->pointerColor = color;
     update();
 }
 
-QColor DashBoardWidget::pointerColor() const
+auto DashBoardWidget::pointerColor() const -> QColor
 {
-    return d->pointerColor;
+    return d_ptr->pointerColor;
 }
 
 void DashBoardWidget::setTextColor(const QColor &color)
 {
-    d->textColor = color;
+    d_ptr->textColor = color;
     update();
 }
 
-QColor DashBoardWidget::textColor() const
+auto DashBoardWidget::textColor() const -> QColor
 {
-    return d->textColor;
+    return d_ptr->textColor;
 }
 
 void DashBoardWidget::setBackgroundColor(const QColor &color)
 {
-    d->backgroundColor = color;
+    d_ptr->backgroundColor = color;
     update();
 }
 
-QColor DashBoardWidget::backgroundColor() const
+auto DashBoardWidget::backgroundColor() const -> QColor
 {
-    return d->backgroundColor;
+    return d_ptr->backgroundColor;
 }
 
 void DashBoardWidget::paintEvent(QPaintEvent *event)
@@ -197,9 +196,9 @@ void DashBoardWidget::paintEvent(QPaintEvent *event)
     painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 
     // 背景
-    if (d->backgroundColor != Qt::transparent) {
+    if (d_ptr->backgroundColor != Qt::transparent) {
         painter.setPen(Qt::NoPen);
-        painter.fillRect(rect(), d->backgroundColor);
+        painter.fillRect(rect(), d_ptr->backgroundColor);
     }
 
     // 平移中心
@@ -223,27 +222,26 @@ void DashBoardWidget::paintEvent(QPaintEvent *event)
 
 void DashBoardWidget::onStartAnimation(const double value)
 {
-    if(value < d->minValue
-        || value > d->maxValue
-        || value == d->value)
+    if (value < d_ptr->minValue || value > d_ptr->maxValue || value == d_ptr->value) {
         return;
-
-    int start = d->value;
+}
+    
+    int start = d_ptr->value;
     int end = value;
-
-    d->animation->setStartValue(start);
-    d->animation->setEndValue(end);
-    d->animation->start();
+    
+    d_ptr->animation->setStartValue(start);
+    d_ptr->animation->setEndValue(end);
+    d_ptr->animation->start();
 }
 
-double DashBoardWidget::value() const
+auto DashBoardWidget::value() const -> double
 {
-    return d->value;
+    return d_ptr->value;
 }
 
 void DashBoardWidget::setValue(const double value)
 {
-    d->value = value;
+    d_ptr->value = value;
     update();
 }
 
@@ -258,27 +256,27 @@ void DashBoardWidget::drawArc(QPainter *painter)
     pen.setCapStyle(Qt::FlatCap);
 
     // 圆弧背景
-    double angle = d->endAngle - d->startAngle;
-    pen.setColor(d->arcColor);
+    double angle = d_ptr->endAngle - d_ptr->startAngle;
+    pen.setColor(d_ptr->arcColor);
     painter->setPen(pen);
-    painter->drawArc(rect, d->startAngle * 16, angle * 16);
+    painter->drawArc(rect, d_ptr->startAngle * 16, angle * 16);
 }
 
 void DashBoardWidget::drawScale(QPainter *painter)
 {
     painter->save();
-
-    painter->rotate(270 - d->endAngle);
-    int steps = (d->scaleMajor * d->scaleMinor);
-    double angleStep = (d->endAngle - d->startAngle) / steps;
+    
+    painter->rotate(270 - d_ptr->endAngle);
+    int steps = (d_ptr->scaleMajor * d_ptr->scaleMinor);
+    double angleStep = (d_ptr->endAngle - d_ptr->startAngle) / steps;
     double min = qMin(width(), height());
     double radius = min / 3;
-
-    QPen pen(d->scaleColor);
+    
+    QPen pen(d_ptr->scaleColor);
     pen.setCapStyle(Qt::RoundCap);
 
     for (int i = 0; i <= steps; i++) {
-        if (i % d->scaleMinor == 0) {
+        if (i % d_ptr->scaleMinor == 0) {
             pen.setWidthF(1.5);
             painter->setPen(pen);
             painter->drawLine(0, radius - 8, 0, radius + 5);
@@ -297,20 +295,20 @@ void DashBoardWidget::drawScale(QPainter *painter)
 void DashBoardWidget::drawScaleNum(QPainter *painter)
 {
     painter->save();
-    painter->setPen(d->scaleColor);
+    painter->setPen(d_ptr->scaleColor);
     double min = qMin(width(), height());
     double radius = min / 2.4;
     QFont font("Microsoft YaHei", min / 25);
     painter->setFont(font);
-
-    double startRad = d->endAngle * (M_PI / 180);
-    double deltaRad = (d->endAngle - d->startAngle) * (M_PI / 180) / d->scaleMajor;
+    
+    double startRad = d_ptr->endAngle * (M_PI / 180);
+    double deltaRad = (d_ptr->endAngle - d_ptr->startAngle) * (M_PI / 180) / d_ptr->scaleMajor;
 
     QFontMetrics fontMetrics(font);
-    for (int i = 0; i <= d->scaleMajor; i++) {
+    for (int i = 0; i <= d_ptr->scaleMajor; i++) {
         double sina = qSin(startRad - i * deltaRad);
         double cosa = qCos(startRad - i * deltaRad);
-        double value = 1.0 * i * ((d->maxValue - d->minValue) / d->scaleMajor) + d->minValue;
+        double value = 1.0 * i * ((d_ptr->maxValue - d_ptr->minValue) / d_ptr->scaleMajor) + d_ptr->minValue;
 
         QString strValue = QString("%1").arg(value, 0, 'f', 2);
         double textWidth = fontMetrics.horizontalAdvance(strValue);
@@ -327,16 +325,16 @@ void DashBoardWidget::drawPointer(QPainter *painter)
 {
     painter->save();
     painter->setPen(Qt::NoPen);
-    painter->setBrush(d->pointerColor);
+    painter->setBrush(d_ptr->pointerColor);
 
     double radius = qMin(width(), height()) / 3.0;
 
     QPolygonF pts;
-    pts << QPointF(-5, 0) << QPointF(0, -8)
-        << QPointF(5, 0) << QPointF(0, radius);
-
-    painter->rotate(270 - d->endAngle);
-    double degRotate = (d->endAngle - d->startAngle) / (d->maxValue - d->minValue) * (d->value - d->minValue);
+    pts << QPointF(-5, 0) << QPointF(0, -8) << QPointF(5, 0) << QPointF(0, radius);
+    
+    painter->rotate(270 - d_ptr->endAngle);
+    double degRotate = (d_ptr->endAngle - d_ptr->startAngle) / (d_ptr->maxValue - d_ptr->minValue)
+                       * (d_ptr->value - d_ptr->minValue);
     painter->rotate(degRotate);
     painter->drawConvexPolygon(pts);
 
@@ -346,22 +344,22 @@ void DashBoardWidget::drawPointer(QPainter *painter)
 void DashBoardWidget::drawValue(QPainter *painter)
 {
     painter->save();
-    painter->setPen(d->textColor);
+    painter->setPen(d_ptr->textColor);
 
     double min = qMin(width(), height());
     double radius = min / 2.0 - min / 4.8;
     QFont font("Microsoft YaHei", min / 25);
     painter->setFont(font);
-
-    QString strValue = QString("%1").arg(d->value, 0, 'f', 2);
-    strValue = QString("%1 %2").arg(strValue, d->unit);
+    
+    QString strValue = QString("%1").arg(d_ptr->value, 0, 'f', 2);
+    strValue = QString("%1 %2").arg(strValue, d_ptr->unit);
     QRectF valueRect(-radius, radius / 2.5, radius * 2, radius / 3.5);
     painter->drawText(valueRect, Qt::AlignCenter, strValue);
 
     QRectF textRect(-radius, radius / 1.5, radius * 2, radius / 2.5);
     //font.setPixelSize(12);
     painter->setFont(font);
-    painter->drawText(textRect, Qt::AlignCenter, d->text);
+    painter->drawText(textRect, Qt::AlignCenter, d_ptr->text);
 
     painter->restore();
 }

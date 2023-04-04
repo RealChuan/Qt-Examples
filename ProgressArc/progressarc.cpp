@@ -33,7 +33,7 @@ ProgressArc::ProgressArc(const QString &title, QWidget *parent)
     connect(this, &ProgressArc::valueChanged, this, &ProgressArc::onStartAnimation);
 }
 
-ProgressArc::~ProgressArc() {}
+ProgressArc::~ProgressArc() = default;
 
 void ProgressArc::setTitle(const QString &title)
 {
@@ -41,7 +41,7 @@ void ProgressArc::setTitle(const QString &title)
     update();
 }
 
-QString ProgressArc::title() const
+auto ProgressArc::title() const -> QString
 {
     return d_ptr->title;
 }
@@ -52,7 +52,7 @@ void ProgressArc::setPercent(const bool percent)
     update();
 }
 
-bool ProgressArc::percent() const
+auto ProgressArc::percent() const -> bool
 {
     return d_ptr->percent;
 }
@@ -63,7 +63,7 @@ void ProgressArc::setMin(const double min)
     update();
 }
 
-double ProgressArc::min() const
+auto ProgressArc::min() const -> double
 {
     return d_ptr->minValue;
 }
@@ -74,7 +74,7 @@ void ProgressArc::setmax(const double max)
     update();
 }
 
-double ProgressArc::max() const
+auto ProgressArc::max() const -> double
 {
     return d_ptr->maxValue;
 }
@@ -85,7 +85,7 @@ void ProgressArc::setStartAngle(const double startAngle)
     update();
 }
 
-double ProgressArc::startAngle() const
+auto ProgressArc::startAngle() const -> double
 {
     return d_ptr->startAngle;
 }
@@ -96,7 +96,7 @@ void ProgressArc::setEndAngle(const double endAngle)
     update();
 }
 
-double ProgressArc::endAngle() const
+auto ProgressArc::endAngle() const -> double
 {
     return d_ptr->endAngle;
 }
@@ -107,7 +107,7 @@ void ProgressArc::setArcColor(const QColor &color)
     update();
 }
 
-QColor ProgressArc::arcColor() const
+auto ProgressArc::arcColor() const -> QColor
 {
     return d_ptr->arcColor;
 }
@@ -118,7 +118,7 @@ void ProgressArc::setTextColor(const QColor &color)
     update();
 }
 
-QColor ProgressArc::textColor() const
+auto ProgressArc::textColor() const -> QColor
 {
     return d_ptr->textColor;
 }
@@ -129,7 +129,7 @@ void ProgressArc::setTitleColor(const QColor &color)
     update();
 }
 
-QColor ProgressArc::titleColor() const
+auto ProgressArc::titleColor() const -> QColor
 {
     return d_ptr->titleColor;
 }
@@ -140,7 +140,7 @@ void ProgressArc::setBaseColor(const QColor &color)
     update();
 }
 
-QColor ProgressArc::baseColor() const
+auto ProgressArc::baseColor() const -> QColor
 {
     return d_ptr->baseColor;
 }
@@ -151,19 +151,19 @@ void ProgressArc::setBackgroundColor(const QColor &color)
     update();
 }
 
-QColor ProgressArc::backgroundColor() const
+auto ProgressArc::backgroundColor() const -> QColor
 {
     return d_ptr->backgroundColor;
 }
 
-QSize ProgressArc::sizeHint() const
+auto ProgressArc::sizeHint() const -> QSize
 {
-    return QSize(200, 200);
+    return {200, 200};
 }
 
-QSize ProgressArc::minimumSizeHint() const
+auto ProgressArc::minimumSizeHint() const -> QSize
 {
-    return QSize(80, 80);
+    return {80, 80};
 }
 
 void ProgressArc::paintEvent(QPaintEvent *event)
@@ -190,8 +190,9 @@ void ProgressArc::paintEvent(QPaintEvent *event)
 
 void ProgressArc::onStartAnimation(const double value)
 {
-    if (value < d_ptr->minValue || value > d_ptr->maxValue || value == d_ptr->value)
+    if (value < d_ptr->minValue || value > d_ptr->maxValue || value == d_ptr->value) {
         return;
+}
 
     int start = d_ptr->value;
     int end = value;
@@ -201,7 +202,7 @@ void ProgressArc::onStartAnimation(const double value)
     d_ptr->animation->start();
 }
 
-double ProgressArc::value() const
+auto ProgressArc::value() const -> double
 {
     return d_ptr->value;
 }

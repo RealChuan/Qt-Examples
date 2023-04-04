@@ -1,15 +1,17 @@
 #include "navigationprogressbar.h"
 
-#include <QPainter>
 #include <QDateTime>
 #include <QDebug>
+#include <QPainter>
 
-class NavigationProgressBarPrivate{
+class NavigationProgressBarPrivate
+{
 public:
-    NavigationProgressBarPrivate(QWidget *parent)
-        : owner(parent){
-        for(int i=0; i<maxStep; i++)
-            topInfo << QString("Step%1").arg(i+1);
+    explicit NavigationProgressBarPrivate(QWidget *parent)
+        : owner(parent)
+    {
+        for (int i = 0; i < maxStep; i++)
+            topInfo << QString("Step%1").arg(i + 1);
     }
     QWidget *owner;
     QColor backgroundColor = QColor(80, 80, 80);
@@ -24,21 +26,18 @@ public:
 NavigationProgressBar::NavigationProgressBar(QWidget *parent)
     : QWidget(parent)
     , d(new NavigationProgressBarPrivate(this))
+{}
+
+NavigationProgressBar::~NavigationProgressBar() = default;
+
+auto NavigationProgressBar::sizeHint() const -> QSize
 {
+    return {500, 100};
 }
 
-NavigationProgressBar::~NavigationProgressBar()
+auto NavigationProgressBar::minimumSizeHint() const -> QSize
 {
-}
-
-QSize NavigationProgressBar::sizeHint() const
-{
-    return QSize(500, 100);
-}
-
-QSize NavigationProgressBar::minimumSizeHint() const
-{
-    return QSize(300, 75);
+    return {300, 75};
 }
 
 void NavigationProgressBar::setMessageList(const QStringList &list)
@@ -48,25 +47,26 @@ void NavigationProgressBar::setMessageList(const QStringList &list)
     update();
 }
 
-QStringList NavigationProgressBar::messageList() const
+auto NavigationProgressBar::messageList() const -> QStringList
 {
     return d->topInfo;
 }
 
 void NavigationProgressBar::setStep(const int step)
 {
-    if(d->step >= step || step > d->maxStep)
+    if (d->step >= step || step > d->maxStep) {
         return;
+}
 
     int s = step - d->step;
-    for(int i=0; i<s; i++)
+    for (int i = 0; i < s; i++)
         d->dateList.append(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss"));
     d->step = step;
     Q_ASSERT(d->step == d->dateList.size());
     update();
 }
 
-int NavigationProgressBar::step() const
+auto NavigationProgressBar::step() const -> int
 {
     return d->step;
 }
@@ -77,7 +77,7 @@ void NavigationProgressBar::setBackgroundColor(const QColor &color)
     update();
 }
 
-QColor NavigationProgressBar::backgroundColor() const
+auto NavigationProgressBar::backgroundColor() const -> QColor
 {
     return d->backgroundColor;
 }
@@ -88,7 +88,7 @@ void NavigationProgressBar::setCurrentBackgroundColor(const QColor &color)
     update();
 }
 
-QColor NavigationProgressBar::currentBackgroundColor() const
+auto NavigationProgressBar::currentBackgroundColor() const -> QColor
 {
     return d->currentBackgroundColor;
 }
@@ -99,7 +99,7 @@ void NavigationProgressBar::setForegroundColor(const QColor &color)
     update();
 }
 
-QColor NavigationProgressBar::foregroundColor() const
+auto NavigationProgressBar::foregroundColor() const -> QColor
 {
     return d->foregroundColor;
 }
@@ -131,7 +131,7 @@ void NavigationProgressBar::drawBackground(QPainter *painter, const bool ok)
     int step = d->maxStep;
     int penWidth = radius / 4;
     QColor backgroundColor = d->backgroundColor;
-    if(ok){
+    if (ok) {
         step = d->step;
         penWidth = radius / 8;
         backgroundColor = d->currentBackgroundColor;
@@ -149,8 +149,9 @@ void NavigationProgressBar::drawBackground(QPainter *painter, const bool ok)
         initX += w;
     }
 
-    if(ok && (d->step > 0) && (d->step < d->maxStep))
+    if (ok && (d->step > 0) && (d->step < d->maxStep)) {
         painter->drawLine(QPoint(initX, initY), QPoint(initX + w / 2, initY));
+}
 
     //逐个绘制圆
     initX = w / 2;
@@ -183,19 +184,19 @@ void NavigationProgressBar::drawText(QPainter *painter, const bool ok)
     double initX = 0;
     double initY = 0;
 
-    QColor color = ok? d->currentBackgroundColor: d->backgroundColor;
+    QColor color = ok ? d->currentBackgroundColor : d->backgroundColor;
     painter->setFont(QFont("Microsoft YaHei", h / 4));
     painter->setPen(color);
     painter->setBrush(Qt::NoBrush);
 
-    int step = ok ? d->step: d->maxStep;
+    int step = ok ? d->step : d->maxStep;
     for (int i = 0; i < step; i++) {
         QRect textRect(initX, initY, w, h);
         painter->drawText(textRect, Qt::AlignCenter, d->topInfo.at(i));
         initX += w;
     }
 
-    if(ok){
+    if (ok) {
         initX = 0;
         initY = h * 2;
         for (int i = 0; i < step; i++) {

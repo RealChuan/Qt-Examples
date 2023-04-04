@@ -11,13 +11,13 @@ class LogAsync : public QThread
 public:
     enum Orientation { Std = 1, File, StdAndFile };
 
-    static LogAsync *instance();
+    static auto instance() -> LogAsync *;
 
     void setOrientation(Orientation);
-    Orientation orientation();
+    auto orientation() -> Orientation;
 
     void setLogLevel(QtMsgType);
-    QtMsgType logLevel();
+    auto logLevel() -> QtMsgType;
 
     void startWork();
     void stop();
@@ -29,7 +29,7 @@ protected:
     void run() override;
 
 private:
-    LogAsync(QObject *parent = nullptr);
+    explicit LogAsync(QObject *parent = nullptr);
     ~LogAsync() override;
 
     static QMutex m_mutex;

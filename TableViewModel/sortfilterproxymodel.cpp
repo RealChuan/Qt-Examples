@@ -2,7 +2,7 @@
 
 #include <QDateTime>
 
-bool SortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
+auto SortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const -> bool
 {
     QVariant leftData = sourceModel()->data(left);
     QVariant rightData = sourceModel()->data(right);

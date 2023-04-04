@@ -3,7 +3,7 @@
 #include <QMenu>
 
 DropListWidget::DropListWidget(QWidget *parent)
-    :QListWidget(parent)
+    : QListWidget(parent)
 {
     setDragEnabled(true);
     setAcceptDrops(true);
@@ -13,14 +13,15 @@ DropListWidget::DropListWidget(QWidget *parent)
 
 void DropListWidget::setupUI()
 {
-    menu = new QMenu(this);
-    menu->addAction(tr("delete"), this, [this]{
+    m_menu = new QMenu(this);
+    m_menu->addAction(tr("delete"), this, [this] {
         removeItemWidget(currentItem());
         delete currentItem();
     });
-    connect(this, &DropListWidget::customContextMenuRequested, this, [this]{
-        if (!currentItem())
+    connect(this, &DropListWidget::customContextMenuRequested, this, [this] {
+        if (!currentItem()) {
             return;
-        menu->exec(QCursor::pos());
+        }
+        m_menu->exec(QCursor::pos());
     });
 }

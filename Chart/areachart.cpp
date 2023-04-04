@@ -4,10 +4,11 @@
 class AreaChart::AreaChartPrivate
 {
 public:
-    AreaChartPrivate(ChartView *parent)
-        :owner(parent){
-        areaSeries = new QAreaSeries(owner);
-        scatterSeries = new QScatterSeries(owner);
+    explicit AreaChartPrivate(ChartView *parent)
+        : q_ptr(parent)
+    {
+        areaSeries = new QAreaSeries(q_ptr);
+        scatterSeries = new QScatterSeries(q_ptr);
         scatterSeries->setMarkerSize(8);
 
         chart = new QChart;
@@ -18,7 +19,9 @@ public:
         chart->axes(Qt::Horizontal).first()->setRange(0, 100);
         chart->axes(Qt::Vertical).first()->setRange(0, 100);
     }
-    ChartView *owner;
+
+    ChartView *q_ptr;
+
     QChart *chart;
     QAreaSeries *areaSeries;
     QScatterSeries *scatterSeries;
@@ -31,9 +34,7 @@ AreaChart::AreaChart(QWidget *parent)
     setupUI();
 }
 
-AreaChart::~AreaChart()
-{
-}
+AreaChart::~AreaChart() = default;
 
 void AreaChart::setupUI()
 {
@@ -44,7 +45,7 @@ void AreaChart::setupUI()
     QLineSeries *upperSeries = new QLineSeries(this);
     QLineSeries *lowerSeries = new QLineSeries(this);
     upperSeries->replace(pointList);
-    for(int i=0; i<pointList.size(); i++){
+    for (int i = 0; i < pointList.size(); i++) {
         pointList[i].setY(0);
     }
     lowerSeries->replace(pointList);

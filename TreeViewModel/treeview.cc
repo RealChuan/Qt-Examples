@@ -12,7 +12,7 @@ TreeView::TreeView(QWidget *parent)
     buildConnect();
 }
 
-QModelIndexList TreeView::selectedIndexes() const
+auto TreeView::selectedIndexes() const -> QModelIndexList
 {
     QModelIndexList indexList(QTreeView::selectedIndexes());
     QModelIndexList list;
@@ -26,7 +26,7 @@ QModelIndexList TreeView::selectedIndexes() const
     return list;
 }
 
-QModelIndexList TreeView::allIndexes() const
+auto TreeView::allIndexes() const -> QModelIndexList
 {
     QModelIndexList list;
     QAbstractItemModel *model = this->model();
@@ -39,7 +39,7 @@ QModelIndexList TreeView::allIndexes() const
     return list;
 }
 
-int TreeView::pageSize()
+auto TreeView::pageSize() -> int
 {
     m_pageSize = height() / 50 + 2;
     return m_pageSize;

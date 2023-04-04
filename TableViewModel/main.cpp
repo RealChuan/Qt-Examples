@@ -1,21 +1,10 @@
 #include "mainwindow.h"
 
 #include <QApplication>
-#include <QFile>
 
-int main(int argc, char *argv[])
+auto main(int argc, char *argv[]) -> int
 {
     QApplication a(argc, argv);
-
-    // 套用了旧的样式，具体细节自己调整
-    //    const QString filePath("D:/Mine/CODE/Qt/Qt-App/resource/qss/base/Common.css");
-    //    if(QFile::exists(filePath)){
-    //        QFile file(filePath);
-    //        if(file.open(QFile::ReadOnly)){
-    //            qApp->setStyleSheet(file.readAll());
-    //            file.close();
-    //        }
-    //    }
 
     MainWindow w;
     w.show();

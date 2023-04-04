@@ -7,8 +7,9 @@
 // 消息处理函数
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    if (type < LogAsync::instance()->logLevel())
+    if (type < LogAsync::instance()->logLevel()) {
         return;
+}
 
     FILE *stdPrint = stdout;
     QString level;
@@ -78,7 +79,7 @@ struct LogAsyncPrivate
 
 QMutex LogAsync::m_mutex;
 
-LogAsync *LogAsync::instance()
+auto LogAsync::instance() -> LogAsync *
 {
     QMutexLocker locker(&m_mutex);
     static LogAsync log;
@@ -90,7 +91,7 @@ void LogAsync::setOrientation(LogAsync::Orientation orientation)
     d_ptr->orientation = orientation;
 }
 
-LogAsync::Orientation LogAsync::orientation()
+auto LogAsync::orientation() -> LogAsync::Orientation
 {
     return d_ptr->orientation;
 }
@@ -100,7 +101,7 @@ void LogAsync::setLogLevel(QtMsgType type)
     d_ptr->msgType = type;
 }
 
-QtMsgType LogAsync::logLevel()
+auto LogAsync::logLevel() -> QtMsgType
 {
     return d_ptr->msgType;
 }

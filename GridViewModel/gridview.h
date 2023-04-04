@@ -8,10 +8,12 @@
 class GridView : public QListView
 {
 public:
-    GridView(QWidget* parent = nullptr);
+    explicit GridView(QWidget *parent = nullptr);
 
-    void setImageVector(const ImageVector& imageVector)
-    { m_gridModel->setImageVector(imageVector); }
+    void setImageVector(const ImageVector &imageVector)
+    {
+        m_gridModel->setImageVector(imageVector);
+    }
 
 private slots:
     void onSelectChanged();

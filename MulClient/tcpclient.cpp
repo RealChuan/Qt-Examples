@@ -13,7 +13,7 @@ TcpClient::~TcpClient()
     qDebug() << "~TcpClient";
 }
 
-QString TcpClient::getInfo() const
+auto TcpClient::getInfo() const -> QString
 {
     QString info = peerName() + " " + peerAddress().toString()
             + " " + QString::number(peerPort()) + " ";

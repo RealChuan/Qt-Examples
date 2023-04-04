@@ -2,7 +2,8 @@
 
 #include <QtWidgets>
 
-struct Triangle{
+struct Triangle
+{
     int width = 10;
     int height = 10;
     BubbleWidget::Direction direct = BubbleWidget::Direction::Top;
@@ -12,17 +13,20 @@ class BubbleWidget::BubbleWidgetPrivate
 {
 public:
     BubbleWidgetPrivate(QWidget *parent)
-        : owner(parent){
-        shadowEffect = new QGraphicsDropShadowEffect(owner);
+        : q_ptr(parent)
+    {
+        shadowEffect = new QGraphicsDropShadowEffect(q_ptr);
         shadowEffect->setOffset(0, 0);
         shadowEffect->setColor(Qt::gray);
         shadowEffect->setBlurRadius(shadowWidth);
-        centralWidget = new QWidget(owner);
+        centralWidget = new QWidget(q_ptr);
 
         pen.setWidth(2);
     }
-    QWidget *owner;
-    QGraphicsDropShadowEffect* shadowEffect;
+
+    QWidget *q_ptr;
+
+    QGraphicsDropShadowEffect *shadowEffect;
     QWidget *centralWidget;
     Triangle triangle;
 
@@ -45,10 +49,7 @@ BubbleWidget::BubbleWidget(QWidget *parent)
     resize(200, 100);
 }
 
-BubbleWidget::~BubbleWidget()
-{
-
-}
+BubbleWidget::~BubbleWidget() {}
 
 void BubbleWidget::setPen(const QPen &pen)
 {
@@ -142,25 +143,28 @@ void BubbleWidget::paintEvent(QPaintEvent *)
     QPainterPath drawPath;
     QPolygon trianglePolygon;
     QRect rect;
-    switch (d_ptr->triangle.direct)
-    {
+    switch (d_ptr->triangle.direct) {
     case Top:
         trianglePolygon << QPoint(width() / 2, d_ptr->shadowWidth);
         trianglePolygon << QPoint(width() / 2 + d_ptr->triangle.width / 2,
                                   d_ptr->triangle.height + d_ptr->shadowWidth);
         trianglePolygon << QPoint(width() / 2 - d_ptr->triangle.width / 2,
                                   d_ptr->triangle.height + d_ptr->shadowWidth);
-        rect = QRect(d_ptr->shadowWidth, d_ptr->triangle.height + d_ptr->shadowWidth,
+        rect = QRect(d_ptr->shadowWidth,
+                     d_ptr->triangle.height + d_ptr->shadowWidth,
                      width() - d_ptr->shadowWidth * 2,
                      height() - d_ptr->shadowWidth * 2 - d_ptr->triangle.height);
         drawPath.addRoundedRect(rect, d_ptr->borderRadius, d_ptr->borderRadius);
         break;
     case Left:
-        trianglePolygon << QPoint(d_ptr->shadowWidth, d_ptr->triangle.height + d_ptr->shadowWidth + d_ptr->shadowWidth);
-        trianglePolygon << QPoint(d_ptr->shadowWidth + d_ptr->triangle.width, d_ptr->shadowWidth + d_ptr->shadowWidth);
+        trianglePolygon << QPoint(d_ptr->shadowWidth,
+                                  d_ptr->triangle.height + d_ptr->shadowWidth + d_ptr->shadowWidth);
+        trianglePolygon << QPoint(d_ptr->shadowWidth + d_ptr->triangle.width,
+                                  d_ptr->shadowWidth + d_ptr->shadowWidth);
         trianglePolygon << QPoint(d_ptr->shadowWidth + d_ptr->triangle.width,
                                   d_ptr->triangle.height + d_ptr->shadowWidth + d_ptr->shadowWidth);
-        rect = QRect(d_ptr->shadowWidth + d_ptr->triangle.width, d_ptr->shadowWidth,
+        rect = QRect(d_ptr->shadowWidth + d_ptr->triangle.width,
+                     d_ptr->shadowWidth,
                      width() - d_ptr->shadowWidth * 2 - d_ptr->triangle.width,
                      height() - d_ptr->shadowWidth * 2);
         drawPath.addRoundedRect(rect, d_ptr->borderRadius, d_ptr->borderRadius);
@@ -172,7 +176,8 @@ void BubbleWidget::paintEvent(QPaintEvent *)
                                   d_ptr->triangle.height + d_ptr->shadowWidth + d_ptr->shadowWidth);
         trianglePolygon << QPoint(width() - d_ptr->shadowWidth,
                                   d_ptr->triangle.height + d_ptr->shadowWidth + d_ptr->shadowWidth);
-        rect = QRect(d_ptr->shadowWidth, d_ptr->shadowWidth,
+        rect = QRect(d_ptr->shadowWidth,
+                     d_ptr->shadowWidth,
                      width() - d_ptr->shadowWidth * 2 - d_ptr->triangle.width,
                      height() - d_ptr->shadowWidth * 2);
         drawPath.addRoundedRect(rect, d_ptr->borderRadius, d_ptr->borderRadius);
@@ -184,7 +189,9 @@ void BubbleWidget::paintEvent(QPaintEvent *)
                                   height() - d_ptr->shadowWidth - d_ptr->triangle.height);
         trianglePolygon << QPoint(width() / 2 - d_ptr->triangle.width / 2,
                                   height() - d_ptr->shadowWidth - d_ptr->triangle.height);
-        rect = QRect(d_ptr->shadowWidth, d_ptr->shadowWidth, width() - d_ptr->shadowWidth * 2,
+        rect = QRect(d_ptr->shadowWidth,
+                     d_ptr->shadowWidth,
+                     width() - d_ptr->shadowWidth * 2,
                      height() - d_ptr->shadowWidth * 2 - d_ptr->triangle.height);
         drawPath.addRoundedRect(rect, d_ptr->borderRadius, d_ptr->borderRadius);
         break;
@@ -192,8 +199,6 @@ void BubbleWidget::paintEvent(QPaintEvent *)
     drawPath.addPolygon(trianglePolygon);
     drawPath = drawPath.simplified();
     painter.drawPath(drawPath);
-
-
 
     painter.setFont(QFont("Microsoft YaHei", 11, 500));
     rect = rect.adjusted(5, 5, -5, -5);

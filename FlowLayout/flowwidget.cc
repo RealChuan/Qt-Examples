@@ -34,12 +34,12 @@ class FlowWidget::FlowWidgetPrivate
 {
 public:
     FlowWidgetPrivate(QWidget *parent)
-        : owner(parent)
+        : q_ptr(parent)
     {
-        flowLayout = new FlowLayout(owner, 9, 5, 5);
+        flowLayout = new FlowLayout(q_ptr, 9, 5, 5);
     }
 
-    QWidget *owner;
+    QWidget *q_ptr;
 
     FlowLayout *flowLayout;
 };

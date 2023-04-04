@@ -3,7 +3,6 @@
 
 #include <QWidget>
 
-class ClockWidgetPrivate;
 class ClockWidget : public QWidget
 {
     Q_OBJECT
@@ -15,28 +14,28 @@ class ClockWidget : public QWidget
     Q_PROPERTY(QColor secondColor READ secondColor WRITE setSecondColor)
 public:
     explicit ClockWidget(QWidget *parent = nullptr);
-    ~ClockWidget();
+    ~ClockWidget() override;
 
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
+    [[nodiscard]] auto sizeHint() const -> QSize override;
+    [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
     void setBorderColor(const QColor &color);
-    QColor borderColor() const;
+    [[nodiscard]] auto borderColor() const -> QColor;
 
     void setBackgroundColor(const QColor &color);
-    QColor backgroundColor() const;
+    [[nodiscard]] auto backgroundColor() const -> QColor;
 
     void setForegroundColor(const QColor &color);
-    QColor foregroundColor() const;
+    [[nodiscard]] auto foregroundColor() const -> QColor;
 
     void setHourColor(const QColor &color);
-    QColor hourColor() const;
+    [[nodiscard]] auto hourColor() const -> QColor;
 
     void setMinuteColor(const QColor &color);
-    QColor minuteColor() const;
+    [[nodiscard]] auto minuteColor() const -> QColor;
 
     void setSecondColor(const QColor &color);
-    QColor secondColor() const;
+    [[nodiscard]] auto secondColor() const -> QColor;
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -47,14 +46,15 @@ private slots:
 private:
     void drawBorder(QPainter *painter);
     void drawBackground(QPainter *painter);
-    void drawScale(QPainter *painter, const double linew);
+    void drawScale(QPainter *painter, double linew);
     void drawScaleNum(QPainter *painter);
     void drawHour(QPainter *painter);
     void drawMinute(QPainter *painter);
     void drawSecond(QPainter *painter);
     void drawDot(QPainter *painter);
 
-    QScopedPointer<ClockWidgetPrivate> d;
+    class ClockWidgetPrivate;
+    QScopedPointer<ClockWidgetPrivate> d_ptr;
 };
 
 #endif // CLOCKWIDGET_H

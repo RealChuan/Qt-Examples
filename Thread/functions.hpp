@@ -5,7 +5,7 @@
 
 namespace Functions {
 
-QString getCurrentThreadIDStr();
+auto getCurrentThreadIDStr() -> QString;
 
 }
 

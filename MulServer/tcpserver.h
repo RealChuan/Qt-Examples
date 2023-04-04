@@ -7,7 +7,7 @@ class TcpServer : public QTcpServer
 {
     Q_OBJECT
 public:
-    TcpServer(QObject *parent = nullptr);
+    explicit TcpServer(QObject *parent = nullptr);
     ~TcpServer() override;
 
 signals:

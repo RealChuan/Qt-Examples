@@ -1,40 +1,41 @@
 #include "piechart.h"
 #include "normalchartdata.h"
 
-class PieChartPrivate{
+class PieChart::PieChartPrivate
+{
 public:
-    PieChartPrivate(ChartView *parent)
-        :owner(parent){
-        pieSeries = new QPieSeries(owner);
+    explicit PieChartPrivate(ChartView *parent)
+        : q_ptr(parent)
+    {
+        pieSeries = new QPieSeries(q_ptr);
 
         chart = new QChart;
         chart->setAnimationOptions(QChart::AllAnimations);
         chart->setTitle(QObject::tr("Pie Chart"));
     }
-    ChartView *owner;
+
+    ChartView *q_ptr;
+
     QChart *chart;
     QPieSeries *pieSeries;
 };
 
 PieChart::PieChart(QWidget *parent)
-    :ChartView(parent)
-    ,d(new PieChartPrivate(this))
+    : ChartView(parent)
+    , d_ptr(new PieChartPrivate(this))
 {
     setupUI();
 }
 
-PieChart::~PieChart()
-{
-    delete d;
-}
+PieChart::~PieChart() = default;
 
 void PieChart::setupUI()
 {
     setRenderHint(QPainter::Antialiasing);
-    setChart(d->chart);
+    setChart(d_ptr->chart);
     PointList pointList = generateRandomDataPoints(5, 100);
     for(int i=0; i<pointList.size(); i++){
-        QPieSlice *slice = d->pieSeries->append(tr("P%1").arg(i), pointList[i].y());
+        QPieSlice *slice = d_ptr->pieSeries->append(tr("P%1").arg(i), pointList[i].y());
         if(i == 0){
             // Show the first slice exploded with label
             slice->setLabelVisible();
@@ -43,5 +44,5 @@ void PieChart::setupUI()
         }
     }
 
-    d->chart->addSeries(d->pieSeries);
+    d_ptr->chart->addSeries(d_ptr->pieSeries);
 }

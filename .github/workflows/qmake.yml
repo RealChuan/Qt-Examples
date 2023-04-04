@@ -3,16 +3,21 @@ name: QMake Build
 on: 
   push:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
-        - 'LICENSE'
+        - 'picture'
+        - '.clang-format'
         - '.gitignore'
-        - 'README.md'
-        - 'Scripts/**'
+        - 'LICENSE'
+        - 'README*'
+        - 'Scripts'
   pull_request:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
-        - 'LICENSE'
+        - 'picture'
+        - '.clang-format'
         - '.gitignore'
-        - 'README.md'
-        - 'Scripts/**'
+        - 'LICENSE'
+        - 'README*'
+        - 'Scripts'
+
 jobs:
   build:
     name: Build
@@ -25,7 +30,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
         qt_ver: 
-          - 6.4.0
+          - 6.5.0
 
     steps:
       - name: Install Qt
@@ -52,4 +57,4 @@ jobs:
         if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
         run: |
           qmake
-          make
+          make -j4

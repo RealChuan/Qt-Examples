@@ -3,16 +3,17 @@
 
 #include "chartview.h"
 
-class StackedBarChartPrivate;
 class StackedBarChart : public ChartView
 {
 public:
-    StackedBarChart(QWidget *parent = nullptr);
-    ~StackedBarChart();
+    explicit StackedBarChart(QWidget *parent = nullptr);
+    ~StackedBarChart() override;
 
 private:
     void setupUI();
-    StackedBarChartPrivate *d;
+
+    class StackedBarChartPrivate;
+    QScopedPointer<StackedBarChartPrivate> d_ptr;
 };
 
 #endif // STACKEDBARCHART_H

@@ -3,7 +3,6 @@
 
 #include <QWidget>
 
-struct DashBoardWidgetPrivate;
 class DashBoardWidget : public QWidget
 {
     Q_OBJECT
@@ -23,52 +22,52 @@ class DashBoardWidget : public QWidget
     Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
 public:
     explicit DashBoardWidget(QWidget *parent = nullptr);
-    ~DashBoardWidget();
+    ~DashBoardWidget() override;
 
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
+    [[nodiscard]] auto sizeHint() const -> QSize override;
+    [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
-    double value() const;
+    [[nodiscard]] auto value() const -> double;
     void setValue(const double value);
 
     void setMin(const double min);
-    double min() const;
+    [[nodiscard]] auto min() const -> double;
 
     void setmax(const double max);
-    double max() const;
+    [[nodiscard]] auto max() const -> double;
 
     void setStartAngle(const double startAngle);
-    double startAngle() const;
+    [[nodiscard]] auto startAngle() const -> double;
 
     void setEndAngle(const double endAngle);
-    double endAngle() const;
+    [[nodiscard]] auto endAngle() const -> double;
 
     void setScaleMajor(const int scale);
-    int scaleMajor() const;
+    [[nodiscard]] auto scaleMajor() const -> int;
 
     void setScaleMinor(const int scale);
-    int scaleMinor() const;
+    [[nodiscard]] auto scaleMinor() const -> int;
 
     void setUnit(const QString &unit);
-    QString unit() const;
+    [[nodiscard]] auto unit() const -> QString;
 
     void setText(const QString &text);
-    QString text() const;
+    [[nodiscard]] auto text() const -> QString;
 
     void setArcColor(const QColor &color);
-    QColor arcColor() const;
+    [[nodiscard]] auto arcColor() const -> QColor;
 
     void setScaleColor(const QColor &color);
-    QColor scaleColor() const;
+    [[nodiscard]] auto scaleColor() const -> QColor;
 
     void setPointerColor(const QColor &color);
-    QColor pointerColor() const;
+    [[nodiscard]] auto pointerColor() const -> QColor;
 
     void setTextColor(const QColor &color);
-    QColor textColor() const;
+    [[nodiscard]] auto textColor() const -> QColor;
 
     void setBackgroundColor(const QColor &color);
-    QColor backgroundColor() const;
+    [[nodiscard]] auto backgroundColor() const -> QColor;
 
 signals:
     void valueChanged(const double value);
@@ -86,7 +85,8 @@ private:
     void drawPointer(QPainter *painter);
     void drawValue(QPainter *painter);
 
-    QScopedPointer<DashBoardWidgetPrivate> d;
+    struct DashBoardWidgetPrivate;
+    QScopedPointer<DashBoardWidgetPrivate> d_ptr;
 };
 
 #endif // DASHBOARDWIDGET_H

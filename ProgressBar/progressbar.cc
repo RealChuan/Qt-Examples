@@ -30,16 +30,16 @@ ProgressBar::ProgressBar(QWidget *parent)
     connect(this, &ProgressBar::valueChanged, this, &ProgressBar::onStartAnimation);
 }
 
-ProgressBar::~ProgressBar() {}
+ProgressBar::~ProgressBar() = default;
 
-QSize ProgressBar::sizeHint() const
+auto ProgressBar::sizeHint() const -> QSize
 {
-    return QSize(165, 15);
+    return {165, 15};
 }
 
-QSize ProgressBar::minimumSizeHint() const
+auto ProgressBar::minimumSizeHint() const -> QSize
 {
-    return QSize(100, 15);
+    return {100, 15};
 }
 
 void ProgressBar::setValue(const double value)
@@ -48,7 +48,7 @@ void ProgressBar::setValue(const double value)
     update();
 }
 
-double ProgressBar::value() const
+auto ProgressBar::value() const -> double
 {
     return d_ptr->value;
 }
@@ -59,7 +59,7 @@ void ProgressBar::setPercent(const bool percent)
     update();
 }
 
-bool ProgressBar::percent() const
+auto ProgressBar::percent() const -> bool
 {
     return d_ptr->percent;
 }
@@ -70,7 +70,7 @@ void ProgressBar::setMin(const double min)
     update();
 }
 
-double ProgressBar::min() const
+auto ProgressBar::min() const -> double
 {
     return d_ptr->minValue;
 }
@@ -81,7 +81,7 @@ void ProgressBar::setmax(const double max)
     update();
 }
 
-double ProgressBar::max() const
+auto ProgressBar::max() const -> double
 {
     return d_ptr->maxValue;
 }
@@ -92,7 +92,7 @@ void ProgressBar::setRadius(const double radius)
     update();
 }
 
-double ProgressBar::radius() const
+auto ProgressBar::radius() const -> double
 {
     return d_ptr->radius;
 }
@@ -103,7 +103,7 @@ void ProgressBar::setAutoRadius(bool autoRadius)
     update();
 }
 
-double ProgressBar::autoRadius() const
+auto ProgressBar::autoRadius() const -> double
 {
     return d_ptr->autoRadius;
 }
@@ -114,7 +114,7 @@ void ProgressBar::setChunkColor(const QColor &color)
     update();
 }
 
-QColor ProgressBar::chunkColor() const
+auto ProgressBar::chunkColor() const -> QColor
 {
     return d_ptr->chunkColor;
 }
@@ -125,7 +125,7 @@ void ProgressBar::setTextColor(const QColor &color)
     update();
 }
 
-QColor ProgressBar::textColor() const
+auto ProgressBar::textColor() const -> QColor
 {
     return d_ptr->textColor;
 }
@@ -136,7 +136,7 @@ void ProgressBar::setBaseColor(const QColor &color)
     update();
 }
 
-QColor ProgressBar::baseColor() const
+auto ProgressBar::baseColor() const -> QColor
 {
     return d_ptr->baseColor;
 }
@@ -147,15 +147,16 @@ void ProgressBar::setBackgroundColor(const QColor &color)
     update();
 }
 
-QColor ProgressBar::backgroundColor() const
+auto ProgressBar::backgroundColor() const -> QColor
 {
     return d_ptr->backgroundColor;
 }
 
 void ProgressBar::onStartAnimation(const double value)
 {
-    if (value < d_ptr->minValue || value > d_ptr->maxValue || value == d_ptr->value)
+    if (value < d_ptr->minValue || value > d_ptr->maxValue || value == d_ptr->value) {
         return;
+}
 
     int start = d_ptr->value;
     int end = value;

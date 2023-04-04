@@ -20,7 +20,7 @@ class Thread2 : public QThread
     Q_OBJECT
 public:
     using QThread::QThread;
-    ~Thread2();
+    ~Thread2() override;
 
 public slots:
     void onDo();
@@ -36,8 +36,8 @@ class Thread3 : public QObject
 {
     Q_OBJECT
 public:
-    Thread3(QObject *parent = nullptr);
-    ~Thread3();
+    explicit Thread3(QObject *parent = nullptr);
+    ~Thread3() override;
 
     void dooo();
 
@@ -53,6 +53,6 @@ void runThread4();
 
 void runThread5();
 
-QThread *runThread6();
+auto runThread6() -> QThread *;
 
 #endif // THREAD_HPP

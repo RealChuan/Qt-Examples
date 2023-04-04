@@ -13,7 +13,7 @@ protected:
     void resizeEvent(QResizeEvent *) override;
 
 private:
-    QChartView *view;
+    QChartView *m_view;
     QGraphicsScene *m_scene;
 };
 

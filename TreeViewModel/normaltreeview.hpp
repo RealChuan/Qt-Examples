@@ -16,11 +16,15 @@ public:
 
     void setDatas(const QFileInfoList &fileInfos, bool depth = false);
 
-    int rowCount(const QModelIndex &idx = QModelIndex()) const override;
+    [[nodiscard]] auto rowCount(const QModelIndex &idx = QModelIndex()) const -> int override;
 
 protected:
-    int columnCount(const QModelIndex &idx) const override { return m_headerList.size(); }
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
+    [[nodiscard]] auto columnCount(const QModelIndex &idx) const -> int override
+    {
+        return m_headerList.size();
+    }
+    [[nodiscard]] auto headerData(int section, Qt::Orientation orientation, int role) const
+        -> QVariant override;
 
 private:
     QStringList m_headerList;
@@ -31,7 +35,7 @@ class NormalTreeView : public TreeView
     Q_OBJECT
 public:
     explicit NormalTreeView(QWidget *parent = nullptr);
-    ~NormalTreeView();
+    ~NormalTreeView() override;
 
     void setDatas(const QFileInfoList &fileInfos);
 

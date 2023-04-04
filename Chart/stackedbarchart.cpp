@@ -1,13 +1,15 @@
 #include "stackedbarchart.h"
 #include "normalchartdata.h"
 
-class StackedBarChartPrivate{
+class StackedBarChart::StackedBarChartPrivate
+{
 public:
-    StackedBarChartPrivate(ChartView *parent)
-        :owner(parent){
-        stackedBarSeries = new QStackedBarSeries(owner);
+    explicit StackedBarChartPrivate(ChartView *parent)
+        : q_ptr(parent)
+    {
+        stackedBarSeries = new QStackedBarSeries(q_ptr);
         PointList pointList = generateRandomDataPoints(5, 101);
-        QBarSet *set = new QBarSet("Bar set", owner);
+        QBarSet *set = new QBarSet("Bar set", q_ptr);
         foreach(const QPointF& p, pointList)
             *set << p.y();
         stackedBarSeries->append(set);  //  先添加点集，不然x轴为空
@@ -20,24 +22,23 @@ public:
         chart->axes(Qt::Horizontal).first()->setRange(0, 100);
         chart->axes(Qt::Vertical).first()->setRange(0, 100);
     }
-    ChartView *owner;
+
+    ChartView *q_ptr;
+
     QChart *chart;
     QStackedBarSeries *stackedBarSeries;
 };
 
 StackedBarChart::StackedBarChart(QWidget *parent)
-    :ChartView(parent)
-    ,d(new StackedBarChartPrivate(this))
+    : ChartView(parent)
+    , d_ptr(new StackedBarChartPrivate(this))
 {
     setupUI();
 }
 
-StackedBarChart::~StackedBarChart()
-{
-    delete d;
-}
+StackedBarChart::~StackedBarChart() = default;
 
 void StackedBarChart::setupUI()
 {
-    setChart(d->chart);
+    setChart(d_ptr->chart);
 }

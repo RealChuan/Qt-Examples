@@ -1,6 +1,6 @@
 #include "fileinfo.hpp"
 
-QString bytesToString(qint64 bytes)
+auto bytesToString(qint64 bytes) -> QString
 {
     static const double KB = 1024 * 1.0;
     static const double MB = KB * 1024;

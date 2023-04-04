@@ -7,7 +7,7 @@ class DateTimeChart : public ChartView
 {
 public:
     explicit DateTimeChart(QWidget *parent = nullptr);
-    ~DateTimeChart();
+    ~DateTimeChart() override;
 
 private:
     void setupUI();

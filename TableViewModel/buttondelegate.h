@@ -6,16 +6,18 @@
 class ButtonDelegate : public QStyledItemDelegate
 {
 public:
-    ButtonDelegate(QObject* parent = nullptr);
+    explicit ButtonDelegate(QObject *parent = nullptr);
+    ~ButtonDelegate() override;
 
     void paint(QPainter *painter,
                const QStyleOptionViewItem &option,
                const QModelIndex &index) const override;
 
 protected:
-    bool editorEvent(QEvent *event, QAbstractItemModel *model,
+    auto editorEvent(QEvent *event,
+                     QAbstractItemModel *model,
                      const QStyleOptionViewItem &option,
-                     const QModelIndex &index) override;
+                     const QModelIndex &index) -> bool override;
 
 private:
     QScopedPointer<QStyleOptionButton> m_buttonPtr;

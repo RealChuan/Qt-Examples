@@ -31,8 +31,8 @@
 #define CALLOUT_H
 
 #include <QtCharts/QChartGlobal>
-#include <QtWidgets/QGraphicsItem>
 #include <QtGui/QFont>
+#include <QtWidgets/QGraphicsItem>
 
 QT_BEGIN_NAMESPACE
 class QGraphicsSceneMouseEvent;
@@ -49,12 +49,12 @@ public:
     void setAnchor(QPointF point);
     void updateGeometry();
 
-    QRectF boundingRect() const;
-    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,QWidget *widget);
+    [[nodiscard]] auto boundingRect() const -> QRectF override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget) override;
 
 protected:
-    void mousePressEvent(QGraphicsSceneMouseEvent *event);
-    void mouseMoveEvent(QGraphicsSceneMouseEvent *event);
+    void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
+    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override;
 
 private:
     QString m_text;

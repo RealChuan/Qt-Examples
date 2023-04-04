@@ -3,9 +3,8 @@
 class DynamicChart::DynamicChartPrivate
 {
 public:
-    DynamicChartPrivate(ChartView *parent)
+    explicit DynamicChartPrivate(ChartView *parent)
         : owner(parent)
-        , timerId(0)
     {
         splineSeries = new QSplineSeries(owner);
         scatterSeries = new QScatterSeries(owner);
@@ -24,7 +23,7 @@ public:
     QChart *chart;
     QSplineSeries *splineSeries;
     QScatterSeries *scatterSeries;
-    int timerId;
+    int timerId = 0;
     QList<double> data;
 };
 
@@ -36,9 +35,7 @@ DynamicChart::DynamicChart(QWidget *parent)
     startChart();
 }
 
-DynamicChart::~DynamicChart()
-{
-}
+DynamicChart::~DynamicChart() = default;
 
 void DynamicChart::timerEvent(QTimerEvent *event)
 {
@@ -56,8 +53,9 @@ void DynamicChart::dataReceived(int value)
         d_ptr->data.removeFirst();
     }
 
-    if (!isVisible())
+    if (!isVisible()) {
         return;
+    }
 
     d_ptr->splineSeries->clear();
     d_ptr->scatterSeries->clear();

@@ -12,11 +12,12 @@
 
 const static int kRollPerSeconds_ = 60 * 60 * 24;
 
-bool generateDirectorys(const QString &directory)
+auto generateDirectorys(const QString &directory) -> bool
 {
     QDir sourceDir(directory);
-    if (sourceDir.exists())
+    if (sourceDir.exists()) {
         return true;
+}
 
     QString tempDir;
     QStringList directorys = directory.split("/");
@@ -25,8 +26,9 @@ bool generateDirectorys(const QString &directory)
         tempDir += path + "/";
 
         QDir dir(tempDir);
-        if (!dir.exists() && !dir.mkdir(tempDir))
+        if (!dir.exists() && !dir.mkdir(tempDir)) {
             return false;
+}
     }
 
     return true;
@@ -79,7 +81,7 @@ void FileUtil::onFlush()
     d_ptr->stream.flush();
 }
 
-QString FileUtil::getFileName(qint64 *now) const
+auto FileUtil::getFileName(qint64 *now) const -> QString
 {
     *now = QDateTime::currentSecsSinceEpoch();
     QString data = QDateTime::fromSecsSinceEpoch(*now).toString("yyyy-MM-dd-hh-mm-ss");
@@ -92,7 +94,7 @@ QString FileUtil::getFileName(qint64 *now) const
     return filename;
 }
 
-bool FileUtil::rollFile(int count)
+auto FileUtil::rollFile(int count) -> bool
 {
     qint64 now = 0;
     QString filename = getFileName(&now);

@@ -7,11 +7,12 @@ class DropListWidget : public QListWidget
 {
     Q_OBJECT
 public:
-    DropListWidget(QWidget *parent = nullptr);
+    explicit DropListWidget(QWidget *parent = nullptr);
 
 private:
     void setupUI();
-    QMenu *menu;
+
+    QMenu *m_menu;
 };
 
 #endif // DROPLISTWIDGET_H

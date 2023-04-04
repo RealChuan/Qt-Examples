@@ -12,35 +12,35 @@ class BatteryWidget : public QWidget
     Q_PROPERTY(QColor alarmColor READ alarmColor WRITE setAlarmColor)
 public:
     explicit BatteryWidget(QWidget *parent = nullptr);
-    ~BatteryWidget();
+    ~BatteryWidget() override;
 
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
+    [[nodiscard]] [[nodiscard]] auto sizeHint() const -> QSize override;
+    [[nodiscard]] [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
-    void setBorderColor(const QColor& color);
-    QColor borderColor() const;
+    void setBorderColor(const QColor &color);
+    [[nodiscard]] [[nodiscard]] auto borderColor() const -> QColor;
 
-    void setPowerColor(const QColor& color);
-    QColor powerColor() const;
+    void setPowerColor(const QColor &color);
+    [[nodiscard]] [[nodiscard]] auto powerColor() const -> QColor;
 
-    void setAlarmColor(const QColor& color);
-    QColor alarmColor() const;
+    void setAlarmColor(const QColor &color);
+    [[nodiscard]] [[nodiscard]] auto alarmColor() const -> QColor;
 
-    void setValue(const int value);
-    int value() const;
+    void setValue(int value);
+    [[nodiscard]] [[nodiscard]] auto value() const -> int;
 
 signals:
-    void valueChanged(const int value);
+    void valueChanged(int value);
 
 private slots:
-    void onStartAnimation(const int value);
+    void onStartAnimation(int value);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
 
 private:
-    void drawBorder(QPainter *painter, const QRectF &batteryRect, const double linew);
-    void drawPower(QPainter *painter, const QRectF &batteryRect, const double linew);
+    void drawBorder(QPainter *painter, const QRectF &batteryRect, double linew);
+    void drawPower(QPainter *painter, const QRectF &batteryRect, double linew);
     void drawValue(QPainter *painter, const QRectF &batteryRect);
     void drawHeader(QPainter *painter, const QRectF &batteryRect);
 

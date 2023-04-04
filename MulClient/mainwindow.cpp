@@ -6,7 +6,7 @@
 class MainWindowPrivate
 {
 public:
-    MainWindowPrivate(QWidget *owner)
+    explicit MainWindowPrivate(QWidget *owner)
         : owner(owner)
     {
         ipEdit = new QLineEdit(owner);

@@ -7,7 +7,7 @@
 
 class MainWindowPrivate{
 public:
-    MainWindowPrivate(QWidget *parent)
+    explicit MainWindowPrivate(QWidget *parent)
         :owner(parent){
         sqlTabView = new QTableView(owner);
         sqlTabView->setAlternatingRowColors(true);

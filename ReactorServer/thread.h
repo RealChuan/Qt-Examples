@@ -8,7 +8,7 @@ class Thread : public QThread
 {
     Q_OBJECT
 public:
-    Thread(QObject *parent = nullptr);
+    explicit Thread(QObject *parent = nullptr);
     ~Thread() override;
 
 signals:

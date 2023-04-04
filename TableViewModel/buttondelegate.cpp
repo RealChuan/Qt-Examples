@@ -1,17 +1,17 @@
 #include "buttondelegate.h"
-#include "student.h"
+#include "displaydata.hpp"
 
-#include <QPainter>
 #include <QApplication>
 #include <QMouseEvent>
+#include <QPainter>
 #include <QtWidgets>
 
 ButtonDelegate::ButtonDelegate(QObject *parent)
     : QStyledItemDelegate(parent)
     , m_buttonPtr(new QStyleOptionButton)
-{
-    
-}
+{}
+
+ButtonDelegate::~ButtonDelegate() {}
 
 void ButtonDelegate::paint(QPainter *painter,
                            const QStyleOptionViewItem &option,
@@ -43,32 +43,34 @@ bool ButtonDelegate::editorEvent(QEvent *event,
     int w = qMin(option.rect.width(), option.rect.height()) / 10.0;
 
     switch (event->type()) {
-    case QEvent::MouseButtonPress:{
-        QMouseEvent* mouseEvent =(QMouseEvent*)event;
+    case QEvent::MouseButtonPress: {
+        QMouseEvent *mouseEvent = (QMouseEvent *) event;
         if (option.rect.adjusted(w, w, -w, -w).contains(mouseEvent->pos())) {
             m_buttonPtr->state |= QStyle::State_Sunken;
         }
     } break;
-    case QEvent::MouseButtonRelease:{
-        QMouseEvent* mouseEvent =(QMouseEvent*)event;
+    case QEvent::MouseButtonRelease: {
+        QMouseEvent *mouseEvent = (QMouseEvent *) event;
         if (option.rect.adjusted(w, w, -w, -w).contains(mouseEvent->pos())) {
             m_buttonPtr->state &= (~QStyle::State_Sunken);
 
-            Student stu = model->data(index, Qt::UserRole).value<Student>();
-            QString details = tr("This Student id = %1, name = %2, age = %3, "
-                                 "gender = %4, achievement = %5")
-                                  .arg(stu.id())
-                                  .arg(stu.name())
-                                  .arg(stu.age())
-                                  .arg(stu.gender())
-                                  .arg(stu.achievement());
-            QDialog dialog;
-            QHBoxLayout *layout = new QHBoxLayout(&dialog);
-            layout->addWidget(new QLabel(details, &dialog));
-            dialog.exec();
+            auto data = model->data(index, Qt::UserRole).value<DisplayInfo>();
+            auto details = tr("Title: %1\nNumber: %2\nState: %3\nProcess: %4\nRichText: %5")
+                               .arg(data.title())
+                               .arg(data.number())
+                               .arg(data.state())
+                               .arg(data.process())
+                               .arg(data.richText() + "x");
+
+            auto w = qobject_cast<QWidget *>(model->parent());
+            if (w) {
+                QDialog dialog(w);
+                QHBoxLayout *layout = new QHBoxLayout(&dialog);
+                layout->addWidget(new QLabel(details, &dialog));
+                dialog.exec();
+            }
         }
-    }
-    break;
+    } break;
     default: break;
     }
     return true;

@@ -6,27 +6,32 @@
 
 #define WIDTH 80
 
-struct ImageInfo{
+struct ImageInfo
+{
     QImage image;
     QString color;
 };
 
-typedef QVector<ImageInfo*> ImageVector;
+using ImageVector = QVector<ImageInfo *>;
 
 class GridModel : public QAbstractListModel
 {
 public:
-    GridModel(QObject* parent = nullptr);
-    int rowCount(const QModelIndex & = QModelIndex()) const override
-    { return m_imageVector.size(); }
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+    explicit GridModel(QObject *parent = nullptr);
+    [[nodiscard]] auto rowCount(const QModelIndex & = QModelIndex()) const -> int override
+    {
+        return m_imageVector.size();
+    }
+    [[nodiscard]] auto data(const QModelIndex &index, int role = Qt::DisplayRole) const
+        -> QVariant override;
 
-    void setImageVector(const ImageVector& imageVector)
+    void setImageVector(const ImageVector &imageVector)
     {
         beginResetModel();
         m_imageVector = imageVector;
         endResetModel();
     }
+
 private:
     ImageVector m_imageVector;
 };

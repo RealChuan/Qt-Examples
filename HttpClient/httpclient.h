@@ -4,16 +4,15 @@
 #include <QNetworkReply>
 #include <QObject>
 
-class HttpClientPrivate;
 class HttpClient : public QObject
 {
     Q_OBJECT
 public:
-    typedef QHash<QString, QString> HttpHeaders;
-    typedef QMap<QString, QVariant> HttpParams;
+    using HttpHeaders = QHash<QString, QString>;
+    using HttpParams = QMap<QString, QVariant>;
 
     explicit HttpClient(QObject *parent = nullptr);
-    ~HttpClient();
+    ~HttpClient() override;
 
 public slots:
     void setHeaders(const HttpClient::HttpHeaders&);
@@ -47,14 +46,15 @@ private slots:
     void slotSslErrors(const QList<QSslError> &errors);
 
 private:
-    QHttpMultiPart *initMultiPart(const QString &url);
+    auto initMultiPart(const QString &url) -> QHttpMultiPart *;
     void execUpload(QHttpMultiPart*);
     void startRequest(const QString &url);
     void execRequest();
-    QNetworkRequest createRequest();
+    auto createRequest() -> QNetworkRequest;
     void buildConnect(QNetworkReply *reply);
 
-    QScopedPointer<HttpClientPrivate> d;
+    class HttpClientPrivate;
+    QScopedPointer<HttpClientPrivate> d_ptr;
 };
 
 #endif // HTTPCLIENT_H

@@ -1,6 +1,6 @@
 #include "validator.hpp"
 
-QValidator::State IntValidator::validate(QString &input, int &pos) const
+auto IntValidator::validate(QString &input, int &pos) const -> QValidator::State
 {
     const State originalRes = QIntValidator::validate(input, pos);
     if (originalRes != Intermediate || input.isEmpty()) {
@@ -18,7 +18,7 @@ QValidator::State IntValidator::validate(QString &input, int &pos) const
     return originalRes;
 }
 
-QValidator::State DoubleValidator::validate(QString &input, int &pos) const
+auto DoubleValidator::validate(QString &input, int &pos) const -> QValidator::State
 {
     const State originalRes = QDoubleValidator::validate(input, pos);
     if (originalRes != Intermediate || input.isEmpty()) {

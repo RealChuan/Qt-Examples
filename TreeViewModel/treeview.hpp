@@ -9,11 +9,11 @@ class TreeView : public QTreeView
 public:
     explicit TreeView(QWidget *parent = nullptr);
 
-    QModelIndexList selectedIndexes() const;
+    [[nodiscard]] auto selectedIndexes() const -> QModelIndexList override;
 
-    QModelIndexList allIndexes() const;
+    [[nodiscard]] auto allIndexes() const -> QModelIndexList;
 
-    virtual int pageSize();
+    virtual auto pageSize() -> int;
 
 signals:
     void selectedChanged();
@@ -27,7 +27,7 @@ private slots:
     void onFetchMore(int value);
 
 protected:
-    void showEvent(QShowEvent *event);
+    void showEvent(QShowEvent *event) override;
 
 protected:
     int m_pageSize = 20;

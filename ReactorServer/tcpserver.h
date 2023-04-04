@@ -10,7 +10,7 @@ class TcpServer : public QTcpServer
 {
     Q_OBJECT
 public:
-    TcpServer(int num = 10, QObject *parent = nullptr);
+    explicit TcpServer(int num = 10, QObject *parent = nullptr);
     ~TcpServer() override;
 
 signals:
@@ -23,7 +23,7 @@ protected:
 
 private:
     void createSocket(qintptr);
-    Thread* getNextThread();
+    auto getNextThread() -> Thread*;
 
     QScopedPointer<TcpServerPrivate> d;
 };

@@ -7,7 +7,7 @@ class DragListWidget : public QListWidget
 {
     Q_OBJECT
 public:
-    DragListWidget(QWidget *parent = nullptr);
+    explicit DragListWidget(QWidget *parent = nullptr);
 };
 
 #endif // DRAGLISTWIDGET_H

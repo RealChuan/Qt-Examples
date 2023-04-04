@@ -3,16 +3,17 @@
 
 #include "chartview.h"
 
-class PieChartPrivate;
 class PieChart : public ChartView
 {
 public:
-    PieChart(QWidget *parent = nullptr);
-    ~PieChart();
+    explicit PieChart(QWidget *parent = nullptr);
+    ~PieChart() override;
 
 private:
     void setupUI();
-    PieChartPrivate *d;
+
+    class PieChartPrivate;
+    QScopedPointer<PieChartPrivate> d_ptr;
 };
 
 #endif // PIECHART_H

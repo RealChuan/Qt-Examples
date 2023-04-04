@@ -3,15 +3,14 @@
 
 #include <QMainWindow>
 
-#include "student.h"
+#include "displaydata.hpp"
 
-class StudentsTable;
+class DisplayTableView;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
 public:
-    MainWindow(QWidget *parent = nullptr);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
 private slots:
@@ -21,7 +20,9 @@ private slots:
 private:
     void init();
     void setupUI();
-    StudentsTable *m_table;
-    QVector<Student> m_students;
+
+    DisplayTableView *m_table;
+    QVector<DisplayInfo> m_datas;
 };
+
 #endif // MAINWINDOW_H

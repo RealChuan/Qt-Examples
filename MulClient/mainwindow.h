@@ -8,13 +8,13 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    MainWindow(QWidget *parent = nullptr);
-    ~MainWindow();
+    explicit MainWindow(QWidget *parent = nullptr);
+    ~MainWindow() override;
 
 private slots:
     void onConnect(bool);
     void onWrite();
-    void removeOne(const int index);
+    void removeOne(int index);
 
 private:
     void warningBox(const QString&, QWidget*);

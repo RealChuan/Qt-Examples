@@ -20,26 +20,26 @@ TreeItem::~TreeItem()
     removeChildren();
 }
 
-TreeItem *TreeItem::childAt(int pos) const
+auto TreeItem::childAt(int pos) const -> TreeItem *
 {
     QTC_ASSERT(pos >= 0, return nullptr);
     return pos < childCount() ? *(begin() + pos) : nullptr;
 }
 
-int TreeItem::indexOf(const TreeItem *item) const
+auto TreeItem::indexOf(const TreeItem *item) const -> int
 {
     auto it = std::find(begin(), end(), item);
     return it == end() ? -1 : it - begin();
 }
 
-QVariant TreeItem::data(int column, int role) const
+auto TreeItem::data(int column, int role) const -> QVariant
 {
     Q_UNUSED(column)
     Q_UNUSED(role)
-    return QVariant();
+    return {};
 }
 
-bool TreeItem::setData(int column, const QVariant &data, int role)
+auto TreeItem::setData(int column, const QVariant &data, int role) -> bool
 {
     Q_UNUSED(column)
     Q_UNUSED(data)
@@ -47,18 +47,18 @@ bool TreeItem::setData(int column, const QVariant &data, int role)
     return false;
 }
 
-Qt::ItemFlags TreeItem::flags(int column) const
+auto TreeItem::flags(int column) const -> Qt::ItemFlags
 {
     Q_UNUSED(column)
     return Qt::ItemIsEnabled | Qt::ItemIsSelectable;
 }
 
-bool TreeItem::hasChildren() const
+auto TreeItem::hasChildren() const -> bool
 {
     return canFetchMore() || childCount() > 0;
 }
 
-bool TreeItem::canFetchMore() const
+auto TreeItem::canFetchMore() const -> bool
 {
     return false;
 }
@@ -177,17 +177,17 @@ void TreeItem::updateColumn(int column)
     }
 }
 
-TreeItem *TreeItem::firstChild() const
+auto TreeItem::firstChild() const -> TreeItem *
 {
     return childCount() == 0 ? nullptr : *begin();
 }
 
-TreeItem *TreeItem::lastChild() const
+auto TreeItem::lastChild() const -> TreeItem *
 {
     return childCount() == 0 ? nullptr : *(end() - 1);
 }
 
-int TreeItem::level() const
+auto TreeItem::level() const -> int
 {
     int l = 0;
     for (TreeItem *item = this->parent(); item; item = item->parent())
@@ -195,18 +195,18 @@ int TreeItem::level() const
     return l;
 }
 
-int TreeItem::indexInParent() const
+auto TreeItem::indexInParent() const -> int
 {
     return m_parent ? m_parent->indexOf(this) : -1;
 }
 
-QModelIndex TreeItem::index() const
+auto TreeItem::index() const -> QModelIndex
 {
     QTC_ASSERT(m_model, return QModelIndex());
     return m_model->indexForItem(this);
 }
 
-QAbstractItemModel *TreeItem::model() const
+auto TreeItem::model() const -> QAbstractItemModel *
 {
     return m_model;
 }
@@ -239,7 +239,7 @@ void TreeItem::forChildrenAtLevel(int level, const std::function<void(TreeItem *
     }
 }
 
-TreeItem *TreeItem::findChildAtLevel(int level, const std::function<bool(TreeItem *)> &pred) const
+auto TreeItem::findChildAtLevel(int level, const std::function<bool(TreeItem *)> &pred) const -> TreeItem *
 {
     QTC_ASSERT(level > 0, return nullptr);
     if (level == 1) {
@@ -255,7 +255,7 @@ TreeItem *TreeItem::findChildAtLevel(int level, const std::function<bool(TreeIte
     return nullptr;
 }
 
-TreeItem *TreeItem::findAnyChild(const std::function<bool(TreeItem *)> &pred) const
+auto TreeItem::findAnyChild(const std::function<bool(TreeItem *)> &pred) const -> TreeItem *
 {
     for (TreeItem *item : *this) {
         if (pred(item))
@@ -266,7 +266,7 @@ TreeItem *TreeItem::findAnyChild(const std::function<bool(TreeItem *)> &pred) co
     return nullptr;
 }
 
-TreeItem *TreeItem::reverseFindAnyChild(const std::function<bool(TreeItem *)> &pred) const
+auto TreeItem::reverseFindAnyChild(const std::function<bool(TreeItem *)> &pred) const -> TreeItem *
 {
     auto end = m_children.rend();
     for (auto it = m_children.rbegin(); it != end; ++it) {
@@ -355,28 +355,28 @@ BaseTreeModel::~BaseTreeModel()
     delete m_root;
 }
 
-QModelIndex BaseTreeModel::parent(const QModelIndex &idx) const
+auto BaseTreeModel::parent(const QModelIndex &idx) const -> QModelIndex
 {
     CHECK_INDEX(idx);
     if (!idx.isValid())
-        return QModelIndex();
+        return {};
 
     const TreeItem *item = itemForIndex(idx);
     QTC_ASSERT(item, return QModelIndex());
     TreeItem *parent = item->parent();
     if (!parent || parent == m_root)
-        return QModelIndex();
+        return {};
 
     const TreeItem *grandparent = parent->parent();
     if (!grandparent)
-        return QModelIndex();
+        return {};
 
     // This is on the performance-critical path for ItemViewFind.
     const int i = grandparent->m_children.indexOf(parent);
     return createIndex(i, 0, static_cast<void *>(parent));
 }
 
-QModelIndex BaseTreeModel::sibling(int row, int column, const QModelIndex &idx) const
+auto BaseTreeModel::sibling(int row, int column, const QModelIndex &idx) const -> QModelIndex
 {
     const TreeItem *item = itemForIndex(idx);
     QTC_ASSERT(item, return QModelIndex());
@@ -388,7 +388,7 @@ QModelIndex BaseTreeModel::sibling(int row, int column, const QModelIndex &idx) 
     return result;
 }
 
-int BaseTreeModel::rowCount(const QModelIndex &idx) const
+auto BaseTreeModel::rowCount(const QModelIndex &idx) const -> int
 {
     CHECK_INDEX(idx);
     if (!idx.isValid())
@@ -399,7 +399,7 @@ int BaseTreeModel::rowCount(const QModelIndex &idx) const
     return item ? item->childCount() : 0;
 }
 
-int BaseTreeModel::columnCount(const QModelIndex &idx) const
+auto BaseTreeModel::columnCount(const QModelIndex &idx) const -> int
 {
     CHECK_INDEX(idx);
     if (idx.column() > 0)
@@ -407,7 +407,7 @@ int BaseTreeModel::columnCount(const QModelIndex &idx) const
     return m_columnCount;
 }
 
-bool BaseTreeModel::setData(const QModelIndex &idx, const QVariant &data, int role)
+auto BaseTreeModel::setData(const QModelIndex &idx, const QVariant &data, int role) -> bool
 {
     TreeItem *item = itemForIndex(idx);
     bool res = item ? item->setData(idx.column(), data, role) : false;
@@ -417,22 +417,22 @@ bool BaseTreeModel::setData(const QModelIndex &idx, const QVariant &data, int ro
     return res;
 }
 
-QVariant BaseTreeModel::data(const QModelIndex &idx, int role) const
+auto BaseTreeModel::data(const QModelIndex &idx, int role) const -> QVariant
 {
     TreeItem *item = itemForIndex(idx);
     return item ? item->data(idx.column(), role) : QVariant();
 }
 
-QVariant BaseTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
+auto BaseTreeModel::headerData(int section, Qt::Orientation orientation, int role) const -> QVariant
 {
     if (orientation == Qt::Horizontal && role == Qt::DisplayRole && section < m_header.size())
         return m_header.at(section);
     if (role == Qt::ToolTipRole && section < m_headerToolTip.size())
         return m_headerToolTip.at(section);
-    return QVariant();
+    return {};
 }
 
-bool BaseTreeModel::hasChildren(const QModelIndex &idx) const
+auto BaseTreeModel::hasChildren(const QModelIndex &idx) const -> bool
 {
     if (idx.column() > 0)
         return false;
@@ -440,7 +440,7 @@ bool BaseTreeModel::hasChildren(const QModelIndex &idx) const
     return !item || item->hasChildren();
 }
 
-Qt::ItemFlags BaseTreeModel::flags(const QModelIndex &idx) const
+auto BaseTreeModel::flags(const QModelIndex &idx) const -> Qt::ItemFlags
 {
     if (!idx.isValid())
         return {};
@@ -448,7 +448,7 @@ Qt::ItemFlags BaseTreeModel::flags(const QModelIndex &idx) const
     return item ? item->flags(idx.column()) : (Qt::ItemIsEnabled | Qt::ItemIsSelectable);
 }
 
-bool BaseTreeModel::canFetchMore(const QModelIndex &idx) const
+auto BaseTreeModel::canFetchMore(const QModelIndex &idx) const -> bool
 {
     if (!idx.isValid())
         return false;
@@ -465,7 +465,7 @@ void BaseTreeModel::fetchMore(const QModelIndex &idx)
         item->fetchMore();
 }
 
-TreeItem *BaseTreeModel::rootItem() const
+auto BaseTreeModel::rootItem() const -> TreeItem *
 {
     return m_root;
 }
@@ -504,20 +504,20 @@ void BaseTreeModel::setHeaderToolTip(const QStringList &tips)
     m_headerToolTip = tips;
 }
 
-QModelIndex BaseTreeModel::index(int row, int column, const QModelIndex &parent) const
+auto BaseTreeModel::index(int row, int column, const QModelIndex &parent) const -> QModelIndex
 {
     CHECK_INDEX(parent);
     if (!hasIndex(row, column, parent))
-        return QModelIndex();
+        return {};
 
     TreeItem *item = itemForIndex(parent);
     QTC_ASSERT(item, return QModelIndex());
     if (row >= item->childCount())
-        return QModelIndex();
+        return {};
     return createIndex(row, column, static_cast<void *>(item->childAt(row)));
 }
 
-TreeItem *BaseTreeModel::itemForIndex(const QModelIndex &idx) const
+auto BaseTreeModel::itemForIndex(const QModelIndex &idx) const -> TreeItem *
 {
     CHECK_INDEX(idx);
     TreeItem *item = idx.isValid() ? static_cast<TreeItem *>(idx.internalPointer()) : m_root;
@@ -526,11 +526,11 @@ TreeItem *BaseTreeModel::itemForIndex(const QModelIndex &idx) const
     return item;
 }
 
-QModelIndex BaseTreeModel::indexForItem(const TreeItem *item) const
+auto BaseTreeModel::indexForItem(const TreeItem *item) const -> QModelIndex
 {
     QTC_ASSERT(item, return QModelIndex());
     if (item == m_root)
-        return QModelIndex();
+        return {};
 
     TreeItem *p = item->parent();
     QTC_ASSERT(p, return QModelIndex());
@@ -555,7 +555,7 @@ void BaseTreeModel::clear()
 \note The item is not destroyed, ownership is effectively passed to the caller.
                                          */
 
-TreeItem *BaseTreeModel::takeItem(TreeItem *item)
+auto BaseTreeModel::takeItem(TreeItem *item) -> TreeItem *
 {
 #if USE_MODEL_TEST
     (void) new ModelTest(this, this);

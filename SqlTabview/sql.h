@@ -11,8 +11,8 @@ class Sql : public QObject
 public:
     explicit Sql(QObject *parent = nullptr);
 
-    static bool searchSQLite(QWidget* parent = nullptr);
-    QSqlError createOrOpenSqlite();
+    static auto searchSQLite(QWidget* parent = nullptr) -> bool;
+    auto createOrOpenSqlite() -> QSqlError;
 
 signals:
 

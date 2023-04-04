@@ -19,7 +19,4 @@ MainWindow::MainWindow(QWidget *parent)
     resize(300, 160);
 }
 
-MainWindow::~MainWindow()
-{
-}
-
+MainWindow::~MainWindow() {}

@@ -2,13 +2,15 @@
 #include "httpclient.h"
 //#include "httpclientthread.h"
 
-#include <QtWidgets>
 #include <QtConcurrent>
+#include <QtWidgets>
 
-class MainWindowPrivate{
+class MainWindowPrivate
+{
 public:
-    MainWindowPrivate(QWidget *parent)
-        : owner(parent){
+    explicit MainWindowPrivate(QWidget *parent)
+        : owner(parent)
+    {
         urlEdit = new QLineEdit(owner);
         urlEdit->setText("http://www.baidu.com");
         urlEdit->setPlaceholderText(QObject::tr("http://url"));
@@ -37,14 +39,12 @@ MainWindow::MainWindow(QWidget *parent)
     buildConnect();
 }
 
-MainWindow::~MainWindow()
-{
-}
+MainWindow::~MainWindow() {}
 
 void MainWindow::onRequest()
 {
     QString url = d->urlEdit->text();
-    if(url.isEmpty() || !QUrl(url).isValid())
+    if (url.isEmpty() || !QUrl(url).isValid())
         return;
     d->requestButton->setEnabled(false);
     d->elapsedTimer.start();
@@ -66,18 +66,18 @@ void MainWindow::onAppendBytes(const QByteArray &bytes)
 
 void MainWindow::onAppendText()
 {
-    if(d->bytes.isEmpty())
+    if (d->bytes.isEmpty())
         return;
 
-    if(d->bytes.size() > 2000){
+    if (d->bytes.size() > 2000) {
         d->textEdit->append(d->bytes.left(2000));
         d->bytes.remove(0, 2000);
-    }else{
+    } else {
         d->textEdit->append(d->bytes);
         d->bytes.clear();
     }
 
-    if(d->bytes.isEmpty() && !d->requestButton->isChecked())
+    if (d->bytes.isEmpty() && !d->requestButton->isChecked())
         d->timer.stop();
 }
 
@@ -108,4 +108,3 @@ void MainWindow::buildConnect()
     //    connect(d->httpClientThread, &HttpClientThread::error, d->textEdit, &QPlainTextEdit::appendPlainText);
     //    connect(d->httpClientThread, &HttpClientThread::finish, this, &MainWindow::onFinish);
 }
-

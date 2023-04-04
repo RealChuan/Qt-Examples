@@ -7,7 +7,7 @@ class Accepter : public QThread
 {
     Q_OBJECT
 public:
-    Accepter(quint16, QObject *parent = nullptr);
+    explicit Accepter(quint16, QObject *parent = nullptr);
     ~Accepter() override;
 
 signals:

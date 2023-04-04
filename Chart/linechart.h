@@ -3,12 +3,11 @@
 
 #include "chartview.h"
 
-class LineChartPrivate;
 class LineChart : public ChartView
 {
     Q_OBJECT
 public:
-    LineChart(QWidget *parent = nullptr);
+    explicit LineChart(QWidget *parent = nullptr);
     ~LineChart() override;
 
 protected:
@@ -25,7 +24,9 @@ private slots:
 private:
     void setupUI();
     void buildConnect();
-    LineChartPrivate *d;
+
+    class LineChartPrivate;
+    QScopedPointer<LineChartPrivate> d_ptr;
 };
 
 #endif // LINECHART_H

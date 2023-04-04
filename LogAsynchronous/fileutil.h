@@ -9,7 +9,7 @@ class FileUtil : public QObject
     Q_OBJECT
 public:
     explicit FileUtil(qint64 days = 30, QObject *parent = nullptr);
-    ~FileUtil();
+    ~FileUtil() override;
 
 public slots:
     void onWrite(const QString &);
@@ -18,8 +18,8 @@ private slots:
     void onFlush();
 
 private:
-    QString getFileName(qint64 *now) const;
-    bool rollFile(int);
+    auto getFileName(qint64 *now) const -> QString;
+    auto rollFile(int) -> bool;
     void autoDelFile();
     void setTimer();
 

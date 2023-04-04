@@ -7,7 +7,7 @@ class AreaChart : public ChartView
 {
 public:
     explicit AreaChart(QWidget *parent = nullptr);
-    ~AreaChart();
+    ~AreaChart() override;
 
 private:
     void setupUI();

@@ -12,7 +12,8 @@ public:
     void paint(QPainter *painter,
                const QStyleOptionViewItem &option,
                const QModelIndex &index) const override;
-    QSize sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const override;
+    [[nodiscard]] auto sizeHint(const QStyleOptionViewItem &option, const QModelIndex &index) const
+        -> QSize override;
 
     Qt::TextElideMode textElideMode = Qt::ElideRight;
 };

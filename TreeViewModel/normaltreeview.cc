@@ -26,12 +26,13 @@ void NormalTreeModel::setDatas(const QFileInfoList &fileInfos, bool depth)
     emit layoutChanged();
 }
 
-int NormalTreeModel::rowCount(const QModelIndex &idx) const
+auto NormalTreeModel::rowCount(const QModelIndex &idx) const -> int
 {
     return BaseTreeModel::rowCount(idx);
 }
 
-QVariant NormalTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
+auto NormalTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
+    -> QVariant
 {
     switch (role) {
     case Qt::TextAlignmentRole: return Qt::AlignVCenter;
@@ -51,13 +52,13 @@ QVariant NormalTreeModel::headerData(int section, Qt::Orientation orientation, i
     } break;
     default: break;
     }
-    return QVariant();
+    return {};
 }
 
 class NormalTreeView::NormalTreeViewPrivate
 {
 public:
-    NormalTreeViewPrivate(QWidget *parent)
+    explicit NormalTreeViewPrivate(QWidget *parent)
         : owner(parent)
         , model(new NormalTreeModel(owner))
     {}
@@ -74,7 +75,7 @@ NormalTreeView::NormalTreeView(QWidget *parent)
     setupUI();
 }
 
-NormalTreeView::~NormalTreeView() {}
+NormalTreeView::~NormalTreeView() = default;
 
 void NormalTreeView::setDatas(const QFileInfoList &fileInfos)
 {

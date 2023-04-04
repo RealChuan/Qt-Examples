@@ -1,12 +1,11 @@
 #ifndef NORMALCHARTDATA_H
 #define NORMALCHARTDATA_H
 
-#include <QPointF>
 #include <QList>
-#include <QRandomGenerator>
+#include <QPointF>
 
-typedef QList<QPointF> PointList;
+using PointList = QList<QPointF>;
 
-PointList generateRandomDataPoints(int listCount, int valueMax);
+auto generateRandomDataPoints(int listCount, int valueMax) -> PointList;
 
 #endif // NORMALCHARTDATA_H

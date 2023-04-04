@@ -6,11 +6,13 @@
 class SortFilterProxyModel : public QSortFilterProxyModel
 {
 public:
-    SortFilterProxyModel(QObject *parent = nullptr)
-        : QSortFilterProxyModel(parent) {}
+    explicit SortFilterProxyModel(QObject *parent = nullptr)
+        : QSortFilterProxyModel(parent)
+    {}
 
 protected:
-    bool lessThan(const QModelIndex &left, const QModelIndex &right) const override;
+    [[nodiscard]] auto lessThan(const QModelIndex &left, const QModelIndex &right) const
+        -> bool override;
 };
 
 #endif // SORTFILTERPROXYMODEL_H

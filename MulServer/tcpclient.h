@@ -7,10 +7,10 @@ class TcpClient : public QTcpSocket
 {
     Q_OBJECT
 public:
-    TcpClient(QObject *parent = nullptr);
-    ~TcpClient();
+    explicit TcpClient(QObject *parent = nullptr);
+    ~TcpClient() override;
 
-    QString getInfo() const;
+    [[nodiscard]] auto getInfo() const -> QString;
 
 public slots:
     void onReadyRead();

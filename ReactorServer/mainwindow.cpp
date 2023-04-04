@@ -7,7 +7,7 @@
 class MainWindowPrivate
 {
 public:
-    MainWindowPrivate(QMainWindow* owner) : owner(owner){
+    explicit MainWindowPrivate(QMainWindow* owner) : owner(owner){
         ipBox = new QComboBox(owner);
         portEdit = new QLineEdit(owner);
         threadSpinBox = new QSpinBox(owner);

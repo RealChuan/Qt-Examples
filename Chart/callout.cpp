@@ -28,19 +28,18 @@
 ****************************************************************************/
 
 #include "callout.h"
-#include <QtGui/QPainter>
-#include <QtGui/QFontMetrics>
-#include <QtWidgets/QGraphicsSceneMouseEvent>
-#include <QtGui/QMouseEvent>
 #include <QtCharts/QChart>
+#include <QtGui/QFontMetrics>
+#include <QtGui/QMouseEvent>
+#include <QtGui/QPainter>
+#include <QtWidgets/QGraphicsSceneMouseEvent>
 
-Callout::Callout(QChart *chart):
-    QGraphicsItem(chart),
-    m_chart(chart)
-{
-}
+Callout::Callout(QChart *chart)
+    : QGraphicsItem(chart)
+    , m_chart(chart)
+{}
 
-QRectF Callout::boundingRect() const
+auto Callout::boundingRect() const -> QRectF
 {
     QPointF anchor = mapFromParent(m_chart->mapToPosition(m_anchor));
     QRectF rect;
@@ -76,16 +75,24 @@ void Callout::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, Q
         // get the nearest m_rect corner.
         qreal x = (onRight + rightOfCenter) * m_rect.width();
         qreal y = (below + belowCenter) * m_rect.height();
-        bool cornerCase = (above && onLeft) || (above && onRight) || (below && onLeft) || (below && onRight);
+        bool cornerCase = (above && onLeft) || (above && onRight) || (below && onLeft)
+                          || (below && onRight);
         bool vertical = qAbs(anchor.x() - x) > qAbs(anchor.y() - y);
 
-        qreal x1 = x + leftOfCenter * 10 - rightOfCenter * 20 + cornerCase * !vertical * (onLeft * 10 - onRight * 20);
-        qreal y1 = y + aboveCenter * 10 - belowCenter * 20 + cornerCase * vertical * (above * 10 - below * 20);;
+        qreal x1 = x + leftOfCenter * 10 - rightOfCenter * 20
+                   + cornerCase * !vertical * (onLeft * 10 - onRight * 20);
+        qreal y1 = y + aboveCenter * 10 - belowCenter * 20
+                   + cornerCase * vertical * (above * 10 - below * 20);
+        ;
         point1.setX(x1);
         point1.setY(y1);
 
-        qreal x2 = x + leftOfCenter * 20 - rightOfCenter * 10 + cornerCase * !vertical * (onLeft * 20 - onRight * 10);;
-        qreal y2 = y + aboveCenter * 20 - belowCenter * 10 + cornerCase * vertical * (above * 20 - below * 10);;
+        qreal x2 = x + leftOfCenter * 20 - rightOfCenter * 10
+                   + cornerCase * !vertical * (onLeft * 20 - onRight * 10);
+        ;
+        qreal y2 = y + aboveCenter * 20 - belowCenter * 10
+                   + cornerCase * vertical * (above * 20 - below * 10);
+        ;
         point2.setX(x2);
         point2.setY(y2);
 
@@ -106,7 +113,7 @@ void Callout::mousePressEvent(QGraphicsSceneMouseEvent *event)
 
 void Callout::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
 {
-    if (event->buttons() & Qt::LeftButton){
+    if (event->buttons() & Qt::LeftButton) {
         setPos(mapToParent(event->pos() - event->buttonDownPos(Qt::LeftButton)));
         event->setAccepted(true);
     } else {

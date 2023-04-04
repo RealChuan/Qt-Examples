@@ -25,9 +25,7 @@ BatteryWidget::BatteryWidget(QWidget *parent)
     connect(this, &BatteryWidget::valueChanged, this, &BatteryWidget::onStartAnimation);
 }
 
-BatteryWidget::~BatteryWidget()
-{
-}
+BatteryWidget::~BatteryWidget() = default;
 
 void BatteryWidget::setBorderColor(const QColor &color)
 {
@@ -35,7 +33,7 @@ void BatteryWidget::setBorderColor(const QColor &color)
     update();
 }
 
-QColor BatteryWidget::borderColor() const
+auto BatteryWidget::borderColor() const -> QColor
 {
     return d_ptr->borderColor;
 }
@@ -46,7 +44,7 @@ void BatteryWidget::setPowerColor(const QColor &color)
     update();
 }
 
-QColor BatteryWidget::powerColor() const
+auto BatteryWidget::powerColor() const -> QColor
 {
     return d_ptr->powerColor;
 }
@@ -57,19 +55,19 @@ void BatteryWidget::setAlarmColor(const QColor &color)
     update();
 }
 
-QColor BatteryWidget::alarmColor() const
+auto BatteryWidget::alarmColor() const -> QColor
 {
     return d_ptr->alarmColor;
 }
 
-QSize BatteryWidget::sizeHint() const
+auto BatteryWidget::sizeHint() const -> QSize
 {
-    return QSize(150, 80);
+    return {150, 80};
 }
 
-QSize BatteryWidget::minimumSizeHint() const
+auto BatteryWidget::minimumSizeHint() const -> QSize
 {
-    return QSize(80, 45);
+    return {80, 45};
 }
 
 void BatteryWidget::paintEvent(QPaintEvent *event)
@@ -99,8 +97,9 @@ void BatteryWidget::paintEvent(QPaintEvent *event)
 
 void BatteryWidget::onStartAnimation(const int value)
 {
-    if (value == d_ptr->value)
+    if (value == d_ptr->value) {
         return;
+    }
 
     int start = d_ptr->value;
     int end = value;
@@ -110,22 +109,20 @@ void BatteryWidget::onStartAnimation(const int value)
     d_ptr->animation->start();
 }
 
-int BatteryWidget::value() const
+auto BatteryWidget::value() const -> int
 {
     return d_ptr->value;
 }
 
-void BatteryWidget::setValue(const int value)
+void BatteryWidget::setValue(int value)
 {
-    if (value == d_ptr->value)
-        return;
+    Q_ASSERT(value >= 0 && value <= 100);
 
-    if(value < 0)
-        d_ptr->value = 0;
-    else if(value > 100)
-        d_ptr->value = 100;
-    else
-        d_ptr->value = value;
+    if (value == d_ptr->value) {
+        return;
+    }
+
+    d_ptr->value = value;
 
     update();
 }
@@ -144,8 +141,7 @@ void BatteryWidget::drawPower(QPainter *painter, const QRectF &batteryRect, cons
     double margin = qMin(width(), height()) / 50.0;
     margin = qMax(margin, linew);
     qreal unit = (batteryRect.width() - (margin * 2)) / 100;
-    QPointF topLeft(batteryRect.topLeft().x() + margin,
-                    batteryRect.topLeft().y() + margin);
+    QPointF topLeft(batteryRect.topLeft().x() + margin, batteryRect.topLeft().y() + margin);
     QPointF bottomRight(d_ptr->value * unit + margin + 5, batteryRect.bottomRight().y() - margin);
     QRectF rect(topLeft, bottomRight);
     double bgRadius = rect.height() / 30;

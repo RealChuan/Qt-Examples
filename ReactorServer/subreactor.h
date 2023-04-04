@@ -7,8 +7,8 @@ class SubReactor : public QObject
 {
     Q_OBJECT
 public:
-    SubReactor(QObject *parent = nullptr);
-    ~SubReactor();
+    explicit SubReactor(QObject *parent = nullptr);
+    ~SubReactor() override;
 
 signals:
     void message(const QString&);

@@ -7,31 +7,31 @@ class BubbleWidget : public QWidget
 {
     Q_OBJECT
 public:
-    enum Direction{ Left, Right, Top, Bottom };
+    enum Direction { Left, Right, Top, Bottom };
 
     explicit BubbleWidget(QWidget *parent = nullptr);
     ~BubbleWidget() override;
 
     void setPen(const QPen &pen);
-    QPen pen() const;
+    [[nodiscard]] auto pen() const -> QPen;
 
     void setBrush(const QBrush &brush);
-    QBrush brush() const;
+    [[nodiscard]] auto brush() const -> QBrush;
 
     void setShadowWidth(qint64 width);
-    qint64 shadowWidth();
+    auto shadowWidth() -> qint64;
 
     void setBorderRadius(qint64 radius);
-    qint64 borderRadius();
+    auto borderRadius() -> qint64;
 
     void setText(const QString &text);
-    QString text() const;
+    [[nodiscard]] auto text() const -> QString;
 
     // 设置小三角宽和高;
     void setTriangleInfo(int width, int height);
 
     void setDerection(Direction);
-    Direction direction();
+    auto direction() -> Direction;
 
     void exec();
 

@@ -9,7 +9,4 @@ MainWindow::MainWindow(QWidget *parent)
     resize(600, 480);
 }
 
-MainWindow::~MainWindow()
-{
-}
-
+MainWindow::~MainWindow() = default;

@@ -9,7 +9,7 @@ class CheckBoxHeaderView : public QHeaderView
 public:
     explicit CheckBoxHeaderView(Qt::Orientation orientation = Qt::Horizontal,
                                 QWidget *parent = nullptr);
-    ~CheckBoxHeaderView();
+    ~CheckBoxHeaderView() override;
 
     void setState(int state);
 

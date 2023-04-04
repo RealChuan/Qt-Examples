@@ -1,0 +1,60 @@
+---
+Checks:          '-*,clang-analyzer-*,readability-*,performance-*,modernize-*,bugprone-*,cert-,cppcoreguidelines-,portability-*,llvm-*,google-*'
+WarningsAsErrors: ''
+HeaderFilterRegex: '.'
+AnalyzeTemporaryDtors: false
+FormatStyle:     file
+User:            user
+CheckOptions:
+  - key:             readability-identifier-naming.AbstractClassCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.ClassCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.ClassConstantCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.ClassConstantPrefix
+    value:           'k'
+  - key:             readability-identifier-naming.ClassMemberCase
+    value:           lower_case
+  - key:             readability-identifier-naming.ClassMemberPrefix
+    value:           'm_'
+  - key:             readability-identifier-naming.ClassMethodCase
+    value:           camelBack
+  - key:             readability-identifier-naming.ConstexprVariableCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.ConstexprVariablePrefix
+    value:           'k'
+  - key:             readability-identifier-naming.EnumCase
+    value:           CamelCase
+  - key:             readability-identifier-naming.EnumConstantCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.EnumConstantPrefix
+    value:           ''
+  - key:             readability-identifier-naming.FunctionCase
+    value:           camelBack
+  - key:             readability-identifier-naming.FunctionParameterCase
+    value:           lower_case
+  - key:             readability-identifier-naming.GlobalConstantCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.GlobalConstantPrefix
+    value:           'k'
+  - key:             readability-identifier-naming.GlobalFunctionCase
+    value:           camelBack
+  - key:             readability-identifier-naming.GlobalVariableCase
+    value:           lower_case
+  - key:             readability-identifier-naming.GlobalVariablePrefix
+    value:           'g_'
+  - key:             readability-identifier-naming.InlineNamespaceCase
+    value:           lower_case
+  - key:             readability-identifier-naming.LocalConstantCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.LocalConstantPrefix
+    value:           'k'
+  - key:             readability-identifier-naming.LocalVariableCase
+    value:           lower_case
+  - key:             readability-identifier-naming.MacroDefinitionCase
+    value:           UPPER_CASE
+  - key:             readability-identifier-naming.NamespaceCase
+    value:           lower_case
+  - key:             bugprone-narrowing-conversions.IgnoreFloatingPointPrecisionLoss 
+    value:           'false'

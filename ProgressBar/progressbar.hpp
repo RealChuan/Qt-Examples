@@ -23,40 +23,40 @@ class ProgressBar : public QWidget
     Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
 public:
     explicit ProgressBar(QWidget *parent = nullptr);
-    ~ProgressBar();
+    ~ProgressBar() override;
 
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
+    [[nodiscard]] auto sizeHint() const -> QSize override;
+    [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
     void setValue(const double value);
-    double value() const;
+    [[nodiscard]] auto value() const -> double;
 
     void setPercent(const bool percent);
-    bool percent() const;
+    [[nodiscard]] auto percent() const -> bool;
 
     void setMin(const double min);
-    double min() const;
+    [[nodiscard]] auto min() const -> double;
 
     void setmax(const double max);
-    double max() const;
+    [[nodiscard]] auto max() const -> double;
 
     void setRadius(const double radius);
-    double radius() const;
+    [[nodiscard]] auto radius() const -> double;
 
     void setAutoRadius(bool autoRadius);
-    double autoRadius() const;
+    [[nodiscard]] auto autoRadius() const -> double;
 
     void setChunkColor(const QColor &color);
-    QColor chunkColor() const;
+    [[nodiscard]] auto chunkColor() const -> QColor;
 
     void setTextColor(const QColor &color);
-    QColor textColor() const;
+    [[nodiscard]] auto textColor() const -> QColor;
 
     void setBaseColor(const QColor &color);
-    QColor baseColor() const;
+    [[nodiscard]] auto baseColor() const -> QColor;
 
     void setBackgroundColor(const QColor &color);
-    QColor backgroundColor() const;
+    [[nodiscard]] auto backgroundColor() const -> QColor;
 
 signals:
     void valueChanged(const double value);

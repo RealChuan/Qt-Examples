@@ -6,10 +6,10 @@
 #include <QTextBlock>
 #include <QTextDocument>
 
-bool textElide(Qt::TextElideMode textElideMode,
+auto textElide(Qt::TextElideMode textElideMode,
                const QFont &font,
                QTextDocument &doc,
-               const QRect &rect)
+               const QRect &rect) -> bool
 {
     QFontMetrics fm(font);
     int dotWidth = fm.horizontalAdvance("...");
@@ -124,8 +124,8 @@ void RichTextItemDelegate::paint(QPainter *painter,
     painter->restore();
 }
 
-QSize RichTextItemDelegate::sizeHint(const QStyleOptionViewItem &option,
-                                     const QModelIndex &index) const
+auto RichTextItemDelegate::sizeHint(const QStyleOptionViewItem &option,
+                                    const QModelIndex &index) const -> QSize
 {
     QStyleOptionViewItem options = option;
     initStyleOption(&options, index);
@@ -133,5 +133,5 @@ QSize RichTextItemDelegate::sizeHint(const QStyleOptionViewItem &option,
     QTextDocument doc;
     doc.setHtml(options.text);
     doc.setTextWidth(options.rect.width());
-    return QSize(doc.idealWidth(), doc.size().height());
+    return {static_cast<int>(doc.idealWidth()), static_cast<int>(doc.size().height())};
 }

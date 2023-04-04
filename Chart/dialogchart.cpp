@@ -3,14 +3,14 @@
 #include <QHBoxLayout>
 
 DialogChart::DialogChart(QGraphicsScene *scene, QWidget *parent)
-    :QDialog(parent)
-    ,m_scene(scene)
+    : QDialog(parent)
+    , m_scene(scene)
 {
-    view = new QChartView;
-    view->setRenderHint(QPainter::Antialiasing);
-    view->setScene(scene);
+    m_view = new QChartView;
+    m_view->setRenderHint(QPainter::Antialiasing);
+    m_view->setScene(scene);
     QHBoxLayout *layout = new QHBoxLayout(this);
-    layout->addWidget(view);
+    layout->addWidget(m_view);
 }
 
 void DialogChart::resizeEvent(QResizeEvent *event)
@@ -18,8 +18,8 @@ void DialogChart::resizeEvent(QResizeEvent *event)
     qreal sx = event->size().width() / m_scene->width();
     qreal sy = event->size().height() / m_scene->height();
     qreal min = qMin(sx, sy);
-    view->scale(min, min);
-    view->show();
+    m_view->scale(min, min);
+    m_view->show();
 
     qDebug() << min;
     QDialog::resizeEvent(event);

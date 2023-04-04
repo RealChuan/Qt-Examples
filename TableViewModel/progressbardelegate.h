@@ -9,11 +9,11 @@ class ProgressBarDelegate : public QStyledItemDelegate
 {
 public:
     explicit ProgressBarDelegate(QObject *parent = nullptr);
-    ~ProgressBarDelegate();
+    ~ProgressBarDelegate() override;
 
     void paint(QPainter *painter,
                const QStyleOptionViewItem &option,
-               const QModelIndex &index) const;
+               const QModelIndex &index) const override;
 
 private:
     QScopedPointer<QProgressBar> m_progressBarPtr;

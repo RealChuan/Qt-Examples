@@ -43,15 +43,15 @@ public:
     TreeItem();
     virtual ~TreeItem();
 
-    virtual QVariant data(int column, int role) const;
-    virtual bool setData(int column, const QVariant &data, int role);
-    virtual Qt::ItemFlags flags(int column) const;
+    [[nodiscard]] virtual auto data(int column, int role) const -> QVariant;
+    virtual auto setData(int column, const QVariant &data, int role) -> bool;
+    [[nodiscard]] virtual Qt::ItemFlags flags(int column) const;
 
-    virtual bool hasChildren() const;
-    virtual bool canFetchMore() const;
+    [[nodiscard]] virtual auto hasChildren() const -> bool;
+    [[nodiscard]] virtual auto canFetchMore() const -> bool;
     virtual void fetchMore() {}
 
-    TreeItem *parent() const { return m_parent; }
+    [[nodiscard]] auto parent() const -> TreeItem * { return m_parent; }
 
     void prependChild(TreeItem *item);
     void appendChild(TreeItem *item);
@@ -67,31 +67,34 @@ public:
     void updateColumn(int column);
     void expand();
     void collapse();
-    TreeItem *firstChild() const;
-    TreeItem *lastChild() const;
-    int level() const;
+    [[nodiscard]] auto firstChild() const -> TreeItem *;
+    [[nodiscard]] auto lastChild() const -> TreeItem *;
+    [[nodiscard]] auto level() const -> int;
 
     using const_iterator = QVector<TreeItem *>::const_iterator;
     using value_type = TreeItem *;
-    int childCount() const { return m_children.size(); }
-    int indexInParent() const;
-    TreeItem *childAt(int index) const;
-    int indexOf(const TreeItem *item) const;
-    const_iterator begin() const { return m_children.begin(); }
-    const_iterator end() const { return m_children.end(); }
-    QModelIndex index() const;
-    QAbstractItemModel *model() const;
+    [[nodiscard]] auto childCount() const -> int { return m_children.size(); }
+    [[nodiscard]] auto indexInParent() const -> int;
+    [[nodiscard]] auto childAt(int index) const -> TreeItem *;
+    auto indexOf(const TreeItem *item) const -> int;
+    [[nodiscard]] const_iterator begin() const { return m_children.begin(); }
+    [[nodiscard]] const_iterator end() const { return m_children.end(); }
+    [[nodiscard]] auto index() const -> QModelIndex;
+    [[nodiscard]] auto model() const -> QAbstractItemModel *;
 
     void forSelectedChildren(const std::function<bool(TreeItem *)> &pred) const;
     void forAllChildren(const std::function<void(TreeItem *)> &pred) const;
-    TreeItem *findAnyChild(const std::function<bool(TreeItem *)> &pred) const;
+    [[nodiscard]] auto findAnyChild(const std::function<bool(TreeItem *)> &pred) const
+        -> TreeItem *;
     // like findAnyChild() but processes children in exact reverse order
     // (bottom to top, most inner children first)
-    TreeItem *reverseFindAnyChild(const std::function<bool(TreeItem *)> &pred) const;
+    [[nodiscard]] auto reverseFindAnyChild(const std::function<bool(TreeItem *)> &pred) const
+        -> TreeItem *;
 
     // Levels are 1-based: Child at Level 1 is an immediate child.
     void forChildrenAtLevel(int level, const std::function<void(TreeItem *)> &pred) const;
-    TreeItem *findChildAtLevel(int level, const std::function<bool(TreeItem *)> &pred) const;
+    [[nodiscard]] auto findChildAtLevel(int level, const std::function<bool(TreeItem *)> &pred) const
+        -> TreeItem *;
 
 private:
     TreeItem(const TreeItem &) = delete;
@@ -122,28 +125,31 @@ protected:
     void setHeaderToolTip(const QStringList &tips);
     void clear();
 
-    TreeItem *rootItem() const;
+    [[nodiscard]] auto rootItem() const -> TreeItem *;
     void setRootItem(TreeItem *item);
-    TreeItem *itemForIndex(const QModelIndex &) const;
-    QModelIndex indexForItem(const TreeItem *needle) const;
+    [[nodiscard]] auto itemForIndex(const QModelIndex &) const -> TreeItem *;
+    auto indexForItem(const TreeItem *needle) const -> QModelIndex;
 
-    int rowCount(const QModelIndex &idx = QModelIndex()) const override;
-    int columnCount(const QModelIndex &idx) const override;
+    [[nodiscard]] auto rowCount(const QModelIndex &idx = QModelIndex()) const -> int override;
+    [[nodiscard]] auto columnCount(const QModelIndex &idx) const -> int override;
 
-    bool setData(const QModelIndex &idx, const QVariant &data, int role) override;
-    QVariant data(const QModelIndex &idx, int role) const override;
-    QModelIndex index(int, int, const QModelIndex &idx = QModelIndex()) const override;
-    QModelIndex parent(const QModelIndex &idx) const override;
-    QModelIndex sibling(int row, int column, const QModelIndex &idx) const override;
-    Qt::ItemFlags flags(const QModelIndex &idx) const override;
-    QVariant headerData(int section, Qt::Orientation orientation, int role) const override;
-    bool hasChildren(const QModelIndex &idx) const override;
+    auto setData(const QModelIndex &idx, const QVariant &data, int role) -> bool override;
+    [[nodiscard]] auto data(const QModelIndex &idx, int role) const -> QVariant override;
+    [[nodiscard]] auto index(int, int, const QModelIndex &idx = QModelIndex()) const
+        -> QModelIndex override;
+    [[nodiscard]] auto parent(const QModelIndex &idx) const -> QModelIndex override;
+    [[nodiscard]] auto sibling(int row, int column, const QModelIndex &idx) const
+        -> QModelIndex override;
+    [[nodiscard]] Qt::ItemFlags flags(const QModelIndex &idx) const override;
+    [[nodiscard]] auto headerData(int section, Qt::Orientation orientation, int role) const
+        -> QVariant override;
+    [[nodiscard]] auto hasChildren(const QModelIndex &idx) const -> bool override;
 
-    bool canFetchMore(const QModelIndex &idx) const override;
+    [[nodiscard]] auto canFetchMore(const QModelIndex &idx) const -> bool override;
     void fetchMore(const QModelIndex &idx) override;
 
-    TreeItem *takeItem(TreeItem *item); // item is not destroyed.
-    void destroyItem(TreeItem *item);   // item is destroyed.
+    auto takeItem(TreeItem *item) -> TreeItem *; // item is not destroyed.
+    void destroyItem(TreeItem *item);            // item is destroyed.
 
 signals:
     void requestExpansion(const QModelIndex &);

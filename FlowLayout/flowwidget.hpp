@@ -16,7 +16,7 @@ class LabelWidget : public QWidget
 public:
     explicit LabelWidget(const QString &text, QWidget *parent);
 
-    QString text() const;
+    [[nodiscard]] auto text() const -> QString;
 
 signals:
     void removed();
@@ -30,12 +30,12 @@ class FlowWidget : public QWidget
     Q_OBJECT
 public:
     explicit FlowWidget(QWidget *parent = nullptr);
-    ~FlowWidget();
+    ~FlowWidget() override;
 
     void setItems(const QStringList &list);
     void addItem(const QString &text);
 
-    QStringList items() const;
+    [[nodiscard]] auto items() const -> QStringList;
 
 private slots:
     void onRemoved();

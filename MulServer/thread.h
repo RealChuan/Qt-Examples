@@ -8,7 +8,7 @@ class Thread : public QThread
 {
     Q_OBJECT
 public:
-    Thread(qintptr socketDescriptor, QObject *parent = nullptr);
+    explicit Thread(qintptr socketDescriptor, QObject *parent = nullptr);
     ~Thread() override;
 
 signals:

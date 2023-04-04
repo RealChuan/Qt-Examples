@@ -18,24 +18,30 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     buttondelegate.cpp \
     comboboxdelegate.cpp \
+    displaytablemodel.cc \
+    displaytableview.cc \
     main.cpp \
     mainwindow.cpp \
     progressbardelegate.cpp \
     richtextitemdelegate.cc \
     sortfilterproxymodel.cpp \
-    studenttablemodel.cpp \
-    stuedenttable.cpp
+    stardelegate.cpp \
+    stareditor.cpp \
+    starrating.cpp
 
 HEADERS += \
     buttondelegate.h \
     comboboxdelegate.h \
+    displaydata.hpp \
+    displaytablemodel.hpp \
+    displaytableview.hpp \
     mainwindow.h \
     progressbardelegate.h \
     richtextitemdelegate.hpp \
     sortfilterproxymodel.h \
-    student.h \
-    studenttablemodel.h \
-    stuedenttable.h
+    stardelegate.h \
+    stareditor.h \
+    starrating.h
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin

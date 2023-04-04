@@ -1,11 +1,11 @@
 #include "mainwindow.h"
+#include "areachart.h"
+#include "datetimechart.h"
 #include "dynamicchart.h"
 #include "dynamicchartx.h"
-#include "areachart.h"
 #include "linechart.h"
-#include "stackedbarchart.h"
 #include "piechart.h"
-#include "datetimechart.h"
+#include "stackedbarchart.h"
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -13,9 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
     setupUI();
 }
 
-MainWindow::~MainWindow()
-{
-}
+MainWindow::~MainWindow() {}
 
 void MainWindow::setupUI()
 {
@@ -33,4 +31,3 @@ void MainWindow::setupUI()
     setCentralWidget(frame);
     setMinimumSize(960, 600);
 }
-

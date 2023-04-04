@@ -4,19 +4,19 @@
 class DateTimeChart::DateTimeChartPrivate
 {
 public:
-    DateTimeChartPrivate(ChartView *parent)
-        : owner(parent)
+    explicit DateTimeChartPrivate(ChartView *parent)
+        : q_ptr(parent)
     {
-        dateTimeAxisX = new QDateTimeAxis(owner);
+        dateTimeAxisX = new QDateTimeAxis(q_ptr);
         dateTimeAxisX->setFormat("yyyy-MM");
         //dateTimeAxisX->setTitleText(QObject::tr("Date"));
 
-        valueAxisY = new QValueAxis(owner);
+        valueAxisY = new QValueAxis(q_ptr);
         //valueAxisY->setTitleText(QObject::tr("Value"));
         valueAxisY->setRange(0, 100);
 
-        lineSeries = new QLineSeries(owner);
-        scatterSeries = new QScatterSeries(owner);
+        lineSeries = new QLineSeries(q_ptr);
+        scatterSeries = new QScatterSeries(q_ptr);
         scatterSeries->setMarkerSize(8);
 
         PointList pointList = generateRandomDataPoints(5, 101);
@@ -42,7 +42,9 @@ public:
         scatterSeries->attachAxis(dateTimeAxisX);
         scatterSeries->attachAxis(valueAxisY);
     }
-    ChartView *owner;
+
+    ChartView *q_ptr;
+
     QChart *chart;
     QDateTimeAxis *dateTimeAxisX;
     QValueAxis *valueAxisY;
@@ -57,9 +59,7 @@ DateTimeChart::DateTimeChart(QWidget *parent)
     setupUI();
 }
 
-DateTimeChart::~DateTimeChart()
-{
-}
+DateTimeChart::~DateTimeChart() = default;
 
 void DateTimeChart::setupUI()
 {

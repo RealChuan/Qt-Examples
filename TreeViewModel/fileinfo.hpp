@@ -5,12 +5,12 @@
 #include <QIcon>
 #include <QtCore>
 
-QString bytesToString(qint64 bytes);
+auto bytesToString(qint64 bytes) -> QString;
 
 class FileInfoData : public QSharedData
 {
 public:
-    FileInfoData() {}
+    FileInfoData() = default;
     FileInfoData(const FileInfoData &other)
         : QSharedData(other)
         , fileInfo(other.fileInfo)
@@ -37,7 +37,7 @@ public:
         : d_ptr(new FileInfoData)
     {}
 
-    FileInfo(const QFileInfo &fileInfo)
+    explicit FileInfo(const QFileInfo &fileInfo)
         : d_ptr(new FileInfoData)
     {
         setFileInfo(fileInfo);
@@ -53,31 +53,31 @@ public:
         : d_ptr(other.d_ptr)
     {}
 
-    ~FileInfo() {}
+    ~FileInfo() = default;
 
-    bool operator==(const FileInfo &other) const
+    auto operator==(const FileInfo &other) const -> bool
     {
         return d_ptr->fileInfo == other.d_ptr->fileInfo;
     }
-    bool operator!=(const FileInfo &other) const { return !(*this == other); }
+    auto operator!=(const FileInfo &other) const -> bool { return !(*this == other); }
 
     void setFileInfo(const QFileInfo &fileInfo) { d_ptr->fileInfo = fileInfo; }
-    QFileInfo fileInfo() const { return d_ptr->fileInfo; }
+    [[nodiscard]] QFileInfo fileInfo() const { return d_ptr->fileInfo; }
 
     void setIcon(const QIcon &icon) { d_ptr->icon = icon; }
-    QIcon icon() const { return d_ptr->icon; }
+    [[nodiscard]] QIcon icon() const { return d_ptr->icon; }
 
     void setType(const QString &type) { d_ptr->type = type; }
-    QString type() const { return d_ptr->type; }
+    [[nodiscard]] auto type() const -> QString { return d_ptr->type; }
 
     void setModifyTime(const QString &modifyTime) { d_ptr->modifyTime = modifyTime; }
-    QString modifyTime() const { return d_ptr->modifyTime; }
+    [[nodiscard]] auto modifyTime() const -> QString { return d_ptr->modifyTime; }
 
     void setSize(const QString &size) { d_ptr->size = size; }
-    QString size() const { return d_ptr->size; }
+    [[nodiscard]] auto size() const -> QString { return d_ptr->size; }
 
     void setChecked(bool checked) { d_ptr->checked = checked; }
-    bool checked() const { return d_ptr->checked; }
+    [[nodiscard]] auto checked() const -> bool { return d_ptr->checked; }
 
 private:
     QExplicitlySharedDataPointer<FileInfoData> d_ptr;

@@ -11,9 +11,9 @@ public:
         : QStyledItemDelegate(parent)
     {}
 
-    QWidget *createEditor(QWidget *parent,
+    auto createEditor(QWidget *parent,
                           const QStyleOptionViewItem &,
-                          const QModelIndex &) const Q_DECL_OVERRIDE;
+                          const QModelIndex &) const -> QWidget * Q_DECL_OVERRIDE;
     void setEditorData(QWidget *editor, const QModelIndex &index) const Q_DECL_OVERRIDE;
     void setModelData(QWidget *editor,
                       QAbstractItemModel *model,

@@ -15,25 +15,25 @@ class NavigationProgressBar : public QWidget
     Q_PROPERTY(QColor foregroundColor READ foregroundColor WRITE setForegroundColor)
 public:
     explicit NavigationProgressBar(QWidget *parent = nullptr);
-    ~NavigationProgressBar();
+    ~NavigationProgressBar() override;
 
-    QSize sizeHint() const override;
-    QSize minimumSizeHint() const override;
+    [[nodiscard]] auto sizeHint() const -> QSize override;
+    [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
     void setMessageList(const QStringList &list);
-    QStringList messageList() const;
+    [[nodiscard]] auto messageList() const -> QStringList;
 
     void setStep(const int step);
-    int step() const;
+    [[nodiscard]] auto step() const -> int;
 
     void setBackgroundColor(const QColor &color);
-    QColor backgroundColor() const;
+    [[nodiscard]] auto backgroundColor() const -> QColor;
 
     void setCurrentBackgroundColor(const QColor &color);
-    QColor currentBackgroundColor() const;
+    [[nodiscard]] auto currentBackgroundColor() const -> QColor;
 
     void setForegroundColor(const QColor &color);
-    QColor foregroundColor() const;
+    [[nodiscard]] auto foregroundColor() const -> QColor;
 
 protected:
     void paintEvent(QPaintEvent *event) override;

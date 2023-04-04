@@ -9,7 +9,7 @@ class Task : public QObject
     Q_OBJECT
 public:
     using QObject::QObject;
-    ~Task();
+    ~Task() override;
 
 public slots:
     void onDo(const QString &text);

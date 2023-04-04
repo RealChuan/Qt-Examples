@@ -9,14 +9,14 @@ class TcpClientThread : public QThread
     Q_OBJECT
 public:
     TcpClientThread(const QString &ip,
-                    const quint16 port,
-                    const int index,
+                    quint16 port,
+                    int index,
                     QObject *parent = nullptr);
     ~TcpClientThread() override;
 
 signals:
     void writeToServer(const QByteArray&);
-    void quitThread(const int);
+    void quitThread(int);
 
 private slots:
     void removeMyself();
