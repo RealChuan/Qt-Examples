@@ -42,7 +42,7 @@ jobs:
           cache: 'true'
       - name: ubuntu install GL library
         if: startsWith(matrix.os, 'ubuntu')
-        run: sudo apt-get install -y libglew-dev libglfw3-dev
+        run: sudo apt-get install -y build-essential libgl1-mesa-dev
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1

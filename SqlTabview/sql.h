@@ -11,14 +11,11 @@ class Sql : public QObject
 public:
     explicit Sql(QObject *parent = nullptr);
 
-    static auto searchSQLite(QWidget* parent = nullptr) -> bool;
+    static auto searchSQLite(QWidget *parent = nullptr) -> bool;
     auto createOrOpenSqlite() -> QSqlError;
 
-signals:
-
 private:
-    void addStudent(QSqlQuery&, const QString&, int, const QString&, int);
-
+    void addStudent(QSqlQuery &, const QString &, int, const QString &, int);
 };
 
 #endif // SQL_H

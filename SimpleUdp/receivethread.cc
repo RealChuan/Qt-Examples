@@ -42,13 +42,19 @@ void ReceiveThread::run()
 {
     qInfo() << "Start Receive-----------------";
     QScopedPointer<QUdpSocket> recvUdpSocket(new QUdpSocket);
-    //not working
-    //    connect(recvUdpSocket.data(),
-    //            &QUdpSocket::readyRead,
-    //            this,
-    //            &UdpReceiveThread::onReadyRead,
-    //            Qt::DirectConnection);
-    qInfo() << recvUdpSocket->bind(QHostAddress::Any, d_ptr->recvPort, QUdpSocket::ShareAddress);
+    // The recvUdpSocket.data() must no buffer data to read before bind, otherwise the readyRead signal will not be emitted.
+    // connect(recvUdpSocket.data(),
+    //         &QUdpSocket::readyRead,
+    //         this,
+    //         &UdpReceiveThread::onReadyRead,
+    //         Qt::DirectConnection);
+    auto bind = recvUdpSocket->bind(QHostAddress::Any, d_ptr->recvPort, QUdpSocket::ShareAddress);
+    if (bind) {
+        qInfo() << "bind success";
+    } else {
+        qInfo() << "bind failed";
+        return;
+    }
     while (d_ptr->runing) {
         recvUdpSocket->waitForReadyRead(100);
         while (d_ptr->runing && recvUdpSocket->hasPendingDatagrams()) {

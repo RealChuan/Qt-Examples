@@ -4,7 +4,6 @@
 #include <QMainWindow>
 
 class QSqlError;
-class MainWindowPrivate;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -25,6 +24,8 @@ private:
     void setupUI();
     void setupModel();
     void showError(const QSqlError &err);
-    MainWindowPrivate *d;
+
+    class MainWindowPrivate;
+    QScopedPointer<MainWindowPrivate> d_ptr;
 };
 #endif // MAINWINDOW_H

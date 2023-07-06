@@ -21,7 +21,7 @@ private:
     void setupUI();
     void initParam();
     void buildConnect();
-
-    MainWindowPrivate *d;
+    
+    MainWindowPrivate *d_ptr;
 };
 #endif // MAINWINDOW_H

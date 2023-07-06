@@ -9,7 +9,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 {
     if (type < LogAsync::instance()->logLevel()) {
         return;
-}
+    }
 
     FILE *stdPrint = stdout;
     QString level;

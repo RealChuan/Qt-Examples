@@ -8,13 +8,13 @@ class MainWindow::MainWindowPrivate
 {
 public:
     MainWindowPrivate(QWidget *parent)
-        : owner(parent)
+        : q_ptr(parent)
     {
-        listView = new ListView(owner);
-        normalTreeView = new NormalTreeView(owner);
+        listView = new ListView(q_ptr);
+        normalTreeView = new NormalTreeView(q_ptr);
     }
-
-    QWidget *owner;
+    
+    QWidget *q_ptr;
 
     ListView *listView;
     NormalTreeView *normalTreeView;

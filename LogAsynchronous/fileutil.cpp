@@ -17,7 +17,7 @@ auto generateDirectorys(const QString &directory) -> bool
     QDir sourceDir(directory);
     if (sourceDir.exists()) {
         return true;
-}
+    }
 
     QString tempDir;
     QStringList directorys = directory.split("/");
@@ -28,7 +28,7 @@ auto generateDirectorys(const QString &directory) -> bool
         QDir dir(tempDir);
         if (!dir.exists() && !dir.mkdir(tempDir)) {
             return false;
-}
+        }
     }
 
     return true;
@@ -98,7 +98,7 @@ auto FileUtil::rollFile(int count) -> bool
 {
     qint64 now = 0;
     QString filename = getFileName(&now);
-    if (count) {
+    if (count != 0) {
         filename += QString(".%1").arg(count);
     } else {
         autoDelFile();

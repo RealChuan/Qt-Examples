@@ -1,20 +1,24 @@
 #include "mainwindow.h"
 #include "sql.h"
 
+#include <QMessageBox>
 #include <QtSql>
 #include <QtWidgets>
-#include <QMessageBox>
 
-class MainWindowPrivate{
+class MainWindow::MainWindowPrivate
+{
 public:
     explicit MainWindowPrivate(QWidget *parent)
-        :owner(parent){
-        sqlTabView = new QTableView(owner);
+        : d_ptr(parent)
+    {
+        sqlTabView = new QTableView(d_ptr);
         sqlTabView->setAlternatingRowColors(true);
         sqlTabView->horizontalHeader()->setStretchLastSection(true);
-        lineEdie = new QLineEdit(owner);
+        lineEdie = new QLineEdit(d_ptr);
     }
-    QWidget *owner;
+
+    QWidget *d_ptr;
+
     Sql *sqlite;
     QSqlTableModel *sqlModel;
     QTableView *sqlTabView;
@@ -23,95 +27,97 @@ public:
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , d(new MainWindowPrivate(this))
+    , d_ptr(new MainWindowPrivate(this))
 {
-    if(!Sql::searchSQLite())
+    if (!Sql::searchSQLite()) {
         return;
-    d->sqlite = new Sql(this);
-    QSqlError error = d->sqlite->createOrOpenSqlite();
-    if(error.type() != QSqlError::NoError){
+    }
+    d_ptr->sqlite = new Sql(this);
+    QSqlError error = d_ptr->sqlite->createOrOpenSqlite();
+    if (error.type() != QSqlError::NoError) {
         showError(error);
         return;
     }
     setupUI();
     setupModel();
+
+    resize(1000, 618);
 }
 
-MainWindow::~MainWindow()
-{
-    delete d;
-}
+MainWindow::~MainWindow() {}
 
 void MainWindow::onAdd()
 {
     // 获得表的行数
-    int rowNum = d->sqlModel->rowCount();
+    int rowNum = d_ptr->sqlModel->rowCount();
     QSqlQuery query;
     int id = query.lastInsertId().toInt();
     // 添加一行
-    d->sqlModel->insertRow(rowNum);
-    d->sqlModel->setData(d->sqlModel->index(rowNum,0),id+1);
+    d_ptr->sqlModel->insertRow(rowNum);
+    d_ptr->sqlModel->setData(d_ptr->sqlModel->index(rowNum, 0), id + 1);
 }
 
 void MainWindow::onDelete()
 {
-    int curRow = d->sqlTabView->currentIndex().row();
-    d->sqlModel->removeRow(curRow);
-    int ok = QMessageBox::warning(this,tr("Delete current row!"),
+    int curRow = d_ptr->sqlTabView->currentIndex().row();
+    d_ptr->sqlModel->removeRow(curRow);
+    int ok = QMessageBox::warning(this,
+                                  tr("Delete current row!"),
                                   tr("Are you sure you want to delete the current line?"),
-                                  QMessageBox::Yes, QMessageBox::No);
-    if(ok == QMessageBox::No)
-        d->sqlModel->revertAll();// 如果不删除， 则撤销
-    else
-        d->sqlModel->submitAll();// 否则提交， 在数据库中删除该行
+                                  QMessageBox::Yes,
+                                  QMessageBox::No);
+    if (ok == QMessageBox::No) {
+        d_ptr->sqlModel->revertAll();
+    }                                 // 如果不删除， 则撤销
+    else {
+        d_ptr->sqlModel->submitAll(); // 否则提交， 在数据库中删除该行
+    }
 }
-
 void MainWindow::onUpdate()
 {
     // 开始事务操作
-    d->sqlModel->database().transaction();
-    if (d->sqlModel->submitAll())
-        d->sqlModel->database().commit(); //提交
-    else
-    {
-        d->sqlModel->database().rollback(); //回滚
-        QMessageBox::warning(this, tr("tableModel"),
-                             tr("Database error: %1").
-                             arg(d->sqlModel->lastError().text()));
+    d_ptr->sqlModel->database().transaction();
+    if (d_ptr->sqlModel->submitAll()) {
+        d_ptr->sqlModel->database().commit();   //提交
+    } else {
+        d_ptr->sqlModel->database().rollback(); //回滚
+        QMessageBox::warning(this,
+                             tr("tableModel"),
+                             tr("Database error: %1").arg(d_ptr->sqlModel->lastError().text()));
     }
 }
 
 void MainWindow::onSelect()
 {
-    QString name = d->lineEdie->text().trimmed();
-    if(name.isEmpty())
-        QMessageBox::warning(this, tr("Warning"), tr("Name cannot be empty!") );
-    else{
+    QString name = d_ptr->lineEdie->text().trimmed();
+    if (name.isEmpty()) {
+        QMessageBox::warning(this, tr("Warning"), tr("Name cannot be empty!"));
+    } else {
         //根据姓名进行筛选， 一定要使用单引号
-        d->sqlModel->setFilter(QString("Name = '%1'").arg(name));
-        d->sqlModel->select();
+        d_ptr->sqlModel->setFilter(QString("Name = '%1'").arg(name));
+        d_ptr->sqlModel->select();
     }
 }
 
 void MainWindow::onRevert()
 {
-    d->sqlModel->revertAll();
+    d_ptr->sqlModel->revertAll();
 }
 
 void MainWindow::onShow()
 {
-    d->sqlModel->setTable("students");
-    d->sqlModel->select();
+    d_ptr->sqlModel->setTable("students");
+    d_ptr->sqlModel->select();
 }
 
 void MainWindow::setupUI()
 {
-    QPushButton *addButton = new QPushButton(tr("Add"), this);
-    QPushButton *deleteButtom = new QPushButton(tr("Delete"), this);
-    QPushButton *updateButton = new QPushButton(tr("Update"), this);
-    QPushButton *selectButton = new QPushButton(tr("Select"), this);
-    QPushButton *revertButton = new QPushButton(tr("Revert"), this);
-    QPushButton *showAllButton = new QPushButton(tr("Show All"), this);
+    auto addButton = new QPushButton(tr("Add"), this);
+    auto deleteButtom = new QPushButton(tr("Delete"), this);
+    auto updateButton = new QPushButton(tr("Update"), this);
+    auto selectButton = new QPushButton(tr("Select"), this);
+    auto revertButton = new QPushButton(tr("Revert"), this);
+    auto showAllButton = new QPushButton(tr("Show All"), this);
 
     connect(addButton, &QPushButton::clicked, this, &MainWindow::onAdd);
     connect(deleteButtom, &QPushButton::clicked, this, &MainWindow::onDelete);
@@ -120,7 +126,7 @@ void MainWindow::setupUI()
     connect(revertButton, &QPushButton::clicked, this, &MainWindow::onSelect);
     connect(showAllButton, &QPushButton::clicked, this, &MainWindow::onShow);
 
-    QVBoxLayout *buttonLayout = new QVBoxLayout(this);
+    auto buttonLayout = new QVBoxLayout;
     buttonLayout->setSpacing(0);
     buttonLayout->addWidget(addButton);
     buttonLayout->addWidget(deleteButtom);
@@ -128,36 +134,33 @@ void MainWindow::setupUI()
     buttonLayout->addWidget(revertButton);
     buttonLayout->addWidget(showAllButton);
 
-    QHBoxLayout *bottomLayout = new QHBoxLayout(this);
+    auto bottomLayout = new QHBoxLayout;
     bottomLayout->addWidget(new QLabel(tr("Name: "), this));
-    bottomLayout->addWidget(d->lineEdie);
+    bottomLayout->addWidget(d_ptr->lineEdie);
 
-    QGridLayout *layout = new QGridLayout(this);
-    layout->addWidget(d->sqlTabView, 0, 0);
+    auto widget = new QWidget(this);
+    QGridLayout *layout = new QGridLayout(widget);
+    layout->addWidget(d_ptr->sqlTabView, 0, 0);
     layout->addLayout(buttonLayout, 0, 1);
     layout->addLayout(bottomLayout, 1, 0);
     layout->addWidget(selectButton, 1, 1);
 
-    QFrame *frame = new QFrame(this);
-    frame->setLayout(layout);
-    setCentralWidget(frame);
-    setMinimumSize(640, 480);
+    setCentralWidget(widget);
 }
 
 void MainWindow::setupModel()
 {
-    d->sqlModel = new QSqlTableModel(this);
-    d->sqlModel->setTable("Students");
-    d->sqlModel->select();
+    d_ptr->sqlModel = new QSqlTableModel(this);
+    d_ptr->sqlModel->setTable("Students");
+    d_ptr->sqlModel->select();
     // 设置编辑策略
-    d->sqlModel->setEditStrategy(QSqlTableModel::OnManualSubmit);
-    d->sqlTabView->setModel(d->sqlModel);
+    d_ptr->sqlModel->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    d_ptr->sqlTabView->setModel(d_ptr->sqlModel);
 }
 
 void MainWindow::showError(const QSqlError &err)
 {
-    QMessageBox::critical(this, tr("Unable to initialize Database"),
+    QMessageBox::critical(this,
+                          tr("Unable to initialize Database"),
                           tr("Error initializing database: ") + err.text());
-
 }
-

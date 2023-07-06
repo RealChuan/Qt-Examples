@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
     setupUI();
-    resize(1000, 600);
+    resize(1000, 618);
 }
 
 MainWindow::~MainWindow()
@@ -16,12 +16,12 @@ MainWindow::~MainWindow()
 
 void MainWindow::setupUI()
 {
-    GridView *view = new GridView(this);
+    auto view = new GridView(this);
 
     m_imageVector.clear();
-    QStringList colorNames = QColor::colorNames();
-    for(const QString &colorName: qAsConst(colorNames)){
-        QImage image(WIDTH, WIDTH , QImage::Format_ARGB32);
+    auto colorNames = QColor::colorNames();
+    for (const QString &colorName : qAsConst(colorNames)) {
+        QImage image(WIDTH, WIDTH, QImage::Format_ARGB32);
         image.fill(Qt::transparent);
         QPainter painter(&image);
         painter.setRenderHint(QPainter::Antialiasing);
@@ -31,11 +31,10 @@ void MainWindow::setupUI()
         rect.adjust(1, 1, -1, -1);
         double radius = (WIDTH - 2) / 2.0;
         painter.drawRoundedRect(rect, radius, radius);
+
         m_imageVector.append(new ImageInfo{image, colorName});
     }
     view->setImageVector(m_imageVector);
 
     setCentralWidget(view);
 }
-
-

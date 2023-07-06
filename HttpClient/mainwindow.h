@@ -3,11 +3,9 @@
 
 #include <QMainWindow>
 
-class MainWindowPrivate;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
@@ -15,13 +13,12 @@ public:
 private slots:
     void onRequest();
     void onFinish();
-    void onAppendBytes(const QByteArray&);
-    void onAppendText();
 
 private:
     void setupUI();
     void buildConnect();
 
-    QScopedPointer<MainWindowPrivate> d;
+    class MainWindowPrivate;
+    QScopedPointer<MainWindowPrivate> d_ptr;
 };
 #endif // MAINWINDOW_H

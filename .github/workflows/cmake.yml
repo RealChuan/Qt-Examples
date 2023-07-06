@@ -59,7 +59,7 @@ jobs:
       - name: Install dependencies on ubuntu
         if: startsWith(matrix.os, 'ubuntu')
         run: |
-          sudo apt-get install -y libglew-dev libglfw3-dev ninja-build
+          sudo apt-get install -y ninja-build build-essential libgl1-mesa-dev
           ninja --version
           cmake --version
           gcc --version

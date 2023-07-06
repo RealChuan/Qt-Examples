@@ -1,39 +1,35 @@
 #include "mainwindow.h"
 #include "httpclient.h"
-//#include "httpclientthread.h"
 
-#include <QtConcurrent>
 #include <QtWidgets>
 
-class MainWindowPrivate
+class MainWindow::MainWindowPrivate
 {
 public:
     explicit MainWindowPrivate(QWidget *parent)
-        : owner(parent)
+        : q_ptr(parent)
     {
-        urlEdit = new QLineEdit(owner);
+        urlEdit = new QLineEdit(q_ptr);
         urlEdit->setText("http://www.baidu.com");
         urlEdit->setPlaceholderText(QObject::tr("http://url"));
-        requestButton = new QPushButton(QObject::tr("Request"), owner);
-        textEdit = new QTextEdit(owner);
-        //httpClientThread = new HttpClientThread(owner);
-        httpClient = new HttpClient(owner);
+        requestButton = new QPushButton(QObject::tr("GET"), q_ptr);
+        textEdit = new QPlainTextEdit(q_ptr);
+        httpClient = new HttpClient(q_ptr);
     }
-    QWidget *owner;
+
+    QWidget *q_ptr;
+
     QLineEdit *urlEdit;
     QPushButton *requestButton;
-    QTextEdit *textEdit; // QPlainTextEdit
-    //HttpClientThread *httpClientThread;
+    QPlainTextEdit *textEdit; // QPlainTextEdit
     HttpClient *httpClient;
-    QByteArray bytes;
-    QTimer timer;
 
     QElapsedTimer elapsedTimer;
 };
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
-    , d(new MainWindowPrivate(this))
+    , d_ptr(new MainWindowPrivate(this))
 {
     setupUI();
     buildConnect();
@@ -43,68 +39,45 @@ MainWindow::~MainWindow() {}
 
 void MainWindow::onRequest()
 {
-    QString url = d->urlEdit->text();
-    if (url.isEmpty() || !QUrl(url).isValid())
+    QString url = d_ptr->urlEdit->text();
+    if (url.isEmpty() || !QUrl(url).isValid()) {
         return;
-    d->requestButton->setEnabled(false);
-    d->elapsedTimer.start();
-    d->timer.start(10);
-    // emit d->httpClientThread->get(url);
-    d->httpClient->get(url);
+    }
+    d_ptr->requestButton->setEnabled(false);
+    d_ptr->elapsedTimer.start();
+    d_ptr->httpClient->get(url);
 }
 
 void MainWindow::onFinish()
 {
-    d->requestButton->setEnabled(true);
-    qDebug() << "onFinish" << d->elapsedTimer.elapsed();
-}
-
-void MainWindow::onAppendBytes(const QByteArray &bytes)
-{
-    d->bytes.append(bytes);
-}
-
-void MainWindow::onAppendText()
-{
-    if (d->bytes.isEmpty())
-        return;
-
-    if (d->bytes.size() > 2000) {
-        d->textEdit->append(d->bytes.left(2000));
-        d->bytes.remove(0, 2000);
-    } else {
-        d->textEdit->append(d->bytes);
-        d->bytes.clear();
-    }
-
-    if (d->bytes.isEmpty() && !d->requestButton->isChecked())
-        d->timer.stop();
+    d_ptr->requestButton->setEnabled(true);
+    qDebug() << "onFinish" << d_ptr->elapsedTimer.elapsed();
 }
 
 void MainWindow::setupUI()
 {
     QHBoxLayout *topLayout = new QHBoxLayout;
-    topLayout->addWidget(d->urlEdit);
-    topLayout->addWidget(d->requestButton);
+    topLayout->addWidget(d_ptr->urlEdit);
+    topLayout->addWidget(d_ptr->requestButton);
 
     QWidget *widget = new QWidget(this);
     QVBoxLayout *layout = new QVBoxLayout(widget);
     layout->addLayout(topLayout);
-    layout->addWidget(d->textEdit);
+    layout->addWidget(d_ptr->textEdit);
     setCentralWidget(widget);
     resize(640, 480);
 }
 
 void MainWindow::buildConnect()
 {
-    connect(&d->timer, &QTimer::timeout, this, &MainWindow::onAppendText);
-
-    connect(d->requestButton, &QPushButton::clicked, this, &MainWindow::onRequest);
-    connect(d->httpClient, &HttpClient::readyReady, this, &MainWindow::onAppendBytes);
-    //connect(d->httpClient, &HttpClient::readyReady, d->textEdit, &QPlainTextEdit::appendPlainText);
-    connect(d->httpClient, &HttpClient::error, d->textEdit, &QTextEdit::append);
-    connect(d->httpClient, &HttpClient::finish, this, &MainWindow::onFinish);
-    //    connect(d->httpClientThread, &HttpClientThread::readyReady, d->textEdit, &QPlainTextEdit::appendPlainText);
-    //    connect(d->httpClientThread, &HttpClientThread::error, d->textEdit, &QPlainTextEdit::appendPlainText);
-    //    connect(d->httpClientThread, &HttpClientThread::finish, this, &MainWindow::onFinish);
+    connect(d_ptr->requestButton, &QPushButton::clicked, this, &MainWindow::onRequest);
+    connect(d_ptr->httpClient,
+            &HttpClient::readyReady,
+            d_ptr->textEdit,
+            &QPlainTextEdit::appendPlainText);
+    connect(d_ptr->httpClient,
+            &HttpClient::error,
+            d_ptr->textEdit,
+            &QPlainTextEdit::appendPlainText);
+    connect(d_ptr->httpClient, &HttpClient::finish, this, &MainWindow::onFinish);
 }

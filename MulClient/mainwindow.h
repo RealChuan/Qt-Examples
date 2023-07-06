@@ -22,7 +22,7 @@ private:
     void setupUI();
     void changeControlState(bool);
     void clearAll();
-
-    MainWindowPrivate *d;
+    
+    MainWindowPrivate *d_ptr;
 };
 #endif // MAINWINDOW_H

@@ -3,7 +3,6 @@
 
 #include <QAbstractButton>
 
-struct SlipButtonPrivate;
 class SlipButton : public QAbstractButton
 {
     Q_OBJECT
@@ -41,7 +40,8 @@ private:
     [[nodiscard]] inline auto widthMargin() const -> double;
     [[nodiscard]] inline auto heightMargin() const -> double;
 
-    QScopedPointer<SlipButtonPrivate> d;
+    struct SlipButtonPrivate;
+    QScopedPointer<SlipButtonPrivate> d_ptr;
 };
 
 #endif // SLIPBUTTON_H
