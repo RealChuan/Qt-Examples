@@ -41,6 +41,10 @@
 
 ## [HttpClient ](/HttpClient)——http客户端；
 
+## [ImageCarousel](ImageCarousel/)——简易图片轮播；
+
+<div align=center><img src="ImageCarousel/picture/ImageCarousel.jpg"></div>
+
 ## [GridViewModel ](/GridViewModel)——基于QListView的自适应宫图；
 
 <div align=center><img src="GridViewModel/picture/GridView.png"></div>
