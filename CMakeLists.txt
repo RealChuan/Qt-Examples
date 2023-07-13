@@ -24,6 +24,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 find_package(Qt6 REQUIRED COMPONENTS Core Widgets Charts Network Concurrent Sql)
 
 add_subdirectory(Battery)
+add_subdirectory(Bootstrap)
 add_subdirectory(BubbleWindow)
 add_subdirectory(Chart)
 add_subdirectory(CheckBoxStandardItem)

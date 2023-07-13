@@ -1,0 +1,10 @@
+[Unit]
+Description=myapp
+
+[Service]
+Type=simple
+EnvironmentFile=/etc/X11/Xsession.d/90x11-common_ssh-agent
+ExecStart=/opt/myapp/myapp
+
+[Install]
+WantedBy=default.target

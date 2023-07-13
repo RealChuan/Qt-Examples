@@ -1,0 +1,9 @@
+[Unit]
+Description=Start myapp after graphical.target
+
+[Timer]
+OnActiveSec=10
+Unit=myapp.service
+
+[Install]
+WantedBy=timers.target

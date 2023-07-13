@@ -3,6 +3,7 @@ CONFIG += ordered
 
 SUBDIRS += \
     Battery \
+    Bootstrap \
     BubbleWindow \
     Chart \
     CheckBoxStandardItem \

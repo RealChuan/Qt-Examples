@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/">
+        <file>resouce/com.myapp.launcher.plist</file>
+        <file>resouce/myapp.service</file>
+        <file>resouce/myapp.timer</file>
+    </qresource>
+</RCC>
