@@ -49,3 +49,7 @@ add_subdirectory(TableViewModel)
 add_subdirectory(Thread)
 add_subdirectory(TreeViewModel)
 add_subdirectory(Validator)
+
+if(CMAKE_HOST_WIN32)
+  add_subdirectory(ShowInMyComputer)
+endif()

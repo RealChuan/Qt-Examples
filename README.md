@@ -97,6 +97,8 @@
 
 ## [SimpleUdp](SimpleUdp/)——简单UDP例子，广播和接收；
 
+## [ShowInMyComputer](ShowInMyComputer/)——在我的电脑中显示当前应用程序；
+
 防火墙白名单。
 
 ## [SlipButton](SlipButton/)——滑动按钮；

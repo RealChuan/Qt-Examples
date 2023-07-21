@@ -30,6 +30,10 @@ SUBDIRS += \
     TreeViewModel \
     Validator
 
+win32{
+SUBDIRS += ShowInMyComputer
+}
+
 DISTFILES += \
     $$files(Scripts/windows/*.py)\
     $$files(Scripts/windows/*.iss)\
