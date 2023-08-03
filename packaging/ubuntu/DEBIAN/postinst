@@ -1,0 +1,6 @@
+#!/bin/sh
+
+chmod 744 /opt/MyApp/MyApp.desktop
+cp -f /opt/MyApp/MyApp.desktop /usr/share/applications/MyApp.desktop
+
+exit 0

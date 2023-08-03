@@ -1,0 +1,5 @@
+#!/bin/sh
+
+rm -f /usr/share/applications/MyApp.desktop
+
+exit 0

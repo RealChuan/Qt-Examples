@@ -1,14 +1,18 @@
-cmake_minimum_required(VERSION 3.16)
+cmake_minimum_required(VERSION 3.21.1)
 
 project(
   Qt-Examples
-  VERSION 0.1
+  VERSION 0.0.1
   LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(CMAKE_HOST_WIN32)
-  list(APPEND CMAKE_PREFIX_PATH "C:\\Qt\\6.5.0\\msvc2019_64")
+  list(APPEND CMAKE_PREFIX_PATH "C:\\Qt\\6.6.0\\msvc2019_64")
+elseif(CMAKE_HOST_APPLE)
+
+elseif(CMAKE_HOST_UNIX)
+  list(APPEND CMAKE_PREFIX_PATH "/opt/Qt/6.6.0/gcc_64")
 endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)

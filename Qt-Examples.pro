@@ -35,9 +35,5 @@ SUBDIRS += ShowInMyComputer
 }
 
 DISTFILES += \
-    $$files(Scripts/windows/*.py)\
-    $$files(Scripts/windows/*.iss)\
-    $$files(Scripts/macos/*.py)\
-    $$files(Scripts/macos/*.json)\
     LICENSE \
-    README.md
+    README*

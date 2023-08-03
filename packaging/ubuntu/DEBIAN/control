@@ -1,0 +1,5 @@
+Package: myapp
+Version: 1.2.9
+Architecture: amd64
+Description: myapp
+Maintainer: 1070753498@qq.com

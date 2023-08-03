@@ -3,20 +3,20 @@ name: CMake Build
 on: 
   push:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
-        - 'picture'
+        - '**/picture/**'
+        - 'packaging/**'
         - '.clang-format'
         - '.gitignore'
         - 'LICENSE'
         - 'README*'
-        - 'Scripts'
   pull_request:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
-        - 'picture'
+        - '**/picture/**'
+        - 'packaging/**'
         - '.clang-format'
         - '.gitignore'
         - 'LICENSE'
         - 'README*'
-        - 'Scripts'
 
 jobs:
   build:
@@ -30,9 +30,9 @@ jobs:
           - macos-latest
           - ubuntu-latest
         qt_ver: 
-          - 6.5.0
+          - 6.6.0
         build_type:
-          - "Release"
+          - "RelWithDebInfo"
         generators:
           - "Ninja"
 
@@ -59,6 +59,7 @@ jobs:
       - name: Install dependencies on ubuntu
         if: startsWith(matrix.os, 'ubuntu')
         run: |
+          sudo apt-get update
           sudo apt-get install -y ninja-build build-essential libgl1-mesa-dev
           ninja --version
           cmake --version
@@ -66,26 +67,26 @@ jobs:
       - uses: actions/checkout@v3
         with:
           fetch-depth: 1
-      - name: Mkdir
-        shell: bash
-        run: |
-          mkdir build
-          mkdir instdir
-      - name: Configure Windows
+
+      - name: Enable Developer Command Prompt
         if: startsWith(matrix.os, 'windows')
-        env:
-          CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
+        uses: ilammy/msvc-dev-cmd@v1.12.1
+        with:
+          arch: amd64
+      - name: Configure windows
+        if: startsWith(matrix.os, 'windows')
         shell: bash
         run: |
           cmake \
             -S . \
             -B ./build \
-            -A x64 \
+            -DCMAKE_C_COMPILER=cl \
+            -DCMAKE_CXX_COMPILER=cl \
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
+            -G "${{ matrix.generators }}" \
             -DCMAKE_INSTALL_PREFIX:PATH=instdir
       - name: Configure macos or ubuntu
         if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
-        env:
-          CMAKE_PREFIX_PATH: ${{env.Qt6_Dir}}
         shell: bash
         run: |
           cmake \

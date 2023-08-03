@@ -16,12 +16,17 @@
 
 ## [Bootstarp](Bootstarp/)--程序开机自启动设置和检测;
 
-1. Windows下读写注册表(HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run)实现开机自启动;
+1. Windows下读写注册表实现开机自启动，有两个位置可以写入;
+    ```powershell
+    HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run //对于所有用户
+    HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run // 对于当前用户
+    ```
 2. MacOS下拷贝plist文件到~/Library/LaunchAgents/，使用launchctl load/unload命令实现开机自启动;
-3. Ubuntu下拷贝.service和.timer文件到~/.config/systemd/user/，使用systemctl --user enable/disable命令实现开机自启动;
-   1. systemctl命令用于.timer文件,.timer文件用于定时执行.service文件，防止图形界面启动后，出现qxcbconnection: could not connect to display错误;
-   2. 不需要定时执行的.service文件，可以直接使用systemctl --user enable/disable命令实现开机自启动;
-   3. 也可以把/usr/share/Application/下的.desktop文件拷贝到~/.config/autostart/下，实现开机自启动（未验证）;
+3. Ubuntu下有两种方式：
+   1. 使用systemctl --user enable/disable命令实现开机自启动;
+      1. 拷贝.service和.timer文件到~/.config/systemd/user/，使用systemctl --user enable/disable命令实现开机自启动;
+      2. systemctl命令用于.timer文件,.timer文件用于定时执行.service文件，防止图形界面启动后，出现qxcbconnection: could not connect to display错误;
+   2. 把/usr/share/Application/下的.desktop文件拷贝到~/.config/autostart/下，实现开机自启动（未验证）;
 
 ## [BubbleWindow](BubbleWindow/)——气泡式对话框，也可作工具提示（ToolTip）；
 
@@ -135,13 +140,17 @@
 
 ## [Validator](Validator/)——加强版IntValidator（QIntValidator）和DoubleValidator（QDoubleValidator）
 
-## [Scripts](Scripts/)——打包脚本
-
-1. [macos](Scripts/macos/)——macos 通用编译打dmg包脚本（`python`/`dmgbuild`）；
-2. [widnows](Scripts/windows)——windows 通用编译打包安装脚本（Innosetup）；
-
+## [packaging](packaging/)——打包脚本；
+1. [macos](packaging/macos/)——macos qmake编译、打包dmg包脚本（`python`/`appdmg`）；
+2. [ubuntu](packaging/ubuntu/)——ubuntu qmake编译、打包AppImage/deb包脚本（`linuxdeployqt-continuous-x86_64.AppImage`/`dpkg-deb`）；
+    1. [使用root权限打开应用程序的一种方法](packaging/ubuntu/opt/MyApp/MyApp.sh)：
+       ```shell
+       #!/bin/sh
+       pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY /opt/MyApp/MyApp
+       ```
+3. [windows](packaging/windows/)——windows qmake编译、打包安装脚本（`Innosetup`）；
    1. `Innosetup` `signtool`
 
       ```
-      sha256="C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.18362.0\\x86\\signtool.exe" sign /f C:\\work\\certificate\\xxxxx.pfx /p password /fd SHA256 /tr http://timestamp.digicert.com/scripts/timestamp.dll /td SHA256 $f
+      sha256="C:\\Program Files (x86)\\Windows Kits\\10\\bin\\10.0.18362.0\\x86\\signtool.exe" sign /f C:\\certificate\\certificate.pfx /p password /fd SHA256 /tr http://timestamp.digicert.com/scripts/timestamp.dll /td SHA256 $f
       ```

@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Categories=Utility;
+Name=MyApp
+Exec=/opt/MyApp/MyApp %F
+Icon=/opt/MyApp/logo.png
+Comment=Edit this default file
+Terminal=false

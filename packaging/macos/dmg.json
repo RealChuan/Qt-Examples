@@ -1,8 +1,9 @@
 {
-	"title": "MyApplication",
+	"title": "MyApp",
 	"icon-size": 100,
 	"background": "",
 	"icon": "app.icns",
+	"format": "UDZO",
 	"window": {
 		"position": {
 			"x": 200,
@@ -18,7 +19,7 @@
 			"x": 200,
 			"y": 180,
 			"type": "file",
-			"path": "MyApplication.app"
+			"path": "MyApp.app"
 		},
 		{
 			"x": 400,
@@ -38,5 +39,8 @@
 			"type": "position",
 			"path": "/.background"
 		}
-	]
+	],
+	"code-sign": {
+		"signing-identity": "Developer ID Application: ******(******)"
+	}
 }
