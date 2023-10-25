@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "MyApp"
-#define MyAppVersion "1.2.9"
+#define MyAppVersion "0.0.1"
 #define MyAppPublisher "Youth Co.,Ld."
 #define MyAppURL "https://github.com/RealChuan"
 #define MyAppExeName "MyApp.exe"
@@ -58,111 +58,25 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 [Files]
 Source: "..\packet\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion signonce
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
-Source: "..\packet\api-ms-win-core-console-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-console-l1-2-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-datetime-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-debug-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-errorhandling-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-file-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-file-l1-2-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-file-l2-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-handle-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-heap-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-interlocked-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-libraryloader-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-localization-l1-2-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-memory-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-namedpipe-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-processenvironment-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-processthreads-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-processthreads-l1-1-1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-profile-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-rtlsupport-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-string-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-synch-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-synch-l1-2-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-sysinfo-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-timezone-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-core-util-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\API-MS-Win-core-xstate-l2-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-conio-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-convert-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-environment-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-filesystem-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-heap-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-locale-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-math-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-multibyte-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-private-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-process-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-runtime-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-stdio-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-string-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-time-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\api-ms-win-crt-utility-l1-1-0.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\concrt140.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\packet\D3Dcompiler_47.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\msvcp140.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\msvcp140_1.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\msvcr100.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\packet\opengl32sw.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\postproc-55.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\packet\Qt6Core.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\packet\Qt6Gui.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\packet\Qt6Network.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6OpenGL.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6Positioning.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6PrintSupport.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6Qml.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6QmlModels.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6Quick.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6QuickWidgets.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6SerialPort.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6Sql.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\packet\Qt6Pdf.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\packet\Qt6Svg.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6WebChannel.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6WebEngineCore.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6WebEngineWidgets.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "..\packet\Qt6Widgets.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\Qt6Xml.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\QtWebEngineProcess.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\ucrtbase.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\vcruntime140.dll"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\MyApp.pdb"; DestDir: "{app}"; Flags: ignoreversion
-Source: "..\packet\bearer\qgenericbearer.dll"; DestDir: "{app}\bearer"; Flags: ignoreversion
-Source: "..\packet\iconengines\qsvgicon.dll"; DestDir: "{app}\iconengines"; Flags: ignoreversion
-Source: "..\packet\imageformats\qapng.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\imageformats\qgif.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\imageformats\qheif.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\imageformats\qicns.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\imageformats\qico.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\imageformats\qjpeg.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\imageformats\qsvg.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\imageformats\qtga.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\imageformats\qtiff.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\imageformats\qwbmp.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\imageformats\qwebp.dll"; DestDir: "{app}\imageformats"; Flags: ignoreversion
-Source: "..\packet\platforms\qwindows.dll"; DestDir: "{app}\platforms"; Flags: ignoreversion
-Source: "..\packet\position\qtposition_positionpoll.dll"; DestDir: "{app}\position"; Flags: ignoreversion
-Source: "..\packet\position\qtposition_serialnmea.dll"; DestDir: "{app}\position"; Flags: ignoreversion
-Source: "..\packet\position\qtposition_winrt.dll"; DestDir: "{app}\position"; Flags: ignoreversion
-Source: "..\packet\printsupport\windowsprintersupport.dll"; DestDir: "{app}\printsupport"; Flags: ignoreversion
-Source: "..\packet\styles\qwindowsvistastyle.dll"; DestDir: "{app}\styles"; Flags: ignoreversion
-Source: "..\packet\resources\icudtl.dat"; DestDir: "{app}\resources"; Flags: ignoreversion
-Source: "..\packet\resources\qtwebengine_devtools_resources.pak"; DestDir: "{app}\resources"; Flags: ignoreversion
-Source: "..\packet\resources\qtwebengine_resources.pak"; DestDir: "{app}\resources"; Flags: ignoreversion
-Source: "..\packet\resources\qtwebengine_resources_100p.pak"; DestDir: "{app}\resources"; Flags: ignoreversion
-Source: "..\packet\resources\qtwebengine_resources_200p.pak"; DestDir: "{app}\resources"; Flags: ignoreversion
-Source: "..\packet\sqldrivers\qsqlite.dll"; DestDir: "{app}\sqldrivers"; Flags: ignoreversion
-Source: "..\packet\sqldrivers\qsqlodbc.dll"; DestDir: "{app}\sqldrivers"; Flags: ignoreversion
-Source: "..\packet\sqldrivers\qsqlpsql.dll"; DestDir: "{app}\sqldrivers"; Flags: ignoreversion
-Source: "..\packet\translations\language.zh_cn.qm"; DestDir: "{app}\translations"; Flags: ignoreversion
-Source: "..\packet\translations\language.zh_en.qm"; DestDir: "{app}\translations"; Flags: ignoreversion
-Source: "..\packet\translations\language.zh_tw.qm"; DestDir: "{app}\translations"; Flags: ignoreversion
-Source: "..\packet\translations\qt_en.qm"; DestDir: "{app}\translations"; Flags: ignoreversion
-Source: "..\packet\translations\qt_zh_CN.qm"; DestDir: "{app}\translations"; Flags: ignoreversion
-Source: "..\packet\translations\qt_zh_TW.qm"; DestDir: "{app}\translations"; Flags: ignoreversion
-Source: "..\packet\translations\qtwebengine_locales\en-US.pak"; DestDir: "{app}\translations\qtwebengine_locales"; Flags: ignoreversion
+Source: "..\packet\generic\*"; DestDir: "{app}\generic"; Flags: ignoreversion createallsubdirs recursesubdirs
+Source: "..\packet\iconengines\*"; DestDir: "{app}\iconengines"; Flags: ignoreversion createallsubdirs recursesubdirs
+Source: "..\packet\imageformats\*"; DestDir: "{app}\imageformats"; Flags: ignoreversion createallsubdirs recursesubdirs
+Source: "..\packet\networkinformation\*"; DestDir: "{app}\networkinformation"; Flags: ignoreversion createallsubdirs recursesubdirs
+Source: "..\packet\platforms\*"; DestDir: "{app}\platforms"; Flags: ignoreversion createallsubdirs recursesubdirs
+Source: "..\packet\styles\*"; DestDir: "{app}\styles"; Flags: ignoreversion createallsubdirs recursesubdirs
+Source: "..\packet\tls\*"; DestDir: "{app}\tls"; Flags: ignoreversion createallsubdirs recursesubdirs
+Source: "..\packet\translations\*"; DestDir: "{app}\translations"; Flags: ignoreversion createallsubdirs recursesubdirs
+Source: "..\packet\msvcr100.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\VC\Redist\MSVC\14.29.30133\x86\Microsoft.VC142.CRT\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs
+Source: "C:\Program Files (x86)\Windows Kits\10\Redist\10.0.19041.0\ucrt\DLLs\x86\*"; DestDir: "{app}"; Flags: ignoreversion createallsubdirs recursesubdirs
 
 [Registry]
 Root: "HKA"; Subkey: "Software\Classes\{#MyAppAssocExt}\OpenWithProgids"; ValueType: string; ValueName: "{#MyAppAssocKey}"; Flags: uninsdeletevalue
@@ -196,16 +110,14 @@ Type: filesandordirs; Name: "{localappdata}\Youth Co.,Ld\MyApp"
 procedure ExitProcess(exitCode:integer);
   external 'ExitProcess@kernel32.dll stdcall';
 
-// �Զ��庯�����ж������Ƿ����У�����Ϊ��Ҫ�жϵ�������exe����
 function KDetectSoft(strExeName: String): Boolean;
-// ��������
 var ErrorCode: Integer;
 var bRes: Boolean;
 var strFileContent: AnsiString;
-var strTmpPath: String;  // ��ʱĿ¼
-var strTmpFile: String;  // ��ʱ�ļ�����������������ݽ��
-var strCmdFind: String;  // ������������
-var strCmdKill: String;  // ��ֹ��������
+var strTmpPath: String;
+var strTmpFile: String;
+var strCmdFind: String;
+var strCmdKill: String;
 begin
   strTmpPath := GetTempDir();
   strTmpFile := Format('%sfindSoftRes.txt', [strTmpPath]);
@@ -228,7 +140,6 @@ begin
   Result :=true;
 end;
 
-// ��ʼҳ��һ��ʱ�ж������Ƿ�����
 function NextButtonClick(CurPageID: Integer): Boolean;
 begin
   if 1=CurPageID then begin
@@ -238,7 +149,6 @@ begin
   Result:= true;
 end;
 
-// ж��ʱ�ر�����
 function InitializeUninstall(): Boolean;
 begin
   Result := KDetectSoft('MyApp.exe');
