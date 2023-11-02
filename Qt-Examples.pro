@@ -24,7 +24,7 @@ SUBDIRS += \
     ReactorServer \
     SimpleUdp \
     SlipButton \
-    SqlTabview \
+    SqliteWAL \
     TableViewModel \
     Thread \
     TreeViewModel \
