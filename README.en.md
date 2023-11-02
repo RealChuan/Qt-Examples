@@ -3,9 +3,9 @@
 -   [Simplified Chinese](README.md)
 -   [English](README.en.md)
 
-## [QT practical tips (updated as soon as they come to mind) | Free will (realchuan.github.io)](https://realchuan.github.io/2021/10/12/QT%E5%AE%9E%E7%94%A8%E5%B0%8F%E6%8A%80%E5%B7%A7%EF%BC%88%E6%83%B3%E5%88%B0%E5%B0%B1%E6%9B%B4%E6%96%B0%EF%BC%89/)
+## [QT Practical Tips (Update as soon as I think of it) | Free Will (realchuan.github.io)](https://realchuan.github.io/2021/10/12/QT%E5%AE%9E%E7%94%A8%E5%B0%8F%E6%8A%80%E5%B7%A7%EF%BC%88%E6%83%B3%E5%88%B0%E5%B0%B1%E6%9B%B4%E6%96%B0%EF%BC%89/)
 
-## [Battery](Battery/)--Battery;
+## [Battery](/Battery/)--Battery
 
 <table>
     <tr>
@@ -14,58 +14,61 @@
     </tr>
 </table>
 
-## [Bootstrap](Bootstarp/)--Auto-start settings and detection when the program is powered on;
+## [Bootstrap](/Bootstarp/)--Auto-start settings and detection when the program is powered on
 
 1.  Reading and writing the registry under Windows enables self-starting at boot, and there are two locations where you can write;
+
     ```powershell
     HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run //对于所有用户
     HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run // 对于当前用户
     ```
+
 2.  Copy the plist file to ~/Library/LaunchAgents/ under MacOS, and use the launchctl load/unload command to achieve automatic startup at boot;
+
 3.  There are two ways under Ubuntu:
     1.  Use the systemctl --user enable/disable command to implement automatic startup at boot;
         1.  Copy the .service and .timer files to ~/.config/systemd/user/, and use the systemctl --user enable/disable command to implement automatic startup at boot;
         2.  The systemctl command is used in the .timer file, which is used to execute the .service file regularly to prevent the qxcbconnection: could not connect to display error from occurring after the graphical interface is started;
     2.  Copy the .desktop file under /usr/share/Application/ to ~/.config/autostart/ to achieve automatic startup at boot (not verified);
 
-## [BubbleWindow](BubbleWindow/)——Bubble dialog box, which can also be used as a tool tip (ToolTip);
+## [BubbleWindow](/BubbleWindow/)——Bubble dialog box, which can also be used as a tool tip (ToolTip)
 
 <div align=center><img src="BubbleWindow/picture/Bubble.png"></div>
 
-## [Chart](Chart/)——Visual chart drawing, reference[Use QChart to display real-time dynamic curves](https://qtdebug.com/qtbook-paint-realtime-curve-qchart/ "qtdebug/公孙二狗")Examples related to QChart;
+## [Chart](Chart/)——Visual chart drawing, reference[Use QChart to display real-time dynamic curves](https://qtdebug.com/qtbook-paint-realtime-curve-qchart/ "qtdebug/公孙二狗")Examples related to QChart
 
 <div align=center><img src="Chart/picture/Chart_1.png">图一二是动态曲线</div>  
 <div align=center><img src="Chart/picture/Chart_2.png">图一二是动态曲线， 图二坐标轴也会动态变化</div>
 
-## [CheckBoxStandardItem](/CheckBoxStandardItem)——StandardItem that can be checked, and the parent node status or child node status is automatically updated according to the checked status;
+## [CheckBoxStandardItem](/CheckBoxStandardItem/)——StandardItem that can be checked, and the parent node status or child node status is automatically updated according to the checked status
 
 <div align=center><img src="CheckBoxStandardItem/picture/checkBoxStandardItem.png"></div>
 
-## [Clock](/Clock)--clock;
+## [Clock](/Clock/)--clock
 
 <div align=center><img src="Clock/picture/Clock.png"></div>
 
-## [DashBoard](/DashBoard)--dash board;
+## [DashBoard](/DashBoard/)--dash board
 
 <div align=center><img src="DashBoard/picture/DashBoard.png"></div>
 
-## [FlowLayout](FlowLayout/)——Flow layout, from QT example Flow Layout Example;
+## [FlowLayout](/FlowLayout/)——Flow layout, from QT example Flow Layout Example
 
 <div align=center><img src="FlowLayout/picture/FlowLayout.png"></div>
 
-## [DragDrop](DragDrop/)——Simple control drag and drop, refer to the QT example Drag and Drop Puzzle Example;
+## [DragDrop](/DragDrop/)——Simple control drag and drop, refer to the QT example Drag and Drop Puzzle Example
 
-## [HttpClient](/HttpClient)——http client;
+## [HttpClient](/HttpClient/)——http client
 
-## [ImageCarousel](ImageCarousel/)——Simple picture carousel;
+## [ImageCarousel](/ImageCarousel/)——Simple picture carousel
 
 <div align=center><img src="ImageCarousel/picture/ImageCarousel.jpg"></div>
 
-## [GridViewModel](/GridViewModel)——Adaptive palace chart based on QListView;
+## [GridViewModel](/GridViewModel/)——Adaptive palace chart based on QListView
 
 <div align=center><img src="GridViewModel/picture/GridView.png"></div>
 
-## [LogAsynchronous](LogAsynchronous/)——Asynchronous logging, create a thread to write logs to files, and separate the front and back ends.
+## [LogAsynchronous](/LogAsynchronous/)——Asynchronous logging, create a thread to write logs to files, and separate the front and back ends
 
 1.  Log file name: application name (appname). time (time, accurate to seconds). host name. process ID (Tid). log (. count). If a single log written in a day is close to 1G, a suffix will be added automatically. (.1,.2.3..., and so on) Create a new log file to write, and rollFile will still be rolled at 0 o'clock every day;
     1.  Normal file name: LogAsynchronous.2020-04-26-20-29-03.Youth.11828.log;
@@ -73,15 +76,15 @@
 2.  Log format: time (time, accurate to milliseconds). Thread ID (Pid). Log level (debug). Print information (msg). File (File). Line number (Line).
     1.  For example: 2020-04-26 20:38:55.818 2052[Debug]123456789qwertyuioplkjhgfdsa 8412789-File:(..\\logAsynchronous\\main.cpp) Line:(19)；
 
-## [MulClient](MulClient/)——Multi-threaded client, one client per thread (how to bypass system limitations and simulate millions of clients);
+## [MulClient](/MulClient/)——Multi-threaded client, one client per thread (how to bypass system limitations and simulate millions of clients)
 
-## [MulServer](MulServer/)——Multi-threaded server, one thread and one client processing (processing TCP communication with high real-time performance);
+## [MulServer](/MulServer/)——Multi-threaded server, one thread and one client processing (processing TCP communication with high real-time performance)
 
-## [Navigation Progress Bar](/NavigationProgressBar)——Navigation progress bar;
+## [Navigation Progress Bar](/NavigationProgressBar/)——Navigation progress bar
 
 <div align=center><img src="NavigationProgressBar/picture/NavigationProgressBar.png"></div>
 
-## [PasswordLineEdit](PasswordLineEdit/)——Password input box;
+## [PasswordLineEdit](/PasswordLineEdit/)——Password input box
 
 <table>
     <tr>
@@ -90,23 +93,23 @@
     </tr>
 </table>
 
-## [ProgressArc](ProgressArc/)——Arc progress bar;
+## [ProgressArc](/ProgressArc/)——Arc progress bar
 
 <div align=center><img src="ProgressArc/picture/ProgressArc.png"></div>
 
-## [ProgressBar](ProgressBar)——QProgressBar rounded corner alternative;
+## [ProgressBar](/ProgressBar/)——QProgressBar rounded corner alternative
 
 <div align=center><img src="ProgressBar/picture/ProgressBar.png"></div>
 
-## [ReactorServer](ReactorServer/)——Multi-threaded server, Reactor mode (Echo);
+## [ReactorServer](/ReactorServer/)——Multi-threaded server, Reactor mode (Echo)
 
-## [SimpleUdp](SimpleUdp/)——Simple UDP example, broadcast and receive;
+## [SimpleUdp](/SimpleUdp/)——Simple UDP example, broadcast and receive
 
-## [ShowInMyComputer](ShowInMyComputer/)——Show current applications in My Computer;
+## [ShowInMyComputer](/ShowInMyComputer/)——Show current applications in My Computer
 
 Firewall whitelist.
 
-## [SlipButton](SlipButton/)——Sliding button;
+## [SlipButton](/SlipButton/)——Sliding button
 
 Another: A simpler implementation:[Animated CheckBox](http://qtdebug.com/qtbook-animated-checkbox/)；
 
@@ -117,9 +120,21 @@ Another: A simpler implementation:[Animated CheckBox](http://qtdebug.com/qtbook-
       </tr>
   </table>
 
-## [SqlTabview](SqlTabview/)——SQLite database call, model method;
+## [SqliteWAL](/SqliteWAL/)——Multi-threaded concurrent writing database program in Sqlite WAL mode
 
-## [TableViewModel](TableViewModel/)——Table view;
+### Advantages of WAL mode
+
+1.  Improved concurrency: WAL mode allows multiple readers and one writer to access the database at the same time, which can improve concurrency and performance;
+2.  Crash recovery: WAL mode ensures that the database remains consistent in the event of a crash by flushing all changes to the log file before committing the transaction;
+3.  Improved write performance: WAL mode allows concurrent writes, which can improve write performance better than the default rollback mode;
+
+### Things to note about WAL mode
+
+1.  WAL mode is only available in SQLite 3.35.5+ versions;
+2.  Increased disk usage: WAL mode requires more disk space than rollback mode because it writes all changes to the log file before committing them;
+3.  Slow read performance: In WAL mode, read operations are not blocked by write operations. If read and write operations are performed at the same time, data inconsistency may result.
+
+## [TableViewModel](/TableViewModel/)——Table view
 
 1.  Various custom agents
     1.  [ButtonDelegate](./TableViewModel/buttondelegate.h)；
@@ -131,25 +146,29 @@ Another: A simpler implementation:[Animated CheckBox](http://qtdebug.com/qtbook-
 
 <div align=center><img src="TableViewModel/picture/TabViewModelDelegate.jpg"></div>
 
-## [Thread](Thread/)——Multi-threading examples, 6 ways of writing;
+## [Thread](/Thread/)——Multi-threading examples, 6 ways of writing
 
-## [TreeViewModel](TreeViewModel/)——Tree view (MVC), QtCreator source code;
+## [TreeViewModel](/TreeViewModel/)——Tree view (MVC), QtCreator source code
 
 <div align=center><img src="TreeViewModel/picture/TreeView.png"></div>  
 <div align=center><img src="TreeViewModel/picture/ListView.png"></div>
 
-## [Validator](Validator/)——Enhanced versions of IntValidator (QIntValidator) and DoubleValidator (QDoubleValidator)
+## [Validator](/Validator/)——Enhanced versions of IntValidator (QIntValidator) and DoubleValidator (QDoubleValidator)
 
-## [packaging](packaging/)——Packaging script;
+## [packaging](/packaging/)——打包脚本
 
-1.  [macos](packaging/macos/)——macos qmake compiles and packages dmg package script (`python`/`appdmg`）；
-2.  [ubuntu](packaging/ubuntu/)——Ubuntu qmake compiles and packages AppImage/deb package script (`linuxdeployqt-continuous-x86_64.AppImage`/`dpkg-deb`）；
-    1.  [A way to open an application with root privileges](packaging/ubuntu/opt/MyApp/MyApp.sh)：
+1.  [macos](/packaging/macos/)——macos qmake compiles and packages dmg package script (`python`/`appdmg`）；
+
+2.  [ubuntu](/packaging/ubuntu/)——Ubuntu qmake compiles and packages AppImage/deb package script (`linuxdeployqt-continuous-x86_64.AppImage`/`dpkg-deb`）；
+
+    1.  [A way to open an application with root privileges](/packaging/ubuntu/opt/MyApp/MyApp.sh)：
+
         ```shell
         #!/bin/sh
         pkexec env DISPLAY=$DISPLAY XAUTHORITY=$XAUTHORITY /opt/MyApp/MyApp
         ```
-3.  [windows](packaging/windows/)——windows qmake compilation, packaging and installation script (`Innosetup`）；
+
+3.  [windows](/packaging/windows/)——windows qmake compilation, packaging and installation script (`Innosetup`）；
 
     1.  `Innosetup``signtool`
 
