@@ -1,6 +1,5 @@
 #include "sqlutils.hpp"
 
-#include <QCoreApplication>
 #include <QDebug>
 #include <QSqlDatabase>
 #include <QSqlError>
@@ -12,23 +11,10 @@ public:
     SqlUtilsPrivate(SqlUtils *q)
         : q_ptr(q)
     {
-        if (checkSQLITEDriver()) {
-            openSqliteDatabase();
-        }
+        openSqliteDatabase();
     }
 
     ~SqlUtilsPrivate() { QSqlDatabase::removeDatabase(connectionName); }
-
-    bool checkSQLITEDriver()
-    {
-        if (QSqlDatabase::drivers().contains("QSQLITE")) {
-            return true;
-        }
-
-        qWarning() << "This demo needs the SQLITE driver";
-        QMetaObject::invokeMethod(qApp, &QCoreApplication::quit, Qt::QueuedConnection);
-        return false;
-    }
 
     void openSqliteDatabase()
     {
