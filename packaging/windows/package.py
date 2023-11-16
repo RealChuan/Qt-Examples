@@ -31,20 +31,14 @@ def package_iss(iss_path):
     build.execute(package_cmd)
 
 
-def main():
-    build_program()
-    deploy(sys.path[0] + "/../packet/MyApp.exe")
-
+def upload_file():
     version = "0.0.1"
     current_time = time.strftime("%Y%m%d", time.localtime())
     exe_name = "MyApp_V{0}_{1}.exe".format(version, current_time)
     out_exe_path = ".\\..\\releases\\{0}".format(exe_name)
+
     build.execute("del /q {0}".format(out_exe_path))
     build.execute("del /q .\\..\\releases\\MyApp_Installation_Package.exe")
-
-    build.execute(
-        "{0} package.iss".format(r'C:\"Program Files (x86)"\"Inno Setup 6"\ISCC.exe')
-    )
     os.rename(".\\..\\releases\\MyApp_Installation_Package.exe", out_exe_path)
 
     # generate update.json
@@ -52,20 +46,18 @@ def main():
     utils.generate_json(version, out_exe_path, exe_name, json_path)
 
     # upload file
-    utils.upload_file(
-        "http://192.168.1.111:80/webdav/admin/Packages/MyApp/Windows/{0}".format(
-            exe_name
-        ),
-        "admin",
-        "password",
-        out_exe_path,
-    )
-    utils.upload_file(
-        "http://192.168.1.111:80/webdav/admin/Packages/MyApp/Windows/update.json",
-        "admin",
-        "password",
-        json_path,
-    )
+    base_url = "http://192.168.1.111:80/webdav/admin/Packages/MyApp/Windows/"
+    username = "admin"
+    password = "password"
+    utils.upload_file(base_url + exe_name, username, password, out_exe_path)
+    utils.upload_file(base_url + "update.json", username, password, json_path)
+
+
+def main():
+    build_program()
+    deploy(sys.path[0] + "/../packet/MyApp.exe")
+    package_iss(sys.path[0] + "/package.iss")
+    upload_file()
 
 
 if __name__ == "__main__":
