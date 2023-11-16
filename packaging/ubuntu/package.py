@@ -32,12 +32,7 @@ def deploy():
     )
 
 
-def main():
-    build_program()
-
-    os.chdir(sys.path[0])
-    deploy()
-
+def build_deb_and_upload():
     version = "0.0.1"
     current_time = time.strftime("%Y%m%d", time.localtime())
     deb_name = "MyApp{0}_{1}.deb".format(version, current_time)
@@ -52,28 +47,26 @@ def main():
 
     # update.json uploadfile
     json_path = "./../releases/update.json"
-    utils.generate_json(
-        version,
-        out_deb_path,
-        deb_name,
-        json_path,
-    )
+    utils.generate_json(version, out_deb_path, deb_name, json_path)
 
     # upload file
-    utils.upload_file(
-        "http://192.168.1.111:80/apps/wanyoucloud/index.php/61646D696E/admin/Packages/MyApp/Ubuntu/{0}".format(
-            deb_name
-        ),
-        "admin",
-        "password.",
-        out_deb_path,
-    )
-    utils.upload_file(
-        "http://192.168.1.111:80/apps/wanyoucloud/index.php/61646D696E/admin/Packages/MyApp/Ubuntu/update.json",
-        "admin",
-        "password.",
-        json_path,
-    )
+    base_url = "http://192.168.1.111:80/apps/wanyoucloud/index.php/61646D696E/admin/Packages/MyApp/Ubuntu/"
+    username = "admin"
+    password = "password"
+    utils.upload_file(base_url + deb_name, username, password, out_deb_path)
+    utils.upload_file(base_url + "update.json", username, password, json_path)
+
+
+def main():
+    build_program()
+
+    os.chdir(sys.path[0])
+    deploy()
+    build_deb_and_upload()
+
+
+if __name__ == "__main__":
+    main()
 
 
 # dpkg -r MyApp

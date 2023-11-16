@@ -49,18 +49,12 @@ def sign():
     )
 
 
-def main():
-    build_program()
-
-    os.chdir(sys.path[0])
-    deploy(sys.path[0] + "/../packet/MyApp.app")
-    build.execute("cp -af ./../packet/MyApp.app ./../releases/MyApp.app")
-    sign()
-
+def build_dmg_and_upload():
     version = "0.0.1"
     current_time = time.strftime("%Y%m%d", time.localtime())
     dmg_name = "MyApp{0}_{1}.dmg".format(version, current_time)
     out_dmg_path = "./../releases/{0}".format(dmg_name)
+
     build.execute("cp -f ./../../src/app.icns ./../releases/app.icns")
     build.execute("cp -f ./dmg.json ./../releases/dmg.json")
     build.execute("rm -f {0}".format(out_dmg_path))
@@ -74,28 +68,24 @@ def main():
 
     # generate update.json
     json_path = "./../releases/update.json"
-    utils.generate_json(
-        version,
-        out_dmg_path,
-        dmg_name,
-        json_path,
-    )
+    utils.generate_json(version, out_dmg_path, dmg_name, json_path)
 
     # upload file
-    utils.upload_file(
-        "http://192.168.1.111:80/webdav/admin/Packages/MyApp/MacOS/{0}".format(
-            dmg_name
-        ),
-        "admin",
-        "password",
-        out_dmg_path,
-    )
-    utils.upload_file(
-        "http://192.168.1.111:80/webdav/admin/Packages/MyApp/MacOS/update.json",
-        "admin",
-        "password.",
-        json_path,
-    )
+    base_url = "http://192.168.1.111:80/webdav/admin/Packages/MyApp/MacOS/"
+    username = "admin"
+    password = "password"
+    utils.upload_file(base_url + dmg_name, username, password, out_dmg_path)
+    utils.upload_file(base_url + "update.json", username, password, json_path)
+
+
+def main():
+    build_program()
+
+    os.chdir(sys.path[0])
+    deploy(sys.path[0] + "/../packet/MyApp.app")
+    build.execute("cp -af ./../packet/MyApp.app ./../releases/MyApp.app")
+    sign()
+    build_dmg_and_upload()
 
 
 if __name__ == "__main__":
