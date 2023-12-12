@@ -13,6 +13,7 @@ SUBDIRS += \
     FlowLayout \
     GridViewModel \
     HttpClient \
+    IconButton \
     ImageCarousel \
     LogAsynchronous \
     MulClient \

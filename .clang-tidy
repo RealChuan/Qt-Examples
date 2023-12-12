@@ -1,37 +1,7 @@
 ---
-Checks:          '-*,clang-analyzer-*,readability-*,performance-*,modernize-*,bugprone-*,cert-,cppcoreguidelines-,portability-*,llvm-*,google-*'
+Checks:          'clang-analyzer-*,readability-*,performance-*,modernize-*,bugprone-*,cert-*,portability-*,llvm-*,google-*'
 WarningsAsErrors: ''
 HeaderFilterRegex: '.'
 AnalyzeTemporaryDtors: false
-FormatStyle:     file
+FormatStyle:     none
 User:            user
-CheckOptions:
-    # 类名改为大驼峰
-
-- key: readability-identifier-naming.ClassCase
-    value: CamelCase
-
-# 函数名改为小驼峰
-
-- key: readability-identifier-naming.FunctionCase
-    value: camelBack
-
-# 变量名改为小驼峰
-
-- key: readability-identifier-naming.VariableCase
-    value: camelBack
-
-# 关闭一些过于严苛或者不适合的检查
-
-- key: readability-braces-around-statements.ShortStatementLines
-    value: '0'
-- key: readability-magic-numbers.IgnorePowersOf2IntegerLiterals
-    value: '1'
-- key: modernize-use-trailing-return-type.UseEastWestConst
-    value: '1'
-- key: readability-identifier-naming.ClassMemberPrefix
-    value: 'm_'
-- key: readability-identifier-naming.ConstexprVariablePrefix
-    value: 'k'
-- key: readability-identifier-naming.GlobalVariablePrefix
-    value: 'g_'

@@ -3,6 +3,9 @@ name: CMake Build
 on: 
   push:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
+        - '.github/workflows/delete_workflow.yml'
+        - '.github/workflows/qmake.yml'
+        - '.github/workflows/readme.yml'
         - '**/picture/**'
         - 'packaging/**'
         - '.clang-format'
@@ -11,6 +14,9 @@ on:
         - 'README*'
   pull_request:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
+        - '.github/workflows/delete_workflow.yml'
+        - '.github/workflows/qmake.yml'
+        - '.github/workflows/readme.yml'
         - '**/picture/**'
         - 'packaging/**'
         - '.clang-format'
@@ -30,7 +36,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
         qt_ver: 
-          - 6.6.0
+          - 6.6.1
         build_type:
           - "RelWithDebInfo"
         generators:
@@ -64,7 +70,7 @@ jobs:
           ninja --version
           cmake --version
           gcc --version
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 

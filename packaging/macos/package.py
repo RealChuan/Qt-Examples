@@ -19,7 +19,7 @@ def build_program():
 
 
 def deploy(program_path):
-    macdeployqt = r"/Users/fxy/Qt/6.6.0/clang_64/bin/macdeployqt"
+    macdeployqt = r"/Users/fxy/Qt/6.6.1/clang_64/bin/macdeployqt"
     build.execute("{0} {1} -always-overwrite".format(macdeployqt, program_path))
 
 

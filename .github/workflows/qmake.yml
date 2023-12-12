@@ -3,6 +3,9 @@ name: QMake Build
 on: 
   push:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
+        - '.github/workflows/cmake.yml'
+        - '.github/workflows/delete_workflow.yml'
+        - '.github/workflows/readme.yml'
         - '**/picture/**'
         - 'packaging/**'
         - '.clang-format'
@@ -11,6 +14,9 @@ on:
         - 'README*'
   pull_request:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
+        - '.github/workflows/cmake.yml'
+        - '.github/workflows/delete_workflow.yml'
+        - '.github/workflows/readme.yml'
         - '**/picture/**'
         - 'packaging/**'
         - '.clang-format'
@@ -30,7 +36,7 @@ jobs:
           - macos-latest
           - ubuntu-latest
         qt_ver: 
-          - 6.6.0
+          - 6.6.1
 
     steps:
       - name: Install Qt
@@ -45,7 +51,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libgl1-mesa-dev
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
