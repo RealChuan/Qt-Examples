@@ -8,11 +8,11 @@ project(
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if(CMAKE_HOST_WIN32)
-  list(APPEND CMAKE_PREFIX_PATH "C:\\Qt\\6.6.0\\msvc2019_64")
+  list(APPEND CMAKE_PREFIX_PATH "C:\\Qt\\6.6.1\\msvc2019_64")
 elseif(CMAKE_HOST_APPLE)
 
 elseif(CMAKE_HOST_UNIX)
-  list(APPEND CMAKE_PREFIX_PATH "/opt/Qt/6.6.0/gcc_64")
+  list(APPEND CMAKE_PREFIX_PATH "/opt/Qt/6.6.1/gcc_64")
 endif()
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
@@ -38,6 +38,7 @@ add_subdirectory(DragDrop)
 add_subdirectory(FlowLayout)
 add_subdirectory(GridViewModel)
 add_subdirectory(HttpClient)
+add_subdirectory(IconButton)
 add_subdirectory(ImageCarousel)
 add_subdirectory(LogAsynchronous)
 add_subdirectory(MulClient)

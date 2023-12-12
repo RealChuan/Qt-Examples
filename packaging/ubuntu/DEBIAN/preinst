@@ -1,7 +1,5 @@
 #!/bin/sh
 
-if [ -f "/opt/MyApp/MyApp" ]; then
-    killall MyApp
-fi
+killall -q MyApp
 
 exit 0

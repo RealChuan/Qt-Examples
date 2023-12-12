@@ -2,4 +2,8 @@
 
 rm -f /usr/share/applications/MyApp.desktop
 
+if ["$1" = "purge"]; then
+    rm -rf ~/.config/MyApp
+fi
+
 exit 0

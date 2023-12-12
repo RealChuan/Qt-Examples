@@ -1,9 +1,7 @@
 #!/bin/sh
 
-if [ -f "/opt/MyApp/MyApp" ]; then
-    killall MyApp
-fi
+killall -q MyApp
+
 rm -f /usr/share/applications/MyApp.desktop
-rm -rf ~/.config/MyApp
 
 exit 0

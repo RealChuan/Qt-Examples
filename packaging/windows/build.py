@@ -5,12 +5,12 @@ import sys
 
 build_list = [
     {
-        "qmake": r"C:\Qt\6.6.0\msvc2019_64\bin\qmake.exe",
+        "qmake": r"C:\Qt\6.6.1\msvc2019_64\bin\qmake.exe",
         "qmake_params": r'"CONFIG+=qtquickcompiler"',
         "jom": r"C:\Qt\Tools\QtCreator\bin\jom\jom.exe",
         "env_bat": r'C:\"Program Files (x86)"\"Microsoft Visual Studio"\2019\Community\VC\Auxiliary\Build\vcvarsall.bat amd64_x86',
         "project": r"C:\myapp\MyApp.pro",
-        "build_directory": r"C:\build-MyApp-Desktop_Qt_6_6_0_MSVC2019_64bit-Release",
+        "build_directory": r"C:\build-MyApp-Desktop_Qt_6_6_1_MSVC2019_64bit-Release",
     }
 ]
 
