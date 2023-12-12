@@ -3,7 +3,7 @@
 -   [Simplified Chinese](README.md)
 -   [English](README.en.md)
 
-## [QT Practical Tips (Update as soon as I think of it) | Free Will (realchuan.github.io)](https://realchuan.github.io/2021/10/12/QT%E5%AE%9E%E7%94%A8%E5%B0%8F%E6%8A%80%E5%B7%A7%EF%BC%88%E6%83%B3%E5%88%B0%E5%B0%B1%E6%9B%B4%E6%96%B0%EF%BC%89/)
+## [QT practical tips (updated as soon as they come to mind) | Free will (realchuan.github.io)](https://realchuan.github.io/2021/10/12/QT%E5%AE%9E%E7%94%A8%E5%B0%8F%E6%8A%80%E5%B7%A7%EF%BC%88%E6%83%B3%E5%88%B0%E5%B0%B1%E6%9B%B4%E6%96%B0%EF%BC%89/)
 
 ## [Battery](/Battery/)--Battery
 
@@ -26,7 +26,7 @@
 2.  Copy the plist file to ~/Library/LaunchAgents/ under MacOS, and use the launchctl load/unload command to achieve automatic startup at boot;
 
 3.  There are two ways under Ubuntu:
-    1.  Use the systemctl --user enable/disable command to implement automatic startup at boot;
+    1.  Use the systemctl --user enable/disable command to achieve automatic startup at boot;
         1.  Copy the .service and .timer files to ~/.config/systemd/user/, and use the systemctl --user enable/disable command to implement automatic startup at boot;
         2.  The systemctl command is used in the .timer file, which is used to execute the .service file regularly to prevent the qxcbconnection: could not connect to display error from occurring after the graphical interface is started;
     2.  Copy the .desktop file under /usr/share/Application/ to ~/.config/autostart/ to achieve automatic startup at boot (not verified);
@@ -59,6 +59,8 @@
 ## [DragDrop](/DragDrop/)——Simple control drag and drop, refer to the QT example Drag and Drop Puzzle Example
 
 ## [HttpClient](/HttpClient/)——http client
+
+## [IconButton](/IconButton/)——EventFilter and Button that support Icon following state switching
 
 ## [ImageCarousel](/ImageCarousel/)——Simple picture carousel
 
@@ -155,7 +157,7 @@ Another: A simpler implementation:[Animated CheckBox](http://qtdebug.com/qtbook-
 
 ## [Validator](/Validator/)——Enhanced versions of IntValidator (QIntValidator) and DoubleValidator (QDoubleValidator)
 
-## [packaging](/packaging/)——打包脚本
+## [packaging](/packaging/)——Packaging script
 
 1.  [macos](/packaging/macos/)——macos qmake compiles and packages dmg package script (`python`/`appdmg`）；
 
