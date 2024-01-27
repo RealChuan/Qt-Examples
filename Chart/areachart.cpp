@@ -4,8 +4,8 @@
 class AreaChart::AreaChartPrivate
 {
 public:
-    explicit AreaChartPrivate(ChartView *parent)
-        : q_ptr(parent)
+    explicit AreaChartPrivate(ChartView *q)
+        : q_ptr(q)
     {
         areaSeries = new QAreaSeries(q_ptr);
         scatterSeries = new QScatterSeries(q_ptr);
@@ -42,11 +42,11 @@ void AreaChart::setupUI()
     setChart(d_ptr->chart);
     PointList pointList = generateRandomDataPoints(5, 101);
     d_ptr->scatterSeries->replace(pointList);
-    QLineSeries *upperSeries = new QLineSeries(this);
-    QLineSeries *lowerSeries = new QLineSeries(this);
+    auto *upperSeries = new QLineSeries(this);
+    auto *lowerSeries = new QLineSeries(this);
     upperSeries->replace(pointList);
-    for (int i = 0; i < pointList.size(); i++) {
-        pointList[i].setY(0);
+    for (auto &i : pointList) {
+        i.setY(0);
     }
     lowerSeries->replace(pointList);
     d_ptr->areaSeries->setUpperSeries(upperSeries);

@@ -1,13 +1,16 @@
 #include "batterywidget.h"
 
-#include <QPainter>
-#include <QPropertyAnimation>
-#include <QTextItem>
-#include <QWheelEvent>
-#include <QtMath>
+#include <QtWidgets>
 
-struct BatteryWidget::BatteryWidgetPrivate
+class BatteryWidget::BatteryWidgetPrivate
 {
+public:
+    BatteryWidgetPrivate(BatteryWidget *q)
+        : q_ptr(q)
+    {}
+
+    BatteryWidget *q_ptr;
+
     QColor borderColor = QColor(80, 80, 80);
     QColor powerColor = QColor(65, 205, 82);
     QColor alarmColor = QColor(250, 118, 113);
@@ -18,7 +21,7 @@ struct BatteryWidget::BatteryWidgetPrivate
 
 BatteryWidget::BatteryWidget(QWidget *parent)
     : QWidget(parent)
-    , d_ptr(new BatteryWidgetPrivate)
+    , d_ptr(new BatteryWidgetPrivate(this))
 {
     d_ptr->animation = new QPropertyAnimation(this, "value", this);
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -73,14 +76,15 @@ auto BatteryWidget::minimumSizeHint() const -> QSize
 void BatteryWidget::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
+
     QPainter painter(this);
     painter.setPen(Qt::NoPen);
     painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
-    double linew = 2 * painter.pen().widthF() / painter.transform().m11();
+    auto linew = 2 * painter.pen().widthF() / painter.transform().m11();
 
     qreal headWidth = width() / 11;
     qreal batteryWidth = width() - headWidth;
-    QRectF batteryRect = QRectF(QPointF(5, 5), QPointF(batteryWidth, height() - 5));
+    auto batteryRect = QRectF(QPointF(5, 5), QPointF(batteryWidth, height() - 5));
 
     // 边框
     drawBorder(&painter, batteryRect, linew);
@@ -127,24 +131,24 @@ void BatteryWidget::setValue(int value)
     update();
 }
 
-void BatteryWidget::drawBorder(QPainter *painter, const QRectF &batteryRect, const double linew)
+void BatteryWidget::drawBorder(QPainter *painter, const QRectF &batteryRect, const qreal linew)
 {
     painter->setPen(QPen(d_ptr->borderColor, linew));
     painter->setBrush(Qt::NoBrush);
-    double borderRadius = batteryRect.height() / 30;
+    qreal borderRadius = batteryRect.height() / 30;
     painter->drawRoundedRect(batteryRect, borderRadius, borderRadius);
 }
 
-void BatteryWidget::drawPower(QPainter *painter, const QRectF &batteryRect, const double linew)
+void BatteryWidget::drawPower(QPainter *painter, const QRectF &batteryRect, const qreal linew)
 {
-    QColor powerColoer = d_ptr->value > d_ptr->alarmValue ? d_ptr->powerColor : d_ptr->alarmColor;
-    double margin = qMin(width(), height()) / 50.0;
+    auto powerColoer = d_ptr->value > d_ptr->alarmValue ? d_ptr->powerColor : d_ptr->alarmColor;
+    qreal margin = qMin(width(), height()) / 50.0;
     margin = qMax(margin, linew);
     qreal unit = (batteryRect.width() - (margin * 2)) / 100;
     QPointF topLeft(batteryRect.topLeft().x() + margin, batteryRect.topLeft().y() + margin);
     QPointF bottomRight(d_ptr->value * unit + margin + 5, batteryRect.bottomRight().y() - margin);
     QRectF rect(topLeft, bottomRight);
-    double bgRadius = rect.height() / 30;
+    qreal bgRadius = rect.height() / 30;
     painter->setPen(Qt::NoPen);
     painter->setBrush(powerColoer);
     painter->drawRoundedRect(rect, bgRadius, bgRadius);
@@ -152,8 +156,8 @@ void BatteryWidget::drawPower(QPainter *painter, const QRectF &batteryRect, cons
 
 void BatteryWidget::drawValue(QPainter *painter, const QRectF &batteryRect)
 {
-    QColor fontColoer = d_ptr->value > d_ptr->alarmValue ? QColor(64, 65, 66) : d_ptr->alarmColor;
-    QString text = QString("%1%").arg(d_ptr->value);
+    auto fontColoer = d_ptr->value > d_ptr->alarmValue ? QColor(64, 65, 66) : d_ptr->alarmColor;
+    auto text = QString("%1%").arg(d_ptr->value);
     QFont font("Microsoft YaHei", batteryRect.width() / 5);
     font.setLetterSpacing(QFont::AbsoluteSpacing, batteryRect.width() / 25);
     painter->setFont(font);
@@ -167,7 +171,7 @@ void BatteryWidget::drawHeader(QPainter *painter, const QRectF &batteryRect)
     QPointF headRectTopLeft(batteryRect.topRight().x(), height() / 3);
     QPointF headRectBottomRight(width(), height() - height() / 3);
     QRectF headRect(headRectTopLeft, headRectBottomRight);
-    double headRadius = headRect.height() / 30;
+    qreal headRadius = headRect.height() / 30;
     painter->setPen(Qt::NoPen);
     painter->setBrush(d_ptr->borderColor);
     painter->drawRoundedRect(headRect, headRadius, headRadius);

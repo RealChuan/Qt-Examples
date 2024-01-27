@@ -28,7 +28,8 @@ public:
     [[nodiscard]] auto text() const -> QString;
 
     // 设置小三角宽和高;
-    void setTriangleInfo(int width, int height);
+    void setTriangleSize(const QSize &size);
+    [[nodiscard]] auto triangleSize() const -> QSize;
 
     void setDerection(Direction);
     auto direction() -> Direction;
@@ -39,7 +40,7 @@ signals:
     void aboutToClose();
 
 protected:
-    void paintEvent(QPaintEvent *) override;
+    void paintEvent(QPaintEvent *event) override;
     void closeEvent(QCloseEvent *event) override;
 
 private:

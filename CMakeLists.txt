@@ -25,9 +25,18 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Widgets Charts Network Concurrent Sql)
+find_package(
+  Qt6 REQUIRED
+  COMPONENTS Core
+             Widgets
+             Charts
+             Network
+             Concurrent
+             Sql
+             Quick)
 
 add_subdirectory(Battery)
+add_subdirectory(BatteryQuick)
 add_subdirectory(Bootstrap)
 add_subdirectory(BubbleWindow)
 add_subdirectory(Chart)
