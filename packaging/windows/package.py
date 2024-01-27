@@ -18,7 +18,7 @@ def build_program():
 
 
 def deploy(program_path):
-    windeployqt = r"C:\Qt\6.6.1\msvc2019_64\bin\windeployqt.exe"
+    windeployqt = r"C:\Qt\6.6.2\msvc2019_64\bin\windeployqt.exe"
     deploy_cmd = (
         f'{windeployqt} --force --no-translations --compiler-runtime "{program_path}"'
     )

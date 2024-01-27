@@ -5,7 +5,7 @@
 
 ## [QT实用小技巧（想到就更新） | 自由意志 (realchuan.github.io)](https://realchuan.github.io/2021/10/12/QT%E5%AE%9E%E7%94%A8%E5%B0%8F%E6%8A%80%E5%B7%A7%EF%BC%88%E6%83%B3%E5%88%B0%E5%B0%B1%E6%9B%B4%E6%96%B0%EF%BC%89/)
 
-## [Battery](/Battery/)——电池
+## [Battery](/Battery/)——电池控件
 
 <table>
     <tr>
@@ -13,6 +13,8 @@
         <td ><div align=center><img src="Battery/picture/HealthyBattery.png"></div></td>
     </tr>
 </table>
+
+## [BatteryQuick](/BatteryQuick/)--电池控件（`QtQuick`）
 
 ## [Bootstarp](/Bootstarp/)--程序开机自启动设置和检测
 

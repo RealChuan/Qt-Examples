@@ -14,20 +14,20 @@ public:
     explicit BatteryWidget(QWidget *parent = nullptr);
     ~BatteryWidget() override;
 
-    [[nodiscard]] [[nodiscard]] auto sizeHint() const -> QSize override;
-    [[nodiscard]] [[nodiscard]] auto minimumSizeHint() const -> QSize override;
+    [[nodiscard]] auto sizeHint() const -> QSize override;
+    [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
     void setBorderColor(const QColor &color);
-    [[nodiscard]] [[nodiscard]] auto borderColor() const -> QColor;
+    [[nodiscard]] auto borderColor() const -> QColor;
 
     void setPowerColor(const QColor &color);
-    [[nodiscard]] [[nodiscard]] auto powerColor() const -> QColor;
+    [[nodiscard]] auto powerColor() const -> QColor;
 
     void setAlarmColor(const QColor &color);
-    [[nodiscard]] [[nodiscard]] auto alarmColor() const -> QColor;
+    [[nodiscard]] auto alarmColor() const -> QColor;
 
     void setValue(int value);
-    [[nodiscard]] [[nodiscard]] auto value() const -> int;
+    [[nodiscard]] auto value() const -> int;
 
 signals:
     void valueChanged(int value);
@@ -44,7 +44,7 @@ private:
     void drawValue(QPainter *painter, const QRectF &batteryRect);
     void drawHeader(QPainter *painter, const QRectF &batteryRect);
 
-    struct BatteryWidgetPrivate;
+    class BatteryWidgetPrivate;
     QScopedPointer<BatteryWidgetPrivate> d_ptr;
 };
 

@@ -6,13 +6,13 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    BatteryWidget *battery = new BatteryWidget(this);
-    QSlider *slider = new QSlider(this);
+    auto *battery = new BatteryWidget(this);
+    auto *slider = new QSlider(this);
     slider->setRange(0, 100);
     connect(slider, &QSlider::valueChanged, battery, &BatteryWidget::valueChanged);
 
-    QWidget *widget = new QWidget(this);
-    QHBoxLayout *layout = new QHBoxLayout(widget);
+    auto *widget = new QWidget(this);
+    auto *layout = new QHBoxLayout(widget);
     layout->addWidget(battery);
     layout->addWidget(slider);
     setCentralWidget(widget);

@@ -5,7 +5,7 @@ import sys
 
 build_list = [
     {
-        "qmake": r"/opt/Qt/6.6.1/gcc_64/bin/qmake",
+        "qmake": r"/opt/Qt/6.6.2/gcc_64/bin/qmake",
         "qmake_params": r'"CONFIG+=qtquickcompiler"',
         "make": r"make",
         "project": r"/home/fxy/myapp/MyApp.pro",

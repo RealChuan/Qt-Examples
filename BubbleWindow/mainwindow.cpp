@@ -2,8 +2,8 @@
 
 #include "bubblewidget.h"
 
-#include <QtWidgets>
 #include <QDebug>
+#include <QtWidgets>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -14,24 +14,24 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::setupUI()
 {
-    BubbleWidget *top = new BubbleWidget(this);
-    top->setTriangleInfo(20, 20);
+    auto *top = new BubbleWidget(this);
+    top->setTriangleSize({20, 20});
     top->setDerection(BubbleWidget::Top);
 
-    BubbleWidget *left = new BubbleWidget(this);
-    left->setTriangleInfo(20, 20);
+    auto *left = new BubbleWidget(this);
+    left->setTriangleSize({20, 20});
     left->setDerection(BubbleWidget::Left);
 
-    BubbleWidget *right = new BubbleWidget(this);
-    right->setTriangleInfo(20, 20);
+    auto *right = new BubbleWidget(this);
+    right->setTriangleSize({20, 20});
     right->setDerection(BubbleWidget::Right);
 
-    BubbleWidget *bottom = new BubbleWidget(this);
-    bottom->setTriangleInfo(20, 20);
+    auto *bottom = new BubbleWidget(this);
+    bottom->setTriangleSize({20, 20});
     bottom->setDerection(BubbleWidget::Bottom);
 
-    QWidget *widget = new QWidget(this);
-    QVBoxLayout *layout = new QVBoxLayout(widget);
+    auto *widget = new QWidget(this);
+    auto *layout = new QVBoxLayout(widget);
     layout->addWidget(top);
     layout->addWidget(left);
     layout->addWidget(right);
@@ -39,4 +39,3 @@ void MainWindow::setupUI()
 
     setCentralWidget(widget);
 }
-
