@@ -3,9 +3,9 @@
 -   [Simplified Chinese](README.md)
 -   [English](README.en.md)
 
-## [QT practical tips (updated as soon as they come to mind) | Free will (realchuan.github.io)](https://realchuan.github.io/2021/10/12/QT%E5%AE%9E%E7%94%A8%E5%B0%8F%E6%8A%80%E5%B7%A7%EF%BC%88%E6%83%B3%E5%88%B0%E5%B0%B1%E6%9B%B4%E6%96%B0%EF%BC%89/)
+## [QT Practical Tips (Update as soon as I think of it) | Free Will (realchuan.github.io)](https://realchuan.github.io/2021/10/12/QT%E5%AE%9E%E7%94%A8%E5%B0%8F%E6%8A%80%E5%B7%A7%EF%BC%88%E6%83%B3%E5%88%B0%E5%B0%B1%E6%9B%B4%E6%96%B0%EF%BC%89/)
 
-## [Battery](/Battery/)--Battery
+## [Battery](/Battery/)——Battery control
 
 <table>
     <tr>
@@ -13,6 +13,8 @@
         <td ><div align=center><img src="Battery/picture/HealthyBattery.png"></div></td>
     </tr>
 </table>
+
+## [BatteryQuick](/BatteryQuick/)--battery control(`QtQuick`）
 
 ## [Bootstrap](/Bootstarp/)--Auto-start settings and detection when the program is powered on
 
