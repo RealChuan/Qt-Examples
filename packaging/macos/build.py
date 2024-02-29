@@ -5,7 +5,7 @@ import sys
 
 build_list = [
     {
-        "qmake": r"/Users/fxy/Qt/6.6.1/macos/bin/qmake",
+        "qmake": r"/Users/fxy/Qt/6.6.2/macos/bin/qmake",
         "qmake_params": r'"CONFIG+=qml_debug"',
         "make": r"make",
         "project": r"/Users/fxy/myapp/MyApp.pro",
