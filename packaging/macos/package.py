@@ -61,7 +61,7 @@ def build_dmg_and_upload():
     build.execute("appdmg ./../releases/dmg.json {0}".format(out_dmg_path))
 
     build.execute(
-        """xcrun altool --notarize-app --primary-bundle-id "com.youth.myapp" --username "1070753498@qq.com" --password "password" --file {0}""".format(
+        """xcrun notarytool submit {0} --apple-id "1070753498@qq.com" --team-id "******" --password "password" --wait""".format(
             out_dmg_path
         )
     )
