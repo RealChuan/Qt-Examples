@@ -27,8 +27,8 @@ def build_program():
 def deploy():
     build.execute(
         "cd ./../packet/opt/MyApp/ \n"
-        "export LD_LIBRARY_PATH=/home/fxy/work/code/myapp/code/bin-64/release/. \n"
-        "'/home/fxy/下载/linuxdeployqt-continuous-x86_64.AppImage' MyApp -always-overwrite -no-translations -qmake=/opt/Qt/6.6.2/gcc_64/bin/qmake -unsupported-allow-new-glibc -appimage\n"
+        "export LD_LIBRARY_PATH=/home/runner/work/code/myapp/code/bin-64/release/. \n"
+        "'/home/runner/下载/linuxdeployqt-continuous-x86_64.AppImage' MyApp -always-overwrite -no-translations -qmake=/opt/Qt/6.7.0/gcc_64/bin/qmake -unsupported-allow-new-glibc -appimage\n"
     )
 
 

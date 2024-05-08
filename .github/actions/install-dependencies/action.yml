@@ -1,0 +1,55 @@
+name: 'Install Dependencies'
+description: 'Install qt environment and compile dependencies'
+inputs:
+  os_name:
+    description: 'os name'
+    required: true
+    type: string
+  qt_modules:
+    description: 'qt modules'
+    required: false
+    default: 'qtcharts qt5compat qtnetworkauth qtimageformats'
+    type: string
+  qt_ver:
+    description: 'qt version'
+    required: false
+    default: '6.7.0'
+    type: string
+
+runs:
+  using: 'composite'
+
+  steps:
+    - name: Install dependencies on windows
+      if: startsWith(runner.os, 'Windows')
+      shell: bash
+      run: |
+        choco install ninja
+        ninja --version
+        cmake --version
+
+    - name: Install dependencies on macos
+      if: startsWith(runner.os, 'macOS')
+      shell: bash
+      run: |
+        brew install ninja
+        ninja --version
+        cmake --version
+        clang --version
+
+    - name: Install dependencies on linux
+      if: startsWith(runner.os, 'Linux')
+      shell: bash
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ninja-build build-essential libgl1-mesa-dev
+        ninja --version
+        cmake --version
+        gcc --version
+
+    - name: Install Qt
+      uses: jurplel/install-qt-action@v3
+      with:
+        version: ${{ inputs.qt_ver }}
+        modules: ${{ inputs.qt_modules }}
+        cache: 'true'

@@ -18,7 +18,7 @@ def build_program():
 
 
 def deploy(program_path):
-    windeployqt = r"C:\Qt\6.6.2\msvc2019_64\bin\windeployqt.exe"
+    windeployqt = r"C:\Qt\6.7.0\msvc2019_64\bin\windeployqt.exe"
     deploy_cmd = (
         f'{windeployqt} --force --no-translations --compiler-runtime "{program_path}"'
     )
@@ -34,7 +34,7 @@ def package_iss(iss_path):
 def upload_file():
     version = "0.0.1"
     current_time = time.strftime("%Y%m%d", time.localtime())
-    exe_name = "MyApp_V{0}_{1}.exe".format(version, current_time)
+    exe_name = "MyApp_{0}_{1}.exe".format(version, current_time)
     out_exe_path = ".\\..\\releases\\{0}".format(exe_name)
 
     build.execute("del /q {0}".format(out_exe_path))

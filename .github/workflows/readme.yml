@@ -15,8 +15,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Setup Node.js
         uses: actions/setup-node@v4
-        with:
-          node-version: 12.x
       # ISO Langusge Codes: https://cloud.google.com/translate/docs/languages  
       - name: Adding README - English
         uses: dephraiim/translate-readme@main

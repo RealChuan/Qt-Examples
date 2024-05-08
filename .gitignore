@@ -1,50 +1,56 @@
-# This file is used to ignore files which are generated
-# ----------------------------------------------------------------------------
-
-*~
-*.autosave
-*.a
-*.core
-*.moc
+# C++ objects and libs
 *.o
-*.obj
-*.orig
-*.rej
+*.a
 *.so
 *.so.*
-*_pch.h.cpp
-*_resource.rc
-*.qm
-.#*
-*.*#
-core
-!core/
-tags
-.DS_Store
-.directory
-*.debug
-Makefile*
-*.prl
-*.app
+*.dll
+*.dylib
+*.lib
+*.exp
+*.slo
+*.lo
+*.la
+*.lai
+
+# Qt generated files
+*.moc
 moc_*.cpp
-ui_*.h
+moc_*.h
 qrc_*.cpp
-Thumbs.db
-*.res
-*.rc
+ui_*.h
+*.qmlc
+*.jsc
+*.qm
+*.prl
+
+# Qt build files and configurations
+object_script.*.Release
+object_script.*.Debug
+*_plugin_import.cpp
 /.qmake.cache
 /.qmake.stash
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+Makefile*
+*build-*
+target_wrapper.*
 
-# qtcreator generated files
-*.pro.user*
+# QtCreator generated files
+*.autosave
+*.qmlproject.user
+*.qmlproject.user.*
+CMakeLists.txt.user*
+compile_commands.json
+*creator.user*
 
-# xemacs temporary files
+# Temporary and machine-specific files
+*~
+*.autosave
+*.core
 *.flc
-
-# Vim temporary files
 .*.swp
-
-# Visual Studio generated files
 *.ib_pdb_index
 *.idb
 *.ilk
@@ -52,25 +58,37 @@ Thumbs.db
 *.sln
 *.suo
 *.vcproj
-*vcproj.*.*.user
+*vcproj.*.*
 *.ncb
 *.sdf
 *.opensdf
 *.vcxproj
 *vcxproj.*
-
-# MinGW generated files
 *.Debug
 *.Release
-
-# Python byte code
 *.pyc
 
+# System and editor files
+core
+!core/
+tags
+.DS_Store
+.directory
+*.*#
+.#*
+
+# Visual Studio generated files
+*.sln
+*.suo
+
+# MinGW generated files
+*.o
+
 # Binaries
-# --------
 *.dll
 *.exe
 
-#others
-*build-*
+# Others
+.vscode
+bin-*
 build

@@ -3,24 +3,22 @@ name: QMake Build
 on: 
   push:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
-        - '.github/workflows/cmake.yml'
-        - '.github/workflows/delete_workflow.yml'
-        - '.github/workflows/readme.yml'
         - '**/picture/**'
+        - 'cmake/**'
         - 'packaging/**'
-        - '.clang-format'
+        - '.clang-*'
         - '.gitignore'
+        - 'CMake*'
         - 'LICENSE'
         - 'README*'
   pull_request:
     paths-ignore: # 下列文件的变更不触发部署，可以自行添加
-        - '.github/workflows/cmake.yml'
-        - '.github/workflows/delete_workflow.yml'
-        - '.github/workflows/readme.yml'
         - '**/picture/**'
+        - 'cmake/**'
         - 'packaging/**'
-        - '.clang-format'
+        - '.clang-*'
         - '.gitignore'
+        - 'CMake*'
         - 'LICENSE'
         - 'README*'
 
@@ -35,36 +33,42 @@ jobs:
           - windows-2019
           - macos-latest
           - ubuntu-latest
-        qt_ver: 
-          - 6.6.2
 
     steps:
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: ${{ matrix.qt_ver }}
-          install-deps: 'true'
-          modules: 'addons.qtcharts addons.qtnetworkauth'
-          cache: 'true'
-      - name: ubuntu install GL library
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential libgl1-mesa-dev
       - uses: actions/checkout@v4
-        with:
+        with: 
           fetch-depth: 1
+          
+      - uses: ./.github/actions/install-dependencies
+        with:
+          os_name: ${{ matrix.os }}
+
+      - uses: RealChuan/install-jom@main
+
+      - name: mkdir build
+        shell: bash
+        run: |
+          mkdir build
 
       - name: msvc-build
         if: startsWith(matrix.os, 'windows')
-        shell: cmd
+        shell: pwsh
         run: |
-          call "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64
-          qmake
-          nmake
-      - name: build macos or ubuntu
-        if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
+          ..\scripts\windows\setVsDev.ps1 -VersionRange "[16.0,17.0)" -Arch "x64"
+          & qmake ./../.
+          & jom
+        working-directory: build
+      - name: ubuntu-build
+        if: startsWith(matrix.os, 'ubuntu')
         shell: bash
         run: |
-          qmake
-          make -j4
+          qmake ./../.
+          make -j $(nproc)
+        working-directory: build
+      - name: macos-build
+        if: startsWith(matrix.os, 'macos')
+        shell: bash
+        run: |
+          qmake ./../.
+          make -j $(sysctl -n hw.ncpu)
+        working-directory: build

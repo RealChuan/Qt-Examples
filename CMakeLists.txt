@@ -1,29 +1,15 @@
-cmake_minimum_required(VERSION 3.21.1)
+cmake_minimum_required(VERSION 3.25.1)
+
+include(cmake/qt.cmake)
 
 project(
   Qt-Examples
   VERSION 0.0.1
+  DESCRIPTION "Examples for Qt"
+  HOMEPAGE_URL "https://github.com/RealChuan/Qt-Examples"
   LANGUAGES CXX)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-
-if(CMAKE_HOST_WIN32)
-  list(APPEND CMAKE_PREFIX_PATH "C:\\Qt\\6.6.2\\msvc2019_64")
-elseif(CMAKE_HOST_APPLE)
-
-elseif(CMAKE_HOST_UNIX)
-  list(APPEND CMAKE_PREFIX_PATH "/opt/Qt/6.6.2/gcc_64")
-endif()
-
-set(CMAKE_INCLUDE_CURRENT_DIR ON)
-
-set(CMAKE_AUTOUIC ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
-# qt_standard_project_setup() 这个识别不了
-
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
+include(cmake/common.cmake)
 
 find_package(
   Qt6 REQUIRED
@@ -34,6 +20,12 @@ find_package(
              Concurrent
              Sql
              Quick)
+
+qt_standard_project_setup(I18N_SOURCE_LANGUAGE en I18N_TRANSLATED_LANGUAGES
+                          zh_CN)
+# qt_standard_project_setup will set CMAKE_RUNTIME_OUTPUT_DIRECTORY, we need to
+# set it back, and use EXECUTABLE_OUTPUT_PATH
+unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 
 add_subdirectory(Battery)
 add_subdirectory(BatteryQuick)
@@ -67,3 +59,5 @@ add_subdirectory(Validator)
 if(CMAKE_HOST_WIN32)
   add_subdirectory(ShowInMyComputer)
 endif()
+
+include(cmake/build_info.cmake)

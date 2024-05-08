@@ -5,11 +5,11 @@ import sys
 
 build_list = [
     {
-        "qmake": r"/Users/fxy/Qt/6.6.2/macos/bin/qmake",
+        "qmake": r"/Users/runner/Qt/6.7.0/macos/bin/qmake",
         "qmake_params": r'"CONFIG+=qml_debug"',
         "make": r"make",
-        "project": r"/Users/fxy/myapp/MyApp.pro",
-        "build_directory": r"/Users/fxy/myapp/build-MyApp-Desktop_Qt_6_6_1_macos_64bit-Release",
+        "project": r"/Users/runner/myapp/MyApp.pro",
+        "build_directory": r"/Users/runner/myapp/build-MyApp-Desktop_Qt_6_7_0_macos_64bit-Release",
     }
 ]
 
@@ -36,7 +36,7 @@ class Builder:
         return True if execute(create_qmake_cmd_line) else False
 
     def execute_make_cmd_line(self):
-        cmd_line = "{0} -j4".format(self.make)
+        cmd_line = "{0} -j $(sysctl -n hw.ncpu)".format(self.make)
         return True if execute(cmd_line) else False
 
     def execute_make_clean_cmd_line(self):

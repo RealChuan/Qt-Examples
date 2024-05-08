@@ -2,26 +2,22 @@ name: CMake Build
 
 on: 
   push:
-    paths-ignore: # 下列文件的变更不触发部署，可以自行添加
-        - '.github/workflows/delete_workflow.yml'
-        - '.github/workflows/qmake.yml'
-        - '.github/workflows/readme.yml'
+    paths-ignore: 
         - '**/picture/**'
         - 'packaging/**'
-        - '.clang-format'
+        - '.clang-*'
         - '.gitignore'
         - 'LICENSE'
+        - '*.pro'
         - 'README*'
   pull_request:
-    paths-ignore: # 下列文件的变更不触发部署，可以自行添加
-        - '.github/workflows/delete_workflow.yml'
-        - '.github/workflows/qmake.yml'
-        - '.github/workflows/readme.yml'
+    paths-ignore: 
         - '**/picture/**'
         - 'packaging/**'
-        - '.clang-format'
+        - '.clang-*'
         - '.gitignore'
         - 'LICENSE'
+        - '*.pro'
         - 'README*'
 
 jobs:
@@ -35,73 +31,38 @@ jobs:
           - windows-latest
           - macos-latest
           - ubuntu-latest
-        qt_ver: 
-          - 6.6.2
         build_type:
           - "RelWithDebInfo"
         generators:
           - "Ninja"
 
     steps:
-      - name: Install Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          version: ${{ matrix.qt_ver }}
-          install-deps: 'true'
-          modules: 'addons.qtcharts addons.qtnetworkauth'
-          cache: 'true'
-      - name: Install dependencies on windows
-        if: startsWith(matrix.os, 'windows')
-        run: |
-          choco install ninja
-          ninja --version
-          cmake --version
-      - name: Install dependencies on macos
-        if: startsWith(matrix.os, 'macos')
-        run: |
-          brew install ninja
-          ninja --version
-          cmake --version
-      - name: Install dependencies on ubuntu
-        if: startsWith(matrix.os, 'ubuntu')
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ninja-build build-essential libgl1-mesa-dev
-          ninja --version
-          cmake --version
-          gcc --version
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
 
-      - name: Enable Developer Command Prompt
-        if: startsWith(matrix.os, 'windows')
-        uses: ilammy/msvc-dev-cmd@v1.12.1
+      - uses: ./.github/actions/install-dependencies
         with:
-          arch: amd64
-      - name: Configure windows
+          os_name: ${{ matrix.os }}
+
+      - name: Configure and build windows
         if: startsWith(matrix.os, 'windows')
+        shell: pwsh
+        run: |
+          .\scripts\windows\setVsDev.ps1
+          cmake `
+            -S . `
+            -B ./build `
+            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+            -G "${{ matrix.generators }}"
+          cmake --build ./build --config ${{ matrix.build_type }}
+      - name: Configure and build on ubuntu or macos
+        if: startsWith(matrix.os, 'ubuntu') || startsWith(matrix.os, 'macos')
         shell: bash
         run: |
           cmake \
             -S . \
             -B ./build \
-            -DCMAKE_C_COMPILER=cl \
-            -DCMAKE_CXX_COMPILER=cl \
             -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -G "${{ matrix.generators }}" \
-            -DCMAKE_INSTALL_PREFIX:PATH=instdir
-      - name: Configure macos or ubuntu
-        if: startsWith(matrix.os, 'macos') || startsWith(matrix.os, 'ubuntu')
-        shell: bash
-        run: |
-          cmake \
-            -S . \
-            -B ./build \
-            -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} \
-            -G "${{ matrix.generators }}" \
-            -DCMAKE_INSTALL_PREFIX:PATH=instdir
-      - name: Build
-        shell: bash
-        run: |
+            -G "${{ matrix.generators }}"
           cmake --build ./build --config ${{ matrix.build_type }}

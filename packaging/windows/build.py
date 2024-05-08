@@ -5,12 +5,12 @@ import sys
 
 build_list = [
     {
-        "qmake": r"C:\Qt\6.6.2\msvc2019_64\bin\qmake.exe",
+        "qmake": r"C:\Qt\6.7.0\msvc2019_64\bin\qmake.exe",
         "qmake_params": r'"CONFIG+=qtquickcompiler"',
         "jom": r"C:\Qt\Tools\QtCreator\bin\jom\jom.exe",
         "env_bat": r'C:\"Program Files (x86)"\"Microsoft Visual Studio"\2019\Community\VC\Auxiliary\Build\vcvarsall.bat amd64_x86',
         "project": r"C:\myapp\MyApp.pro",
-        "build_directory": r"C:\build-MyApp-Desktop_Qt_6_6_1_MSVC2019_64bit-Release",
+        "build_directory": r"C:\build-MyApp-Desktop_Qt_6_7_0_MSVC2019_64bit-Release",
     }
 ]
 
@@ -38,7 +38,7 @@ class Builder:
         return True if execute(create_qmake_cmd_line) else False
 
     def execute_make_cmd_line(self):
-        cmd_line = "{0} -j4".format(self.jom)
+        cmd_line = "{0}".format(self.jom)
         return True if execute(cmd_line) else False
 
     def execute_make_clean_cmd_line(self):

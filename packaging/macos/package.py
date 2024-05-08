@@ -19,7 +19,7 @@ def build_program():
 
 
 def deploy(program_path):
-    macdeployqt = r"/Users/fxy/Qt/6.6.2/clang_64/bin/macdeployqt"
+    macdeployqt = r"/Users/runner/Qt/6.7.0/clang_64/bin/macdeployqt"
     build.execute("{0} {1} -always-overwrite".format(macdeployqt, program_path))
 
 
@@ -61,7 +61,7 @@ def build_dmg_and_upload():
     build.execute("appdmg ./../releases/dmg.json {0}".format(out_dmg_path))
 
     build.execute(
-        """xcrun notarytool submit {0} --apple-id "1070753498@qq.com" --team-id "******" --password "password" --wait""".format(
+        """xcrun altool --notarize-app --primary-bundle-id "com.youth.myapp" --username "1070753498@qq.com" --password "password" --file {0}""".format(
             out_dmg_path
         )
     )

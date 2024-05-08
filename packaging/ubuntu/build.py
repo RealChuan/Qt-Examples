@@ -5,11 +5,11 @@ import sys
 
 build_list = [
     {
-        "qmake": r"/opt/Qt/6.6.2/gcc_64/bin/qmake",
+        "qmake": r"/opt/Qt/6.7.0/gcc_64/bin/qmake",
         "qmake_params": r'"CONFIG+=qtquickcompiler"',
         "make": r"make",
-        "project": r"/home/fxy/myapp/MyApp.pro",
-        "build_directory": r"/home/fxy/myapp/build-MyApp-Desktop_Qt_6_6_1_GCC_64bit-Release",
+        "project": r"/home/runner/myapp/MyApp.pro",
+        "build_directory": r"/home/runner/myapp/build-MyApp-Desktop_Qt_6_7_0_GCC_64bit-Release",
     }
 ]
 
@@ -36,7 +36,7 @@ class Builder:
         return True if execute(create_qmake_cmd_line) else False
 
     def execute_make_cmd_line(self):
-        cmd_line = "{0} -j4".format(self.make)
+        cmd_line = "{0} -j $(nproc)".format(self.make)
         return True if execute(cmd_line) else False
 
     def execute_make_clean_cmd_line(self):
