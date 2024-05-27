@@ -7,9 +7,17 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    QTextEdit *edit = new QTextEdit(this);
-    connect(LogAsync::instance(), &LogAsync::appendBuf, edit, &QTextEdit::append);
-    setCentralWidget(edit);
+    auto *log = LogAsync::instance();
+    log->setLogPath(QDir::tempPath());
+    log->setAutoDelFile(true);
+    log->setAutoDelFileDays(7);
+    log->setOrientation(LogAsync::Orientation::StdAndFile);
+    log->setLogLevel(QtDebugMsg);
+    log->startWork();
+
+    auto *textBrowser = new QTextBrowser(this);
+    connect(log, &LogAsync::appendBuf, textBrowser, &QTextBrowser::append);
+    setCentralWidget(textBrowser);
     resize(1000, 618);
     qDebug() << "Start Log!";
     m_watcher = QtConcurrent::run(&MainWindow::testLog, this);

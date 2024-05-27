@@ -3,26 +3,24 @@
 
 #include <QObject>
 
-struct FileUtilPrivate;
 class FileUtil : public QObject
 {
     Q_OBJECT
 public:
-    explicit FileUtil(qint64 days = 30, QObject *parent = nullptr);
+    explicit FileUtil(QObject *parent = nullptr);
     ~FileUtil() override;
 
 public slots:
-    void onWrite(const QString &);
+    void onWrite(const QString & /*msg*/);
 
 private slots:
     void onFlush();
 
 private:
-    auto getFileName(qint64 *now) const -> QString;
-    auto rollFile(int) -> bool;
-    void autoDelFile();
+    auto rollFile(int /*count*/) -> bool;
     void setTimer();
 
+    class FileUtilPrivate;
     QScopedPointer<FileUtilPrivate> d_ptr;
 };
 

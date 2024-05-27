@@ -78,6 +78,7 @@
    2. 当日写日志接近1G，新建的文件名：LogAsynchronous.2020-04-26-20-38-55.Youth.11828.log.1；
 2. 日志格式：时间（time，精确到毫秒）.线程ID（Pid）.日志级别（debug）.打印信息（msg）.文件（File）.行号（Line）。
    1. 比如：2020-04-26 20:38:55.818 2052 [Debug] 123456789qwertyuioplkjhgfdsa 8412789-File:(..\logAsynchronous\main.cpp) Line:(19)；
+3. [Qt-App](https://github.com/RealChuan/Qt-App/blob/main/src/utils/logasync.h)，这个项目中也有对日志的封装，与本项目的代码大致一致，由于两个项目更新频率可能不同，建议在查看日志模块时，同时检查[Qt-App](https://github.com/RealChuan/Qt-App/blob/main/src/utils/logasync.h)的最新更新。
 
 ## [MulClient](/MulClient/)——多线程客户端，一个线程一个客户端（怎么可以绕开系统限制，模拟百万个客户端）
 

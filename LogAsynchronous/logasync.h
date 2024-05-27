@@ -4,7 +4,6 @@
 #include <QMutex>
 #include <QThread>
 
-struct LogAsyncPrivate;
 class LogAsync : public QThread
 {
     Q_OBJECT
@@ -13,10 +12,19 @@ public:
 
     static auto instance() -> LogAsync *;
 
-    void setOrientation(Orientation);
+    void setLogPath(const QString &path);
+    auto logPath() -> QString;
+
+    void setAutoDelFile(bool on);
+    auto autoDelFile() -> bool;
+
+    void setAutoDelFileDays(qint64 days);
+    auto autoDelFileDays() -> qint64;
+
+    void setOrientation(Orientation /*orientation*/);
     auto orientation() -> Orientation;
 
-    void setLogLevel(QtMsgType);
+    void setLogLevel(QtMsgType /*type*/);
     auto logLevel() -> QtMsgType;
 
     void startWork();
@@ -32,7 +40,7 @@ private:
     explicit LogAsync(QObject *parent = nullptr);
     ~LogAsync() override;
 
-    static QMutex m_mutex;
+    class LogAsyncPrivate;
     QScopedPointer<LogAsyncPrivate> d_ptr;
 };
 

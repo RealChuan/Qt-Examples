@@ -7,7 +7,8 @@
 // 消息处理函数
 void messageHandler(QtMsgType type, const QMessageLogContext &context, const QString &msg)
 {
-    if (type < LogAsync::instance()->logLevel()) {
+    auto *instance = LogAsync::instance();
+    if (type < instance->logLevel()) {
         return;
     }
 
@@ -38,7 +39,7 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     }
 
     const QString dataTimeString(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
-    const QString threadId = QString("%1").arg(qint64(QThread::currentThreadId()),
+    const QString threadId = QString("%1").arg(reinterpret_cast<quint64>(QThread::currentThreadId()),
                                                5,
                                                10,
                                                QLatin1Char('0'));
@@ -48,19 +49,19 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
 #ifndef QT_NO_DEBUG
     contexInfo = QString("File:(%1) Line:(%2)").arg(context.file).arg(context.line);
 #endif
-    const QString message = QString("%1 %2 [%3] %4 - %5\n")
-                                .arg(dataTimeString, threadId, level, msg, contexInfo);
+    const auto message = QString("%1 %2 [%3] %4 - %5\n")
+                             .arg(dataTimeString, threadId, level, msg, contexInfo);
 
-    switch (LogAsync::instance()->orientation()) {
+    switch (instance->orientation()) {
     case LogAsync::Orientation::Std:
         fprintf(stdPrint, "%s", message.toLocal8Bit().constData());
         ::fflush(stdPrint);
         break;
-    case LogAsync::Orientation::File: emit LogAsync::instance()->appendBuf(message); break;
+    case LogAsync::Orientation::File: emit instance->appendBuf(message); break;
     case LogAsync::Orientation::StdAndFile:
         fprintf(stdPrint, "%s", message.toLocal8Bit().constData());
         ::fflush(stdPrint);
-        emit LogAsync::instance()->appendBuf(message);
+        emit instance->appendBuf(message);
         break;
     default:
         fprintf(stdPrint, "%s", message.toLocal8Bit().constData());
@@ -69,21 +70,58 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     }
 }
 
-struct LogAsyncPrivate
+class LogAsync::LogAsyncPrivate
 {
+public:
+    explicit LogAsyncPrivate(LogAsync *q)
+        : q_ptr(q)
+    {}
+
+    LogAsync *q_ptr;
+
+    QString logPath;
+    bool autoDelFile = false;
+    qint64 autoDelFileDays = 7;
     QtMsgType msgType = QtWarningMsg;
     LogAsync::Orientation orientation = LogAsync::Orientation::Std;
     QWaitCondition waitCondition;
     QMutex mutex;
 };
 
-QMutex LogAsync::m_mutex;
-
 auto LogAsync::instance() -> LogAsync *
 {
-    QMutexLocker locker(&m_mutex);
-    static LogAsync log;
-    return &log;
+    static LogAsync instance;
+    return &instance;
+}
+
+void LogAsync::setLogPath(const QString &path)
+{
+    d_ptr->logPath = path;
+}
+
+auto LogAsync::logPath() -> QString
+{
+    return d_ptr->logPath;
+}
+
+void LogAsync::setAutoDelFile(bool on)
+{
+    d_ptr->autoDelFile = on;
+}
+
+auto LogAsync::autoDelFile() -> bool
+{
+    return d_ptr->autoDelFile;
+}
+
+void LogAsync::setAutoDelFileDays(qint64 days)
+{
+    d_ptr->autoDelFileDays = days;
+}
+
+auto LogAsync::autoDelFileDays() -> qint64
+{
+    return d_ptr->autoDelFileDays;
 }
 
 void LogAsync::setOrientation(LogAsync::Orientation orientation)
@@ -132,7 +170,7 @@ void LogAsync::run()
 
 LogAsync::LogAsync(QObject *parent)
     : QThread(parent)
-    , d_ptr(new LogAsyncPrivate)
+    , d_ptr(new LogAsyncPrivate(this))
 {
     qInstallMessageHandler(messageHandler);
 }

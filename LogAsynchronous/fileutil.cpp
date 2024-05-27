@@ -1,4 +1,5 @@
 #include "fileutil.h"
+#include "logasync.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -8,49 +9,63 @@
 #include <QTextStream>
 #include <QTimer>
 
-#define ROLLSIZE 1000 * 1000 * 1000
+#define ROLLSIZE (1000 * 1000 * 1000)
 
-const static int kRollPerSeconds_ = 60 * 60 * 24;
+const static int g_kRollPerSeconds = 60 * 60 * 24;
 
-auto generateDirectorys(const QString &directory) -> bool
+static auto getFileName(qint64 seconds) -> QString
 {
-    QDir sourceDir(directory);
-    if (sourceDir.exists()) {
-        return true;
-    }
-
-    QString tempDir;
-    QStringList directorys = directory.split("/");
-    for (int i = 0; i < directorys.count(); i++) {
-        QString path = directorys[i];
-        tempDir += path + "/";
-
-        QDir dir(tempDir);
-        if (!dir.exists() && !dir.mkdir(tempDir)) {
-            return false;
-        }
-    }
-
-    return true;
+    auto data = QDateTime::fromSecsSinceEpoch(seconds).toString("yyyy-MM-dd-hh-mm-ss");
+    auto filename = QString("%1/%2.%3.%4.%5.log")
+                        .arg(LogAsync::instance()->logPath(),
+                             qAppName(),
+                             data,
+                             QSysInfo::machineHostName(),
+                             QString::number(qApp->applicationPid()));
+    return filename;
 }
 
-struct FileUtilPrivate
+static void autoDelFile()
 {
+    auto *instance = LogAsync::instance();
+    const QString path(instance->logPath());
+    QDir dir(path);
+    if (!dir.exists()) {
+        return;
+    }
+
+    const QFileInfoList list = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Time);
+    const QDateTime cur = QDateTime::currentDateTime();
+    const QDateTime pre = cur.addDays(-instance->autoDelFileDays());
+
+    for (const QFileInfo &info : std::as_const(list)) {
+        if (info.lastModified() <= pre) {
+            dir.remove(info.fileName());
+        }
+    }
+}
+
+class FileUtil::FileUtilPrivate
+{
+public:
+    explicit FileUtilPrivate(FileUtil *q)
+        : q_ptr(q)
+    {}
+
+    FileUtil *q_ptr;
+
     QFile file;
     //QTextStream 读写分离的，内部有缓冲区static const int QTEXTSTREAM_BUFFERSIZE = 16384;
     QTextStream stream;
     qint64 startTime = 0;
     qint64 lastRoll = 0;
     int count = 0;
-    qint64 autoDelFileDays = 30;
 };
 
-FileUtil::FileUtil(qint64 days, QObject *parent)
+FileUtil::FileUtil(QObject *parent)
     : QObject(parent)
-    , d_ptr(new FileUtilPrivate)
+    , d_ptr(new FileUtilPrivate(this))
 {
-    d_ptr->autoDelFileDays = days;
-    generateDirectorys(qApp->applicationDirPath() + "/log");
     rollFile(0);
     setTimer();
 }
@@ -66,7 +81,7 @@ void FileUtil::onWrite(const QString &msg)
         rollFile(++d_ptr->count);
     } else {
         qint64 now = QDateTime::currentSecsSinceEpoch();
-        qint64 thisPeriod = now / kRollPerSeconds_ * kRollPerSeconds_;
+        qint64 thisPeriod = now / g_kRollPerSeconds * g_kRollPerSeconds;
         if (thisPeriod != d_ptr->startTime) {
             d_ptr->count = 0;
             rollFile(0);
@@ -81,29 +96,16 @@ void FileUtil::onFlush()
     d_ptr->stream.flush();
 }
 
-auto FileUtil::getFileName(qint64 *now) const -> QString
-{
-    *now = QDateTime::currentSecsSinceEpoch();
-    QString data = QDateTime::fromSecsSinceEpoch(*now).toString("yyyy-MM-dd-hh-mm-ss");
-    QString filename = QString("%1/log/%2.%3.%4.%5.log")
-                           .arg(qApp->applicationDirPath(),
-                                qAppName(),
-                                data,
-                                QSysInfo::machineHostName(),
-                                QString::number(qApp->applicationPid()));
-    return filename;
-}
-
 auto FileUtil::rollFile(int count) -> bool
 {
-    qint64 now = 0;
-    QString filename = getFileName(&now);
+    qint64 now = QDateTime::currentSecsSinceEpoch();
+    QString filename = getFileName(now);
     if (count != 0) {
         filename += QString(".%1").arg(count);
-    } else {
+    } else if (LogAsync::instance()->autoDelFile()) {
         autoDelFile();
     }
-    qint64 start = now / kRollPerSeconds_ * kRollPerSeconds_;
+    qint64 start = now / g_kRollPerSeconds * g_kRollPerSeconds;
     if (now > d_ptr->lastRoll) {
         d_ptr->startTime = start;
         d_ptr->lastRoll = now;
@@ -120,26 +122,9 @@ auto FileUtil::rollFile(int count) -> bool
     return false;
 }
 
-void FileUtil::autoDelFile()
-{
-    const QString path(qApp->applicationDirPath() + "/log");
-    generateDirectorys(path);
-    QDir dir(path);
-
-    const QFileInfoList list = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Time);
-    const QDateTime cur = QDateTime::currentDateTime();
-    const QDateTime pre = cur.addDays(-d_ptr->autoDelFileDays);
-
-    for (const QFileInfo &info : qAsConst(list)) {
-        if (info.lastModified() <= pre) {
-            dir.remove(info.fileName());
-        }
-    }
-}
-
 void FileUtil::setTimer()
 {
-    QTimer *timer = new QTimer(this);
+    auto *timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &FileUtil::onFlush);
     timer->start(5000); // 5秒刷新一次
 }
