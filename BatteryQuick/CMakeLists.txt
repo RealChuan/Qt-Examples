@@ -3,7 +3,7 @@ qt_add_executable(BatteryQuick main.cc)
 qt_add_qml_module(
   BatteryQuick
   URI
-  qml
+  BatteryQuickResources
   VERSION
   1.0
   QML_FILES
@@ -23,3 +23,10 @@ set_target_properties(
              WIN32_EXECUTABLE TRUE)
 
 target_link_libraries(BatteryQuick PRIVATE Qt6::Quick)
+
+include(GNUInstallDirs)
+install(
+  TARGETS BatteryQuick
+  BUNDLE DESTINATION .
+  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})

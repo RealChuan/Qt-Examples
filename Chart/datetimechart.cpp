@@ -22,7 +22,7 @@ public:
         PointList pointList = generateRandomDataPoints(5, 101);
         int year = 2020;
         int mouth = 1;
-        for (const QPointF &p : qAsConst(pointList)) {
+        for (const QPointF &p : std::as_const(pointList)) {
             QDateTime momentInTime(QDate(year, mouth, 15), QTime());
             scatterSeries->append(momentInTime.toMSecsSinceEpoch(), p.y());
             lineSeries->append(momentInTime.toMSecsSinceEpoch(), p.y());

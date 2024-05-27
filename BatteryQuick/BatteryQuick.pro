@@ -4,7 +4,7 @@ SOURCES += \
         main.cc
 
 resources.files = Main.qml 
-resources.prefix = /qml
+resources.prefix = /qt/qml/BatteryQuickResources
 RESOURCES += resources
 
 # Additional import path used to resolve QML modules in Qt Creator's code model

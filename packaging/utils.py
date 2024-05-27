@@ -5,45 +5,52 @@ import hashlib
 import json
 import base64
 import requests
+import os
+import shutil
+
+
+def remove(path):
+    if os.path.exists(path):
+        if os.path.isfile(path):
+            os.remove(path)
+        else:
+            shutil.rmtree(path)
 
 
 def generate_json(version, md5_file_path, file_name, json_path):
     with open(md5_file_path, "rb") as fp:
-        data = fp.read()
-    md5 = hashlib.md5(data).hexdigest()
+        md5 = hashlib.md5(fp.read()).hexdigest()
     current_time = time.strftime("%Y%m%d", time.localtime())
-    dict = {
-        "version": version,
-        "buildVersion": int(current_time),
-        "name": file_name,
-        "md5": md5,
-    }
     with open(json_path, "w", encoding="utf-8") as f:
-        f.write(json.dumps(dict, indent=4))
+        json.dump(
+            {
+                "version": version,
+                "buildVersion": int(current_time),
+                "name": file_name,
+                "md5": md5,
+            },
+            f,
+            indent=4,
+        )
 
 
 def upload_file(url, username, password, local_file):
-    headers = {"User-Agent": "Mozilla/5.0"}
-    # 读取本地文件
+    headers = {
+        "User-Agent": "Mozilla/5.0",
+        "Content-Type": "application/octet-stream",
+        "Connection": "close",
+        "Overwrite": "T",
+        "translate": "f",
+        "Authorization": "Basic "
+        + base64.b64encode(f"{username}:{password}".encode()).decode(),
+    }
     with open(local_file, "rb") as f:
-        content = f.read()
-    # 构造请求
-    headers["Content-Type"] = "application/octet-stream"
-    headers["Connection"] = "close"
-    headers["Content-Length"] = str(len(content))
-    headers["Overwrite"] = "T"
-    headers["translate"] = "f"
-    headers["Authorization"] = (
-        "Basic " + base64.b64encode((username + ":" + password).encode()).decode()
-    )
-    # 发送请求
-    print("Start upload file: {0}, URL: {1}".format(local_file, url))
-    r = requests.put(url, headers=headers, data=content, verify=False)
-    if r.status_code == 201:
-        print("[+] upload file success")
+        headers["Content-Length"] = str(os.path.getsize(local_file))
+        with requests.Session() as session:
+            response = session.put(url, headers=headers, data=f, verify=False)
+    if response.status_code == 201:
+        print(f"[+] Upload file '{local_file}' success")
     else:
         print(
-            "[-] upload file failed, status code: {0}, reason: {1}".format(
-                r.status_code, r.reason
-            )
+            f"[-] Upload file '{local_file}' failed, status code: {response.status_code}, reason: {response.reason}"
         )

@@ -45,9 +45,9 @@ void SendThread::run()
     while (d_ptr->runing && loop > 0) {
         const QByteArray buf = "Hello " + QByteArray::number(loop);
         QList<QNetworkInterface> interfaceList = QNetworkInterface::allInterfaces();
-        for (const QNetworkInterface &interface : qAsConst(interfaceList)) {
+        for (const QNetworkInterface &interface : std::as_const(interfaceList)) {
             QList<QNetworkAddressEntry> entryList = interface.addressEntries();
-            for (const QNetworkAddressEntry &entry : qAsConst(entryList)) {
+            for (const QNetworkAddressEntry &entry : std::as_const(entryList)) {
                 const QHostAddress broadcastAdress = entry.broadcast();
                 if (broadcastAdress == QHostAddress::Null
                     || broadcastAdress == QHostAddress::LocalHost) {

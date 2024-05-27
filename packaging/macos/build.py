@@ -5,11 +5,11 @@ import sys
 
 build_list = [
     {
-        "qmake": r"/Users/runner/Qt/6.7.0/macos/bin/qmake",
-        "qmake_params": r'"CONFIG+=qml_debug"',
+        "qmake": r"/Users/runner/Qt/6.7.2/clang_64/bin/qmake",
+        "qmake_params": r'"CONFIG+=qtquickcompiler"',
         "make": r"make",
-        "project": r"/Users/runner/myapp/MyApp.pro",
-        "build_directory": r"/Users/runner/myapp/build-MyApp-Desktop_Qt_6_7_0_macos_64bit-Release",
+        "project": r"/Users/runner/code/Qt-App/Qt-App.pro",
+        "build_directory": r"/Users/runner/code/Qt-App/build/Desktop_Qt_6_7_0_clang_64bit-Release",
     }
 ]
 

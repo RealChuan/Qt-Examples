@@ -1,0 +1,8 @@
+#!/bin/sh -ex
+
+echo "Preinstall script is not implemented for macOS."
+
+sudo killall -9 Qt-App || true
+sudo killall -9 CrashReport || true
+
+exit 0

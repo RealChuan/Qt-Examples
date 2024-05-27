@@ -20,7 +20,7 @@ void MainWindow::setupUI()
 
     m_imageVector.clear();
     auto colorNames = QColor::colorNames();
-    for (const QString &colorName : qAsConst(colorNames)) {
+    for (const QString &colorName : std::as_const(colorNames)) {
         QImage image(WIDTH, WIDTH, QImage::Format_ARGB32);
         image.fill(Qt::transparent);
         QPainter painter(&image);

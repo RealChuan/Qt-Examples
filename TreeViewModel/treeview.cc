@@ -16,7 +16,7 @@ auto TreeView::selectedIndexes() const -> QModelIndexList
 {
     QModelIndexList indexList(QTreeView::selectedIndexes());
     QModelIndexList list;
-    for (const auto &index : qAsConst(indexList)) {
+    for (const auto &index : std::as_const(indexList)) {
         QModelIndex i(index.siblingAtColumn(0));
         if (list.contains(i)) {
             continue;

@@ -21,6 +21,7 @@ public:
 protected:
     [[nodiscard]] auto columnCount(const QModelIndex &idx) const -> int override
     {
+        Q_UNUSED(idx)
         return m_headerList.size();
     }
     [[nodiscard]] auto headerData(int section, Qt::Orientation orientation, int role) const

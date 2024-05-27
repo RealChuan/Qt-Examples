@@ -38,7 +38,7 @@ void ListView::onSelectionChanged(const QItemSelection &selected, const QItemSel
 {
     //qDebug() << selected << deselected;
     const QModelIndexList selectedList(selected.indexes());
-    for (auto index : qAsConst(selectedList)) {
+    for (auto index : std::as_const(selectedList)) {
         if (!index.isValid()) {
             continue;
         }
@@ -50,7 +50,7 @@ void ListView::onSelectionChanged(const QItemSelection &selected, const QItemSel
     }
 
     const QModelIndexList deselectedList(deselected.indexes());
-    for (auto index : qAsConst(deselectedList)) {
+    for (auto index : std::as_const(deselectedList)) {
         if (!index.isValid()) {
             continue;
         }
@@ -66,6 +66,8 @@ void ListView::onSelectionChanged(const QItemSelection &selected, const QItemSel
 
 void ListView::onDataChanged(const QModelIndex &topLeft, const QModelIndex &bottomRight)
 {
+    Q_UNUSED(bottomRight)
+
     if (!topLeft.isValid()) {
         return;
     }

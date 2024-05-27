@@ -30,6 +30,7 @@ MainWindow::~MainWindow()
         m_watcher.cancel();
         m_watcher.waitForFinished();
     }
+    LogAsync::instance()->stop();
     qDebug() << "Stop Log!";
 }
 
@@ -39,8 +40,9 @@ void MainWindow::testLog()
     timer.start();
 
     for (int i = 0; i < 1000; i++) {
-        if (!m_running)
+        if (!m_running) {
             break;
+        }
         qInfo() << "1234567890qwertyuiopasdfghjklzxcvbnm" << i;
         QThread::msleep(1); //主界面无响应，上下文切换太快
     }

@@ -1,5 +1,5 @@
 {
-	"title": "MyApp",
+	"title": "Qt-App",
 	"icon-size": 100,
 	"background": "",
 	"icon": "app.icns",
@@ -19,7 +19,7 @@
 			"x": 200,
 			"y": 180,
 			"type": "file",
-			"path": "MyApp.app"
+			"path": "Qt-App.app"
 		},
 		{
 			"x": 400,

@@ -57,7 +57,7 @@ auto ImageCarousel::addImage(const QString &filename) -> bool
 auto ImageCarousel::addImages(const QStringList &filenames) -> int
 {
     int count = 0;
-    for (const auto &filename : qAsConst(filenames)) {
+    for (const auto &filename : std::as_const(filenames)) {
         if (addImage(filename)) {
             ++count;
         }
@@ -67,7 +67,7 @@ auto ImageCarousel::addImages(const QStringList &filenames) -> int
 
 void ImageCarousel::clearImages()
 {
-    for (auto item : qAsConst(d_ptr->items)) {
+    for (auto item : std::as_const(d_ptr->items)) {
         scene()->removeItem(item);
         delete item;
     }

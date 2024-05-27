@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<installer-gui-script minSpecVersion="1">
+    <title>Qt-App</title>
+    <organization>org.youth</organization>
+    <domains enable_localSystem="true"/>
+    <options customize="never" require-scripts="true" rootVolumeOnly="true" />
+    <!-- Define documents displayed at various steps -->
+    <welcome    file="welcome.html"    mime-type="text/html" />
+    <conclusion file="conclusion.html" mime-type="text/html" />
+    <!-- List all component packages -->
+    <pkg-ref id="org.Qt-App.client"
+             version="0"
+             auth="root">tmp.pkg</pkg-ref>
+    <!-- List them again here. They can now be organized
+         as a hierarchy if you want. -->
+    <choices-outline>
+        <line choice="default">
+            <line choice="org.Qt-App.client"/>
+        </line>
+    </choices-outline>
+    <!-- Define each choice above -->
+    <choice id="default"/>
+    <choice
+        id="org.Qt-App.client"
+        visible="true"
+        title="Qt-App"
+        description="A qt Application template"
+        start_selected="true">
+      <pkg-ref id="org.Qt-App.client"/>
+    </choice>
+</installer-gui-script>

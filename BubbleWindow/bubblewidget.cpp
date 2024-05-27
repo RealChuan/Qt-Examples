@@ -137,6 +137,8 @@ void BubbleWidget::exec()
 
 void BubbleWidget::paintEvent(QPaintEvent *event)
 {
+    Q_UNUSED(event)
+
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
     painter.setPen(d_ptr->pen);

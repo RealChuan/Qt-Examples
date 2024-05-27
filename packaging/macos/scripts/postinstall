@@ -1,0 +1,5 @@
+#!/bin/sh -ex
+
+echo "Postinstall script is not implemented for macOS."
+
+exit 0

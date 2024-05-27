@@ -19,7 +19,7 @@ void NormalTreeModel::setDatas(const QFileInfoList &fileInfos, bool depth)
 {
     clear();
     TreeItem *root = rootItem();
-    for (const auto &fileInfo : qAsConst(fileInfos)) {
+    for (const auto &fileInfo : std::as_const(fileInfos)) {
         root->appendChild(new FileItem(fileInfo, depth));
     }
 
@@ -34,6 +34,8 @@ auto NormalTreeModel::rowCount(const QModelIndex &idx) const -> int
 auto NormalTreeModel::headerData(int section, Qt::Orientation orientation, int role) const
     -> QVariant
 {
+    Q_UNUSED(orientation)
+
     switch (role) {
     case Qt::TextAlignmentRole: return Qt::AlignVCenter;
     case Qt::CheckStateRole: {

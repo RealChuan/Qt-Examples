@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+
+
 import os
 import datetime
 import subprocess
@@ -5,12 +8,12 @@ import sys
 
 build_list = [
     {
-        "qmake": r"C:\Qt\6.7.0\msvc2019_64\bin\qmake.exe",
+        "qmake": r"C:\Qt\6.7.2\msvc2019_64\bin\qmake.exe",
         "qmake_params": r'"CONFIG+=qtquickcompiler"',
         "jom": r"C:\Qt\Tools\QtCreator\bin\jom\jom.exe",
-        "env_bat": r'C:\"Program Files (x86)"\"Microsoft Visual Studio"\2019\Community\VC\Auxiliary\Build\vcvarsall.bat amd64_x86',
-        "project": r"C:\myapp\MyApp.pro",
-        "build_directory": r"C:\build-MyApp-Desktop_Qt_6_7_0_MSVC2019_64bit-Release",
+        "env_bat": r'C:\"Program Files (x86)"\"Microsoft Visual Studio"\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64',
+        "project": r"C:\code\qt-app\qt-app.pro",
+        "build_directory": r"C:\work\code\qt-app\build\Desktop_Qt_6_7_0_MSVC2019_64bit-Release",
     }
 ]
 
@@ -24,6 +27,8 @@ class Builder:
         self.env_bat = env_bat
         self.build_directory = build_directory
 
+        os.makedirs(build_directory, exist_ok=True)
+
         (self.qmake_path, self.qmake_name) = os.path.split(qmake)
         (self.jom_path, self.jom_name) = os.path.split(jom)
         (self.project_path, self.project_name) = os.path.split(project)
@@ -35,15 +40,15 @@ class Builder:
         create_qmake_cmd_line = (
             self.qmake + " " + self.project + " -spec win32-msvc " + self.qmake_params
         )
-        return True if execute(create_qmake_cmd_line) else False
+        return True if execute_cmd(create_qmake_cmd_line) else False
 
     def execute_make_cmd_line(self):
         cmd_line = "{0}".format(self.jom)
-        return True if execute(cmd_line) else False
+        return True if execute_cmd(cmd_line) else False
 
     def execute_make_clean_cmd_line(self):
         if os.path.exists("Makefile") | os.path.exists("makefile"):
-            return True if execute("{0} clean".format(self.jom)) else False
+            return True if execute_cmd("{0} clean".format(self.jom)) else False
         return True
 
     def init_env(self):
@@ -86,17 +91,6 @@ class Builder:
         return isOk
 
 
-def execute(cmd):
-    print(cmd)
-    result = subprocess.run(
-        cmd, encoding="gbk", stdout=sys.stdout, stderr=sys.stderr, shell=True
-    )
-    if result.returncode != 0:
-        print(result.stderr)
-
-    return True if result.returncode == 0 else False
-
-
 def build(build_list):
     for each in build_list:
         qmake = each.get("qmake")
@@ -112,6 +106,45 @@ def build(build_list):
         if builder.build() == False:
             print("[{0}] Deploy failed!!!".format(datetime.datetime.now()))
             exit(-1)
+
+
+def execute_cmd(cmd):
+    print(cmd)
+    result = subprocess.run(
+        cmd, encoding="gbk", stdout=sys.stdout, stderr=sys.stderr, shell=True
+    )
+    if result.returncode != 0:
+        print(result.stderr)
+
+    return True if result.returncode == 0 else False
+
+
+def change_powershell_execution_policy(execution_policy):
+    subprocess.run(
+        [
+            "powershell",
+            "-Command",
+            f"Set-ExecutionPolicy {execution_policy} -Scope CurrentUser -Force",
+        ]
+    )
+
+
+def execute_powershell(script_path, is_script):
+    print("Execute powershell script: {0}".format(script_path))
+    change_powershell_execution_policy("Unrestricted")
+    if is_script:
+        command = f"& '{script_path}'"
+    else:
+        command = script_path
+
+    proc = subprocess.Popen(
+        ["powershell", "-Command", command],
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+        shell=True,
+    )
+
+    return proc.wait()
 
 
 if __name__ == "__main__":

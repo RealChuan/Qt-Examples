@@ -21,7 +21,7 @@ FileItem::FileItem(const QFileInfo &fileInfo, bool depth)
                         .entryInfoList(QDir::AllEntries | QDir::Hidden | QDir::NoDotAndDotDot,
                                        QDir::DirsFirst);
     //qDebug() << fileInfo.absoluteFilePath();
-    for (const auto &item : qAsConst(itemList)) {
+    for (const auto &item : std::as_const(itemList)) {
         appendChild(new FileItem(item, depth));
     }
 }

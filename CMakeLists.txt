@@ -12,7 +12,7 @@ project(
 include(cmake/common.cmake)
 
 find_package(
-  Qt6 REQUIRED
+  Qt6 6.5 REQUIRED
   COMPONENTS Core
              Widgets
              Charts
@@ -21,8 +21,8 @@ find_package(
              Sql
              Quick)
 
-qt_standard_project_setup(I18N_SOURCE_LANGUAGE en I18N_TRANSLATED_LANGUAGES
-                          zh_CN)
+qt_standard_project_setup(REQUIRES 6.5)
+qt_policy(SET QTP0001 NEW)
 # qt_standard_project_setup will set CMAKE_RUNTIME_OUTPUT_DIRECTORY, we need to
 # set it back, and use EXECUTABLE_OUTPUT_PATH
 unset(CMAKE_RUNTIME_OUTPUT_DIRECTORY)

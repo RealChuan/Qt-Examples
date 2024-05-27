@@ -59,7 +59,7 @@ void FlowWidget::setItems(const QStringList &list)
     QList<LabelWidget *> widgets = findChildren<LabelWidget *>();
     qDeleteAll(widgets);
 
-    for (const QString &text : qAsConst(list)) {
+    for (const QString &text : std::as_const(list)) {
         addItem(text);
     }
 }
@@ -75,7 +75,7 @@ QStringList FlowWidget::items() const
 {
     QStringList list;
     QList<LabelWidget *> widgets = findChildren<LabelWidget *>();
-    for (LabelWidget *widget : qAsConst(widgets)) {
+    for (LabelWidget *widget : std::as_const(widgets)) {
         list.append(widget->text());
     }
     return list;
