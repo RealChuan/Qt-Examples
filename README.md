@@ -63,28 +63,28 @@
   <img src="DashBoard/picture/DashBoard.png" width="50%" height="50%">
 </div>
 
+## [DragDrop](DragDrop/)——简单控件拖拽，参考QT示例Drag and Drop Puzzle Example
+
 ## [FlowLayout](FlowLayout/)——流式布局，来自QT示例Flow Layout Example
 
 <div align="center">
   <img src="FlowLayout/picture/FlowLayout.png" width="50%" height="50%">
 </div>
 
-## [DragDrop](DragDrop/)——简单控件拖拽，参考QT示例Drag and Drop Puzzle Example
+## [GridViewModel](GridViewModel/)——基于QListView的自适应宫图
+
+<div align="center">
+  <img src="GridViewModel/picture/GridView.png" width="90%" height="90%">
+</div>
 
 ## [HttpClient](HttpClient/)——http客户端
 
 ## [IconButton](IconButton/)——支持Icon跟随状态切换的EventFilter和Button
 
-## [ImageCarousel](ImageCarousel/)——简易图片轮播
+## [ImageCarousel](ImageCarousel/)——简易图片轮播组件
 
 <div align="center">
   <img src="ImageCarousel/picture/ImageCarousel.jpg" width="90%" height="90%">
-</div>
-
-## [GridViewModel](GridViewModel/)——基于QListView的自适应宫图
-
-<div align="center">
-  <img src="GridViewModel/picture/GridView.png" width="90%" height="90%">
 </div>
 
 ## [LogAsynchronous](LogAsynchronous/)——异步日志，开辟一个线程专门往文件里写日志，前后端分离

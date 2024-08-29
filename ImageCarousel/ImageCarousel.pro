@@ -9,14 +9,14 @@ CONFIG += c++17
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    graphicspixmapitem.cc \
     imagecarousel.cc \
-    imagecarouselwidget.cc \
     main.cc \
     mainwindow.cc
 
 HEADERS += \
+    graphicspixmapitem.hpp \
     imagecarousel.hpp \
-    imagecarouselwidget.hpp \
     mainwindow.hpp
 
 # Default rules for deployment.

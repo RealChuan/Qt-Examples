@@ -1,8 +1,8 @@
 set(PROJECT_SOURCES
+    graphicspixmapitem.cc
+    graphicspixmapitem.hpp
     imagecarousel.cc
     imagecarousel.hpp
-    imagecarouselwidget.hpp
-    imagecarouselwidget.cc
     main.cc
     mainwindow.cc
     mainwindow.hpp)
