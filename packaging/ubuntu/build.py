@@ -9,7 +9,7 @@ build_list = [
         "qmake_params": r'"CONFIG+=qtquickcompiler"',
         "make": r"make",
         "project": r"/home/runner/work/code/Qt-App/Qt-App.pro",
-        "build_directory": r"/home/runner/work/code/Qt-App/build/Desktop_Qt_6_7_0_clang_64bit-Release",
+        "build_directory": r"/home/runner/work/code/Qt-App/build/Desktop_Qt_6_8_1_macosbit-Release",
     }
 ]
 

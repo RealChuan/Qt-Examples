@@ -77,7 +77,7 @@
   <img src="GridViewModel/picture/GridView.png" width="90%" height="90%">
 </div>
 
-## [HttpClient](HttpClient/)——http客户端
+## [HttpClient](HttpClient/)——简单HTTP客户端，支持JSON请求和上传下载功能
 
 ## [IconButton](IconButton/)——支持Icon跟随状态切换的EventFilter和Button
 

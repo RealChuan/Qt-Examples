@@ -1,11 +1,25 @@
-#include "mainwindow.h"
+#include "httpclient.hpp"
 
-#include <QApplication>
+#include <QCoreApplication>
+#include <QJsonObject>
 
 auto main(int argc, char *argv[]) -> int
 {
-    QApplication a(argc, argv);
-    MainWindow w;
-    w.show();
+    QCoreApplication a(argc, argv);
+
+    QMetaObject::invokeMethod(
+        &a,
+        [] {
+            HttpClient httpClient;
+            auto *reply = httpClient.sendRequest(HttpClient::Method::GET,
+                                                 QUrl("http://www.baidu.com"),
+                                                 {},
+                                                 {},
+                                                 30);
+            httpClient.sync(reply);
+            qApp->quit();
+        },
+        Qt::QueuedConnection);
+
     return a.exec();
 }

@@ -13,7 +13,7 @@ inputs:
   qt_ver:
     description: 'qt version'
     required: false
-    default: '6.7.2'
+    default: '6.8.1'
     type: string
 
 runs:
@@ -48,7 +48,7 @@ runs:
         gcc --version
 
     - name: Install Qt
-      uses: jurplel/install-qt-action@v3
+      uses: jurplel/install-qt-action@v4
       with:
         version: ${{ inputs.qt_ver }}
         modules: ${{ inputs.qt_modules }}

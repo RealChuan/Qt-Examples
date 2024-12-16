@@ -1,0 +1,383 @@
+#include "httpclient.hpp"
+
+#include <QEventLoop>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QPointer>
+#include <QTimer>
+
+class HttpClient::HttpClientPrivate
+{
+public:
+    explicit HttpClientPrivate(HttpClient *q)
+        : q_ptr(q)
+    {
+        sslConfiguration.setPeerVerifyMode(QSslSocket::VerifyNone);
+    }
+
+    QNetworkRequest networkRequest(bool verifyCertificate)
+    {
+        QNetworkRequest request;
+        if (!verifyCertificate) {
+            request.setSslConfiguration(sslConfiguration);
+        }
+        return request;
+    }
+
+    void clearTask(QNetworkReply *reply)
+    {
+        tasks.remove(reply);
+        auto *download = downloads.take(reply);
+        if (download) {
+            delete download;
+        }
+        auto *file = uploads.take(reply);
+        if (file) {
+            file->deleteLater();
+        }
+    }
+
+    QByteArray methodToString(Method method) const
+    {
+        switch (method) {
+        case Method::GET: return "GET";
+        case Method::POST: return "POST";
+        case Method::PUT: return "PUT";
+        case Method::DELETE: return "DELETE";
+        default: break;
+        }
+        Q_ASSERT(false);
+        return "UNKNOWN";
+    }
+
+    auto jsonFromBytes(const QByteArray &bytes) -> QJsonObject
+    {
+        QJsonParseError jsonParseError;
+        auto jsonDocument = QJsonDocument::fromJson(bytes, &jsonParseError);
+        if (QJsonParseError::NoError != jsonParseError.error) {
+            qWarning() << QString("%1\nOffset: %2")
+                              .arg(jsonParseError.errorString(),
+                                   QString::number(jsonParseError.offset))
+                       << bytes;
+            return {};
+        }
+        return jsonDocument.object();
+    }
+
+    struct Download
+    {
+        ~Download()
+        {
+            if (!filePtr.isNull()) {
+                filePtr->deleteLater();
+            }
+        }
+
+        QString filePath;
+        qint64 fileBaseSize;
+        QPointer<QFile> filePtr;
+        ProgressCallBack progressCallBack = nullptr;
+    };
+
+    HttpClient *q_ptr;
+
+    QSslConfiguration sslConfiguration = QSslConfiguration::defaultConfiguration();
+    QMap<QNetworkReply *, CallBack> tasks;
+    QMap<QNetworkReply *, Download *> downloads;
+    QMap<QNetworkReply *, QFile *> uploads;
+};
+
+HttpClient::HttpClient(QObject *parent)
+    : QNetworkAccessManager(parent)
+    , d_ptr(new HttpClientPrivate(this))
+{}
+
+HttpClient::~HttpClient() {}
+
+QNetworkReply *HttpClient::sendRequest(Method method,
+                                       const QUrl &url,
+                                       const HttpHeaders &httpHeaders,
+                                       const QJsonObject &body,
+                                       int timeout,
+                                       bool verifyCertificate,
+                                       CallBack callBack)
+{
+    auto request = d_ptr->networkRequest(verifyCertificate);
+    request.setUrl(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QVariant("application/json"));
+    for (auto iter = httpHeaders.begin(); iter != httpHeaders.end(); iter++) {
+        request.setRawHeader(iter.key().toUtf8(), iter.value().toUtf8());
+    }
+
+    qDebug() << d_ptr->methodToString(method) << url.toString(QUrl::RemoveUserInfo) << body;
+
+    auto *reply = QNetworkAccessManager::sendCustomRequest(request,
+                                                           d_ptr->methodToString(method),
+                                                           QJsonDocument(body).toJson(
+                                                               QJsonDocument::Compact));
+    reply->setParent(this);
+    connect(reply, &QNetworkReply::finished, this, &HttpClient::onReplyFinish);
+    connect(reply, &QNetworkReply::errorOccurred, this, &HttpClient::onErrorOccurred);
+    connect(reply, &QNetworkReply::sslErrors, this, &HttpClient::onSslErrors);
+    d_ptr->tasks.insert(reply, callBack);
+    if (timeout > 0) {
+        auto *timer = new QTimer(reply);
+        connect(timer, &QTimer::timeout, this, &HttpClient::onNetworkTimeout);
+        timer->start(timeout * 1000);
+    }
+    return reply;
+}
+
+QJsonObject HttpClient::sync(QNetworkReply *reply)
+{
+    QPointer<QNetworkReply> replyPtr(reply);
+    QJsonObject json;
+    QEventLoop loop;
+    connect(this, &HttpClient::ready, &loop, [&](QNetworkReply *reply, const QJsonObject &object) {
+        if (replyPtr.isNull()) {
+            loop.quit();
+        }
+        if (reply == replyPtr) {
+            json = object;
+            loop.quit();
+        }
+    });
+    loop.exec();
+    return json;
+}
+
+QNetworkReply *HttpClient::downLoad(const QUrl &url,
+                                    const QString &filePath,
+                                    int timeout,
+                                    bool verifyCertificate,
+                                    ProgressCallBack progressCallBack,
+                                    CallBack callBack)
+{
+    Q_ASSERT(!filePath.isEmpty());
+    auto *file = new QFile(filePath + ".temp", this);
+    if (!file->open(QIODevice::WriteOnly | QIODevice::Append)) {
+        qWarning() << QString("Cannot open the file: %1!").arg(filePath) << file->errorString();
+        return nullptr;
+    }
+
+    auto request = d_ptr->networkRequest(verifyCertificate);
+    request.setUrl(url);
+    auto bytes = file->size();
+    if (bytes > 0) {
+        const QByteArray fromRange = "bytes=" + QByteArray::number(bytes) + "-";
+        request.setRawHeader("Range", fromRange);
+    }
+    qDebug() << QString("Download: %-1>%2").arg(url.toString(QUrl::RemoveUserInfo), filePath);
+
+    auto *reply = QNetworkAccessManager::get(request);
+    d_ptr->downloads
+        .insert(reply, new HttpClientPrivate::Download{filePath, bytes, file, progressCallBack});
+    d_ptr->tasks.insert(reply, callBack);
+    connect(reply, &QNetworkReply::errorOccurred, this, &HttpClient::onErrorOccurred);
+    connect(reply, &QNetworkReply::sslErrors, this, &HttpClient::onSslErrors);
+    connect(reply, &QNetworkReply::downloadProgress, this, &HttpClient::onDownloadProgress);
+    connect(reply, &QNetworkReply::readyRead, this, &HttpClient::onDownloadReadyRead);
+    connect(reply, &QNetworkReply::finished, this, &HttpClient::onDownloadFinish);
+    if (timeout > 0) {
+        auto *timer = new QTimer(reply);
+        connect(timer, &QTimer::timeout, this, &HttpClient::onNetworkTimeout);
+        timer->start(timeout * 1000);
+    }
+    return reply;
+}
+
+QNetworkReply *HttpClient::upload(const QUrl &url,
+                                  const QString &filePath,
+                                  int timeout,
+                                  bool verifyCertificate,
+                                  CallBack callBack)
+{
+    Q_ASSERT(!filePath.isEmpty());
+    auto *file = new QFile(filePath, this);
+    if (!file->open(QIODevice::ReadOnly)) {
+        qWarning() << QString("Cannot open the file: %1!").arg(filePath) << file->errorString();
+        return nullptr;
+    }
+    qDebug() << QString("Upload: %1->%2").arg(filePath, url.toString(QUrl::RemoveUserInfo));
+
+    auto request = d_ptr->networkRequest(verifyCertificate);
+    request.setUrl(url);
+    auto *reply = QNetworkAccessManager::put(request, file);
+    file->setParent(reply);
+    d_ptr->uploads.insert(reply, file);
+    d_ptr->tasks.insert(reply, callBack);
+    connect(reply, &QNetworkReply::errorOccurred, this, &HttpClient::onErrorOccurred);
+    connect(reply, &QNetworkReply::sslErrors, this, &HttpClient::onSslErrors);
+    connect(reply, &QNetworkReply::finished, this, &HttpClient::onUploadFinish);
+    if (timeout > 0) {
+        auto *timer = new QTimer(reply);
+        connect(timer, &QTimer::timeout, this, &HttpClient::onNetworkTimeout);
+        timer->start(timeout * 1000);
+    }
+    return reply;
+}
+
+QNetworkReply *HttpClient::upload(
+    const QUrl &url, const QByteArray &data, int timeout, bool verifyCertificate, CallBack callBack)
+{
+    qDebug() << QString("Upload To %1").arg(url.toString(QUrl::RemoveUserInfo));
+
+    auto request = d_ptr->networkRequest(verifyCertificate);
+    request.setUrl(url);
+    auto *reply = QNetworkAccessManager::put(request, data);
+    d_ptr->tasks.insert(reply, callBack);
+    connect(reply, &QNetworkReply::errorOccurred, this, &HttpClient::onErrorOccurred);
+    connect(reply, &QNetworkReply::sslErrors, this, &HttpClient::onSslErrors);
+    connect(reply, &QNetworkReply::finished, this, &HttpClient::onUploadFinish);
+    if (timeout > 0) {
+        auto *timer = new QTimer(reply);
+        connect(timer, &QTimer::timeout, this, &HttpClient::onNetworkTimeout);
+        timer->start(timeout * 1000);
+    }
+    return reply;
+}
+
+void HttpClient::onReplyFinish()
+{
+    auto *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) {
+        return;
+    }
+    const auto object(d_ptr->jsonFromBytes(reply->readAll()));
+    queryResult(reply, object);
+}
+
+void HttpClient::onErrorOccurred(QNetworkReply::NetworkError code)
+{
+    auto *reply = qobject_cast<QNetworkReply *>(sender());
+    if (code == QNetworkReply::NoError || !reply) {
+        return;
+    }
+    qWarning() << "Network Error :" << reply->error() << reply->errorString() << reply->readAll();
+
+    QJsonObject object;
+    object.insert("error", code);
+    queryResult(reply, object);
+}
+
+void HttpClient::onSslErrors(const QList<QSslError> &errors)
+{
+    auto *reply = qobject_cast<QNetworkReply *>(sender());
+    if (errors.isEmpty() || !reply) {
+        return;
+    }
+    qWarning() << "SSL Errors: ";
+    for (const auto &error : std::as_const(errors)) {
+        qWarning() << error.error() << error.errorString();
+    }
+    qWarning() << reply->readAll();
+
+    QJsonObject object;
+    object.insert("error", errors.first().error());
+    queryResult(reply, object);
+}
+
+void HttpClient::onNetworkTimeout()
+{
+    qWarning() << "Network Timeout";
+
+    emit timeOut();
+    auto *timer = qobject_cast<QTimer *>(sender());
+    if (!timer) {
+        return;
+    }
+    timer->stop();
+    timer->deleteLater();
+    auto *reply = qobject_cast<QNetworkReply *>(timer->parent());
+    if (!reply) {
+        return;
+    }
+
+    QJsonObject object;
+    object.insert("error", NETWORK_TIMEOUT_ERROR);
+    queryResult(reply, object);
+}
+
+void HttpClient::onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal)
+{
+    auto *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) {
+        return;
+    }
+    auto *download = d_ptr->downloads.value(reply);
+    if (!download) {
+        return;
+    }
+    auto progressCallBack = download->progressCallBack;
+    if (!progressCallBack) {
+        return;
+    }
+    progressCallBack(bytesReceived + download->fileBaseSize, bytesTotal + download->fileBaseSize);
+}
+
+void HttpClient::onDownloadReadyRead()
+{
+    auto *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) {
+        return;
+    }
+    auto *download = d_ptr->downloads.value(reply);
+    if (!download) {
+        return;
+    }
+    if (download->filePtr.isNull()) {
+        return;
+    }
+    download->filePtr->write(reply->readAll());
+}
+
+void HttpClient::onDownloadFinish()
+{
+    auto *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) {
+        return;
+    }
+
+    auto *download = d_ptr->downloads.value(reply);
+    if (download) {
+        if (!download->filePtr.isNull()) {
+            download->filePtr->write(reply->readAll());
+            download->filePtr->flush();
+            download->filePtr->close();
+            if (QFile::exists(download->filePath)) {
+                QFile::remove(download->filePath);
+            }
+            download->filePtr->rename(download->filePath);
+        }
+    }
+    queryResult(reply, {});
+}
+
+void HttpClient::onUploadFinish()
+{
+    auto *reply = qobject_cast<QNetworkReply *>(sender());
+    if (!reply) {
+        return;
+    }
+    queryResult(reply, {});
+}
+
+QJsonObject HttpClient::hookResult(const QJsonObject &object)
+{
+    return object;
+}
+
+void HttpClient::queryResult(QNetworkReply *reply, const QJsonObject &object)
+{
+    qDebug() << object;
+    auto callBack = d_ptr->tasks.value(reply);
+    d_ptr->clearTask(reply);
+    auto json = hookResult(object);
+    if (callBack) {
+        callBack(json);
+    }
+    emit ready(reply, json);
+
+    reply->deleteLater();
+}
