@@ -16,6 +16,7 @@ SUBDIRS += \
     HttpClient \
     IconButton \
     ImageCarousel \
+    LoadingIndicator \
     LogAsynchronous \
     MulClient \
     MulServer \
