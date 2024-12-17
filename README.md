@@ -87,6 +87,12 @@
   <img src="ImageCarousel/picture/ImageCarousel.jpg" width="90%" height="90%">
 </div>
 
+## [LoadingIndicator](LoadingIndicator/)——加载指示器，支持gif动画
+
+<div align="center">
+  <img src="LoadingIndicator/picture/LoadingIndicator.jpg" width="35%" height="35%">
+</div>
+
 ## [LogAsynchronous](LogAsynchronous/)——异步日志，开辟一个线程专门往文件里写日志，前后端分离
 
 1. 日志文件名：应用程序名（appname）.时间(time,精确到秒).主机hostname.进程ID（Tid）.log（.count），假如一天内写的单个日志大约接近1G，会自动加后缀（.1,.2.3...，以此类推）新建新的日志文件去写，每天0点依然会rollFile；
