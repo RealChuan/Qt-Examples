@@ -30,7 +30,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
-          - windows-2019
+          - windows-latest
           - macos-latest
           - ubuntu-latest
 
@@ -54,7 +54,7 @@ jobs:
         if: startsWith(matrix.os, 'windows')
         shell: pwsh
         run: |
-          ..\scripts\windows\setVsDev.ps1 -VersionRange "[16.0,17.0)" -Arch "x64"
+          ..\scripts\windows\setVsDev.ps1
           & qmake ./../.
           & jom
         working-directory: build
