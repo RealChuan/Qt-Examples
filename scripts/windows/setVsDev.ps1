@@ -24,6 +24,11 @@ if ([string]::IsNullOrEmpty($Arch)) {
     $Arch = "x64"  
 }
 
+$Host_Arch = $Arch
+if ($Arch -eq "arm64") {
+    $Host_Arch = "x64"
+}
+
 Write-Host "Architecture: $Arch"
 Write-Host "VSWhere Args: $vswhereArgs"
 
@@ -41,7 +46,7 @@ if ($null -ne $vsInstallPath) {
         exit 1
     }
     Import-Module $vsDevShell
-    Enter-VsDevShell -VsInstallPath $vsInstallPath -DevCmdArguments "-arch=$Arch -host_arch=$Arch" -SkipAutomaticLocation
+    Enter-VsDevShell -VsInstallPath $vsInstallPath -DevCmdArguments "-arch=$Arch -host_arch=$Host_Arch" -SkipAutomaticLocation
 
     if ($LASTEXITCODE -eq 0) {
         Write-Host "Development environment set up successfully."
@@ -54,9 +59,9 @@ else {
     Write-Host "Using Custom Visual Studio installation path."
     $vsInstallPath = "C:\Program Files (x86)\Microsoft Visual Studio\2019\Enterprise"
     if (-not (Test-Path $vsInstallPath)) {
-        $vsInstallPath = "C:\Program Files (x86)\Microsoft Visual Studio\2022\Enterprise"
+        $vsInstallPath = "C:\Program Files\Microsoft Visual Studio\2022\Enterprise"
     }
     $vsDevShell = Join-Path $vsInstallPath "Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
     Import-Module $vsDevShell
-    Enter-VsDevShell -VsInstallPath $vsInstallPath -DevCmdArguments "-arch=x64 -host_arch=x64" -SkipAutomaticLocation
+    Enter-VsDevShell -VsInstallPath $vsInstallPath -DevCmdArguments "-arch=$Arch -host_arch=$Host_Arch" -SkipAutomaticLocation
 }
