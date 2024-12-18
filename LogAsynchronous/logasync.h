@@ -1,14 +1,12 @@
-#ifndef LOGASYNC_H
-#define LOGASYNC_H
+#pragma once
 
-#include <QMutex>
 #include <QThread>
 
 class LogAsync : public QThread
 {
     Q_OBJECT
 public:
-    enum Orientation { Std = 1, File, StdAndFile };
+    enum Orientation : int { Std = 1, File, StdAndFile };
 
     static auto instance() -> LogAsync *;
 
@@ -21,11 +19,14 @@ public:
     void setAutoDelFileDays(qint64 days);
     auto autoDelFileDays() -> qint64;
 
-    void setOrientation(Orientation /*orientation*/);
+    void setOrientation(Orientation orientation);
     auto orientation() -> Orientation;
 
-    void setLogLevel(QtMsgType /*type*/);
+    void setLogLevel(QtMsgType type);
     auto logLevel() -> QtMsgType;
+
+    void setMaxConsoleLineSize(int size);
+    auto maxConsoleLineSize() -> int;
 
     void startWork();
     void stop();
@@ -43,5 +44,3 @@ private:
     class LogAsyncPrivate;
     QScopedPointer<LogAsyncPrivate> d_ptr;
 };
-
-#endif // LOGASYNC_H

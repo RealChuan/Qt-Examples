@@ -1,7 +1,8 @@
 #include "logasync.h"
-#include "fileutil.h"
+#include "logfile.hpp"
 
 #include <QDateTime>
+#include <QMutex>
 #include <QWaitCondition>
 
 // 消息处理函数
@@ -38,33 +39,40 @@ void messageHandler(QtMsgType type, const QMessageLogContext &context, const QSt
     default: level = QString("%1").arg("Unknown", -7); break;
     }
 
-    const QString dataTimeString(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
-    const QString threadId = QString("%1").arg(reinterpret_cast<quint64>(QThread::currentThreadId()),
-                                               5,
-                                               10,
-                                               QLatin1Char('0'));
+    const auto dataTimeString(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss.zzz"));
+    const auto threadId = QString("%1").arg(reinterpret_cast<quint64>(QThread::currentThreadId()),
+                                            5,
+                                            10,
+                                            QLatin1Char('0'));
     // By default, this information is recorded only in debug builds.
     // You can overwrite this explicitly by defining QT_MESSAGELOGCONTEXT or QT_NO_MESSAGELOGCONTEXT.
     QString contexInfo;
 #ifndef QT_NO_DEBUG
     contexInfo = QString("File:(%1) Line:(%2)").arg(context.file).arg(context.line);
 #endif
-    const auto message = QString("%1 %2 [%3] %4 - %5\n")
-                             .arg(dataTimeString, threadId, level, msg, contexInfo);
+    const auto printToFile = QString("%1 %2 [%3] %4 - %5\n")
+                                 .arg(dataTimeString, threadId, level, msg, contexInfo);
+    QString printToConsole;
+    if (msg.size() > instance->maxConsoleLineSize()) {
+        printToConsole = QString("%1 %2 [%3] %4 - %5\n")
+                             .arg(dataTimeString,
+                                  threadId,
+                                  level,
+                                  msg.left(instance->maxConsoleLineSize()),
+                                  contexInfo);
+    } else {
+        printToConsole = printToFile;
+    }
 
     switch (instance->orientation()) {
-    case LogAsync::Orientation::Std:
-        fprintf(stdPrint, "%s", message.toLocal8Bit().constData());
-        ::fflush(stdPrint);
-        break;
-    case LogAsync::Orientation::File: emit instance->appendBuf(message); break;
+    case LogAsync::Orientation::File: emit instance->appendBuf(printToFile); break;
     case LogAsync::Orientation::StdAndFile:
-        fprintf(stdPrint, "%s", message.toLocal8Bit().constData());
+        emit instance->appendBuf(printToFile);
+        fprintf(stdPrint, "%s", printToConsole.toLocal8Bit().constData());
         ::fflush(stdPrint);
-        emit instance->appendBuf(message);
         break;
     default:
-        fprintf(stdPrint, "%s", message.toLocal8Bit().constData());
+        fprintf(stdPrint, "%s", printToConsole.toLocal8Bit().constData());
         ::fflush(stdPrint);
         break;
     }
@@ -84,6 +92,7 @@ public:
     qint64 autoDelFileDays = 7;
     QtMsgType msgType = QtWarningMsg;
     LogAsync::Orientation orientation = LogAsync::Orientation::Std;
+    int maxConsoleLineSize = 1024 * 10;
     QWaitCondition waitCondition;
     QMutex mutex;
 };
@@ -144,17 +153,30 @@ auto LogAsync::logLevel() -> QtMsgType
     return d_ptr->msgType;
 }
 
+void LogAsync::setMaxConsoleLineSize(int size)
+{
+    if (size < 1) {
+        return;
+    }
+    d_ptr->maxConsoleLineSize = size;
+}
+
+auto LogAsync::maxConsoleLineSize() -> int
+{
+    return d_ptr->maxConsoleLineSize;
+}
+
 void LogAsync::startWork()
 {
     start();
     QMutexLocker lock(&d_ptr->mutex);
-    d_ptr->waitCondition.wait(&d_ptr->mutex);
+    d_ptr->waitCondition.wait(&d_ptr->mutex, 5000);
 }
 
 void LogAsync::stop()
 {
+    // 可能有部分日志未写入文件，异步信号槽机制问题
     if (isRunning()) {
-        //QThread::sleep(1);   // 最后一条日志格式化可能来不及进入信号槽
         quit();
         wait();
     }
@@ -162,8 +184,8 @@ void LogAsync::stop()
 
 void LogAsync::run()
 {
-    FileUtil fileUtil;
-    connect(this, &LogAsync::appendBuf, &fileUtil, &FileUtil::onWrite);
+    LogFile logFile;
+    connect(this, &LogAsync::appendBuf, &logFile, &LogFile::onWrite);
     d_ptr->waitCondition.wakeOne();
     exec();
 }

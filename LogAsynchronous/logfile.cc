@@ -1,12 +1,9 @@
-#include "fileutil.h"
+#include "logfile.hpp"
 #include "logasync.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
 #include <QDir>
-#include <QFile>
-#include <QProcess>
-#include <QTextStream>
 #include <QTimer>
 
 #define ROLLSIZE (1000 * 1000 * 1000)
@@ -28,31 +25,31 @@ static auto getFileName(qint64 seconds) -> QString
 static void autoDelFile()
 {
     auto *instance = LogAsync::instance();
-    const QString path(instance->logPath());
+    const auto path(instance->logPath());
     QDir dir(path);
     if (!dir.exists()) {
         return;
     }
 
-    const QFileInfoList list = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Time);
-    const QDateTime cur = QDateTime::currentDateTime();
-    const QDateTime pre = cur.addDays(-instance->autoDelFileDays());
+    const auto list = dir.entryInfoList(QDir::Files | QDir::NoDotAndDotDot, QDir::Time);
+    const auto cur = QDateTime::currentDateTime();
+    const auto pre = cur.addDays(-instance->autoDelFileDays());
 
-    for (const QFileInfo &info : std::as_const(list)) {
+    for (const auto &info : std::as_const(list)) {
         if (info.lastModified() <= pre) {
             dir.remove(info.fileName());
         }
     }
 }
 
-class FileUtil::FileUtilPrivate
+class LogFile::LogFilePrivate
 {
 public:
-    explicit FileUtilPrivate(FileUtil *q)
+    explicit LogFilePrivate(LogFile *q)
         : q_ptr(q)
     {}
 
-    FileUtil *q_ptr;
+    LogFile *q_ptr;
 
     QFile file;
     //QTextStream 读写分离的，内部有缓冲区static const int QTEXTSTREAM_BUFFERSIZE = 16384;
@@ -62,20 +59,20 @@ public:
     int count = 0;
 };
 
-FileUtil::FileUtil(QObject *parent)
+LogFile::LogFile(QObject *parent)
     : QObject(parent)
-    , d_ptr(new FileUtilPrivate(this))
+    , d_ptr(new LogFilePrivate(this))
 {
     rollFile(0);
     setTimer();
 }
 
-FileUtil::~FileUtil()
+LogFile::~LogFile()
 {
     onFlush();
 }
 
-void FileUtil::onWrite(const QString &msg)
+void LogFile::onWrite(const QString &msg)
 {
     if (d_ptr->file.size() > ROLLSIZE) {
         rollFile(++d_ptr->count);
@@ -91,12 +88,12 @@ void FileUtil::onWrite(const QString &msg)
     d_ptr->stream << msg;
 }
 
-void FileUtil::onFlush()
+void LogFile::onFlush()
 {
     d_ptr->stream.flush();
 }
 
-auto FileUtil::rollFile(int count) -> bool
+auto LogFile::rollFile(int count) -> bool
 {
     qint64 now = QDateTime::currentSecsSinceEpoch();
     QString filename = getFileName(now);
@@ -122,9 +119,9 @@ auto FileUtil::rollFile(int count) -> bool
     return false;
 }
 
-void FileUtil::setTimer()
+void LogFile::setTimer()
 {
     auto *timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &FileUtil::onFlush);
+    connect(timer, &QTimer::timeout, this, &LogFile::onFlush);
     timer->start(5000); // 5秒刷新一次
 }
