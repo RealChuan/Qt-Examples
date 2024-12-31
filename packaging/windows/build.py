@@ -11,7 +11,7 @@ build_list = [
         "qmake": r"C:\Qt\6.8.1\msvc2022_64\bin\qmake.exe",
         "qmake_params": r'"CONFIG+=qtquickcompiler"',
         "jom": r"C:\Qt\Tools\QtCreator\bin\jom\jom.exe",
-        "env_bat": r'C:\"Program Files (x86)"\"Microsoft Visual Studio"\2019\Community\VC\Auxiliary\Build\vcvarsall.bat x64',
+        "env_bat": r'C:\"Program Files"\"Microsoft Visual Studio"\2022\Community\VC\Auxiliary\Build\vcvarsall.bat x64',
         "project": r"C:\code\qt-app\qt-app.pro",
         "build_directory": r"C:\work\code\qt-app\build\Desktop_Qt_6_8_1_msvc2022_64bit-Release",
     }
