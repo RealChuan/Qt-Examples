@@ -26,5 +26,5 @@ set(PROJECT_SOURCES
     stackedbarchart.cpp)
 
 qt_add_executable(Chart MANUAL_FINALIZATION ${PROJECT_SOURCES})
-target_link_libraries(Chart PRIVATE Qt6::Widgets Qt6::Charts)
+target_link_libraries(Chart PRIVATE Qt::Widgets Qt::Charts)
 qt_finalize_executable(Chart)

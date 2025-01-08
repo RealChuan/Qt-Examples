@@ -8,5 +8,5 @@ set(PROJECT_SOURCES
     mainwindow.h)
 
 qt_add_executable(LogAsynchronous MANUAL_FINALIZATION ${PROJECT_SOURCES})
-target_link_libraries(LogAsynchronous PRIVATE Qt6::Widgets Qt6::Concurrent)
+target_link_libraries(LogAsynchronous PRIVATE Qt::Widgets Qt::Concurrent)
 qt_finalize_executable(LogAsynchronous)

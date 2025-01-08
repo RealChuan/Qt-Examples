@@ -25,5 +25,5 @@ set(PROJECT_SOURCES
     starrating.h)
 
 qt_add_executable(TableViewModel MANUAL_FINALIZATION ${PROJECT_SOURCES})
-target_link_libraries(TableViewModel PRIVATE Qt6::Widgets)
+target_link_libraries(TableViewModel PRIVATE Qt::Widgets)
 qt_finalize_executable(TableViewModel)
