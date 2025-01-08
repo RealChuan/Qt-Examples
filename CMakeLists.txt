@@ -19,7 +19,8 @@ find_package(
              Network
              Concurrent
              Sql
-             Quick)
+             Quick
+             Test)
 
 qt_standard_project_setup(REQUIRES 6.5)
 qt_policy(SET QTP0001 NEW)

@@ -1,7 +1,8 @@
 #include "httpclient.hpp"
 
 #include <QEventLoop>
-#include <QFile>
+#include <QFileInfo>
+#include <QHttpMultiPart>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QPointer>
@@ -147,6 +148,13 @@ QJsonObject HttpClient::sync(QNetworkReply *reply)
     return json;
 }
 
+void HttpClient::cancel(QNetworkReply *reply)
+{
+    d_ptr->clearTask(reply);
+    reply->abort();
+    reply->deleteLater();
+}
+
 QNetworkReply *HttpClient::downLoad(const QUrl &url,
                                     const QString &filePath,
                                     int timeout,
@@ -168,7 +176,7 @@ QNetworkReply *HttpClient::downLoad(const QUrl &url,
         const QByteArray fromRange = "bytes=" + QByteArray::number(bytes) + "-";
         request.setRawHeader("Range", fromRange);
     }
-    qDebug() << QString("Download: %-1>%2").arg(url.toString(QUrl::RemoveUserInfo), filePath);
+    qDebug() << QString("Download: %1->%2").arg(url.toString(QUrl::RemoveUserInfo), filePath);
 
     auto *reply = QNetworkAccessManager::get(request);
     d_ptr->downloads
@@ -187,16 +195,17 @@ QNetworkReply *HttpClient::downLoad(const QUrl &url,
     return reply;
 }
 
-QNetworkReply *HttpClient::upload(const QUrl &url,
-                                  const QString &filePath,
-                                  int timeout,
-                                  bool verifyCertificate,
-                                  CallBack callBack)
+QNetworkReply *HttpClient::upload_put(const QUrl &url,
+                                      const QString &filePath,
+                                      int timeout,
+                                      bool verifyCertificate,
+                                      CallBack callBack)
 {
     Q_ASSERT(!filePath.isEmpty());
     auto *file = new QFile(filePath, this);
     if (!file->open(QIODevice::ReadOnly)) {
         qWarning() << QString("Cannot open the file: %1!").arg(filePath) << file->errorString();
+        file->deleteLater();
         return nullptr;
     }
     qDebug() << QString("Upload: %1->%2").arg(filePath, url.toString(QUrl::RemoveUserInfo));
@@ -206,19 +215,11 @@ QNetworkReply *HttpClient::upload(const QUrl &url,
     auto *reply = QNetworkAccessManager::put(request, file);
     file->setParent(reply);
     d_ptr->uploads.insert(reply, file);
-    d_ptr->tasks.insert(reply, callBack);
-    connect(reply, &QNetworkReply::errorOccurred, this, &HttpClient::onErrorOccurred);
-    connect(reply, &QNetworkReply::sslErrors, this, &HttpClient::onSslErrors);
-    connect(reply, &QNetworkReply::finished, this, &HttpClient::onUploadFinish);
-    if (timeout > 0) {
-        auto *timer = new QTimer(reply);
-        connect(timer, &QTimer::timeout, this, &HttpClient::onNetworkTimeout);
-        timer->start(timeout * 1000);
-    }
+    connectUploadSlots(reply, timeout, callBack);
     return reply;
 }
 
-QNetworkReply *HttpClient::upload(
+QNetworkReply *HttpClient::upload_put(
     const QUrl &url, const QByteArray &data, int timeout, bool verifyCertificate, CallBack callBack)
 {
     qDebug() << QString("Upload To %1").arg(url.toString(QUrl::RemoveUserInfo));
@@ -226,15 +227,66 @@ QNetworkReply *HttpClient::upload(
     auto request = d_ptr->networkRequest(verifyCertificate);
     request.setUrl(url);
     auto *reply = QNetworkAccessManager::put(request, data);
-    d_ptr->tasks.insert(reply, callBack);
-    connect(reply, &QNetworkReply::errorOccurred, this, &HttpClient::onErrorOccurred);
-    connect(reply, &QNetworkReply::sslErrors, this, &HttpClient::onSslErrors);
-    connect(reply, &QNetworkReply::finished, this, &HttpClient::onUploadFinish);
-    if (timeout > 0) {
-        auto *timer = new QTimer(reply);
-        connect(timer, &QTimer::timeout, this, &HttpClient::onNetworkTimeout);
-        timer->start(timeout * 1000);
+    connectUploadSlots(reply, timeout, callBack);
+    return reply;
+}
+
+QNetworkReply *HttpClient::upload_post(const QUrl &url,
+                                       const QString &filePath,
+                                       int timeout,
+                                       bool verifyCertificate,
+                                       CallBack callBack)
+{
+    Q_ASSERT(!filePath.isEmpty());
+    auto *file = new QFile(filePath, this);
+    if (!file->open(QIODevice::ReadOnly)) {
+        qWarning() << QString("Cannot open the file: %1!").arg(filePath) << file->errorString();
+        file->deleteLater();
+        return nullptr;
     }
+    auto filename = QFileInfo(filePath).fileName();
+    qDebug() << QString("Upload: %1->%2")
+                    .arg(filePath, url.toString(QUrl::RemoveUserInfo) + "/" + filename);
+
+    auto disposition = QString("form-data; name=\"%1\"; filename=\"%2\"").arg("file", filename);
+    QHttpPart filePart;
+    filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(disposition));
+    filePart.setBodyDevice(file);
+    auto *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    multiPart->append(filePart);
+
+    auto request = d_ptr->networkRequest(verifyCertificate);
+    request.setUrl(url);
+
+    auto *reply = QNetworkAccessManager::post(request, multiPart);
+    file->setParent(reply);
+    multiPart->setParent(reply);
+    d_ptr->uploads.insert(reply, file);
+    connectUploadSlots(reply, timeout, callBack);
+    return reply;
+}
+
+QNetworkReply *HttpClient::upload_post(const QUrl &url,
+                                       const QString &filename,
+                                       const QByteArray &data,
+                                       int timeout,
+                                       bool verifyCertificate,
+                                       CallBack callBack)
+{
+    qDebug() << QString("Upload To %1").arg(url.toString(QUrl::RemoveUserInfo) + "/" + filename);
+    auto disposition = QString("form-data; name=\"%1\"; filename=\"%2\"").arg("file", filename);
+    QHttpPart filePart;
+    filePart.setHeader(QNetworkRequest::ContentDispositionHeader, QVariant(disposition));
+    filePart.setBody(data);
+    auto *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    multiPart->append(filePart);
+
+    auto request = d_ptr->networkRequest(verifyCertificate);
+    request.setUrl(url);
+
+    auto *reply = QNetworkAccessManager::post(request, multiPart);
+    multiPart->setParent(reply);
+    connectUploadSlots(reply, timeout, callBack);
     return reply;
 }
 
@@ -366,6 +418,19 @@ void HttpClient::onUploadFinish()
 QJsonObject HttpClient::hookResult(const QJsonObject &object)
 {
     return object;
+}
+
+void HttpClient::connectUploadSlots(QNetworkReply *reply, int timeout, CallBack callBack)
+{
+    d_ptr->tasks.insert(reply, callBack);
+    connect(reply, &QNetworkReply::errorOccurred, this, &HttpClient::onErrorOccurred);
+    connect(reply, &QNetworkReply::sslErrors, this, &HttpClient::onSslErrors);
+    connect(reply, &QNetworkReply::finished, this, &HttpClient::onUploadFinish);
+    if (timeout > 0) {
+        auto *timer = new QTimer(reply);
+        connect(timer, &QTimer::timeout, this, &HttpClient::onNetworkTimeout);
+        timer->start(timeout * 1000);
+    }
 }
 
 void HttpClient::queryResult(QNetworkReply *reply, const QJsonObject &object)

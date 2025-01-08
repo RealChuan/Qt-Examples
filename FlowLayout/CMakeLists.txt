@@ -8,5 +8,5 @@ set(PROJECT_SOURCES
     flowwidget.cc)
 
 qt_add_executable(FlowLayout MANUAL_FINALIZATION ${PROJECT_SOURCES})
-target_link_libraries(FlowLayout PRIVATE Qt6::Widgets)
+target_link_libraries(FlowLayout PRIVATE Qt::Widgets)
 qt_finalize_executable(FlowLayout)

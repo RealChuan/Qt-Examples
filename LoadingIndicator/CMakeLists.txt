@@ -5,5 +5,5 @@ qt_add_resources(SOURCES resource.qrc)
 
 qt_add_executable(LoadingIndicator MANUAL_FINALIZATION ${PROJECT_SOURCES}
                   ${SOURCES})
-target_link_libraries(LoadingIndicator PRIVATE Qt6::Widgets)
+target_link_libraries(LoadingIndicator PRIVATE Qt::Widgets)
 qt_finalize_executable(LoadingIndicator)

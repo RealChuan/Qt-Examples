@@ -22,7 +22,7 @@ set_target_properties(
              MACOSX_BUNDLE TRUE
              WIN32_EXECUTABLE TRUE)
 
-target_link_libraries(BatteryQuick PRIVATE Qt6::Quick)
+target_link_libraries(BatteryQuick PRIVATE Qt::Quick)
 
 include(GNUInstallDirs)
 install(
