@@ -11,5 +11,5 @@ endif()
 qt_add_resources(SOURCES resouce.qrc)
 
 qt_add_executable(Bootstrap MANUAL_FINALIZATION ${PROJECT_SOURCES} ${SOURCES})
-target_link_libraries(Bootstrap PRIVATE Qt6::Widgets)
+target_link_libraries(Bootstrap PRIVATE Qt::Widgets)
 qt_finalize_executable(Bootstrap)

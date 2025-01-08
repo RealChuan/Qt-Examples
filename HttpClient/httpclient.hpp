@@ -34,16 +34,27 @@ public:
                             ProgressCallBack progressCallBack = nullptr,
                             CallBack callBack = nullptr);
 
-    QNetworkReply *upload(const QUrl &url,
-                          const QString &filePath,
-                          int timeout = -1,
-                          bool verifyCertificate = true,
-                          CallBack callBack = nullptr);
-    QNetworkReply *upload(const QUrl &url,
-                          const QByteArray &data,
-                          int timeout = -1,
-                          bool verifyCertificate = true,
-                          CallBack callBack = nullptr);
+    QNetworkReply *upload_put(const QUrl &url,
+                              const QString &filePath,
+                              int timeout = -1,
+                              bool verifyCertificate = true,
+                              CallBack callBack = nullptr);
+    QNetworkReply *upload_put(const QUrl &url,
+                              const QByteArray &data,
+                              int timeout = -1,
+                              bool verifyCertificate = true,
+                              CallBack callBack = nullptr);
+    QNetworkReply *upload_post(const QUrl &url,
+                               const QString &filePath,
+                               int timeout = -1,
+                               bool verifyCertificate = true,
+                               CallBack callBack = nullptr);
+    QNetworkReply *upload_post(const QUrl &url,
+                               const QString &filename,
+                               const QByteArray &data,
+                               int timeout = -1,
+                               bool verifyCertificate = true,
+                               CallBack callBack = nullptr);
 
 signals:
     void timeOut();
@@ -63,6 +74,7 @@ protected:
     virtual QJsonObject hookResult(const QJsonObject &object);
 
 private:
+    void connectUploadSlots(QNetworkReply *reply, int timeout, CallBack callBack);
     void queryResult(QNetworkReply *reply, const QJsonObject &object);
 
     class HttpClientPrivate;
