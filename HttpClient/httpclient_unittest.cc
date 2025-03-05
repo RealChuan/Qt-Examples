@@ -210,4 +210,4 @@ private slots:
 
 QTEST_MAIN(HttpClientTest)
 
-#include "main.moc"
+#include "httpclient_unittest.moc"
