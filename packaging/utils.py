@@ -7,6 +7,7 @@ import base64
 import requests
 import os
 import shutil
+import paramiko
 
 
 def remove(path):
@@ -54,3 +55,75 @@ def upload_file(url, username, password, local_file):
         print(
             f"[-] Upload file '{local_file}' failed, status code: {response.status_code}, reason: {response.reason}"
         )
+
+
+def format_bytes(size, precision=2):
+    units = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"]
+    unit_index = 0
+    while size >= 1024 and unit_index < len(units) - 1:
+        size /= 1024.0
+        unit_index += 1
+    return f"{size:.{precision}f} {units[unit_index]}"
+
+
+def sftp_upload_file(
+    sftp_server,
+    sftp_port,
+    username,
+    password,
+    local_file_path,
+    remote_file_path,
+    chunk_size=10 * 1024 * 1024,
+):
+    """
+    使用Paramiko通过SFTP上传大文件
+    :param sftp_server: SFTP服务器地址
+    :param sftp_port: SFTP服务器端口
+    :param username: 用户名
+    :param password: 密码
+    :param local_file_path: 本地文件路径
+    :param remote_file_path: 远程文件路径
+    :param chunk_size: 每次读取的块大小，默认为10MB
+    """
+
+    ssh = paramiko.SSHClient()
+    ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+
+    try:
+        ssh.connect(
+            hostname=sftp_server, port=sftp_port, username=username, password=password
+        )
+        sftp = ssh.open_sftp()
+
+        if not os.path.isfile(local_file_path):
+            raise FileNotFoundError(f"本地文件 {local_file_path} 不存在")
+
+        with open(local_file_path, "rb") as local_file:
+            with sftp.open(remote_file_path, "wb") as remote_file:
+                total_size = os.path.getsize(local_file_path)
+                uploaded_size = 0
+
+                while True:
+                    chunk = local_file.read(chunk_size)
+                    if not chunk:
+                        break
+                    remote_file.write(chunk)
+                    uploaded_size += len(chunk)
+
+                    print(
+                        f"上传进度：{format_bytes(uploaded_size)}/{format_bytes(total_size)} ({uploaded_size / total_size * 100:.2f}%)"
+                    )
+
+        print(f"文件 {local_file_path} 已成功上传到 {remote_file_path}")
+
+    except FileNotFoundError as e:
+        print(f"错误：{e}")
+    except paramiko.AuthenticationException:
+        print("错误：认证失败，请检查用户名和密码是否正确")
+    except paramiko.SSHException as e:
+        print(f"错误：SSH连接失败，原因：{e}")
+    except Exception as e:
+        print(f"未知错误：{e}")
+    finally:
+        sftp.close()
+        ssh.close()

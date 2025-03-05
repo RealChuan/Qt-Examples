@@ -1,6 +1,7 @@
 #include "receivethread.hpp"
 
 #include <QCoreApplication>
+#include <QDebug>
 #include <QNetworkDatagram>
 #include <QUdpSocket>
 

@@ -1,17 +1,17 @@
 #include "accepter.h"
 #include "tcpserver.h"
 
-Accepter::Accepter(quint16 port_, int num_, QObject *parent)
-    :QThread(parent)
-    ,port(port_)
-    ,num(num_)
-{
+#include <QDebug>
 
-}
+Accepter::Accepter(quint16 port_, int num_, QObject *parent)
+    : QThread(parent)
+    , port(port_)
+    , num(num_)
+{}
 
 Accepter::~Accepter()
 {
-    if(isRunning()){
+    if (isRunning()) {
         quit();
         wait();
     }
@@ -25,8 +25,9 @@ void Accepter::run()
     connect(tcpServer.data(), &TcpServer::message, this, &Accepter::message);
     connect(tcpServer.data(), &TcpServer::maxCount, this, &Accepter::maxCount);
     connect(tcpServer.data(), &TcpServer::clientCount, this, &Accepter::clientCount);
-    if(!tcpServer->listen(QHostAddress::Any, port)){
-        qDebug() << "TcpServer online failure: " << tcpServer->errorString() << QThread::currentThreadId();
+    if (!tcpServer->listen(QHostAddress::Any, port)) {
+        qDebug() << "TcpServer online failure: " << tcpServer->errorString()
+                 << QThread::currentThreadId();
         return;
     }
     qDebug() << "TcpServer online: " << QThread::currentThreadId();

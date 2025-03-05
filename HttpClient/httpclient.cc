@@ -117,7 +117,6 @@ QNetworkReply *HttpClient::sendRequest(Method method,
                                                            d_ptr->methodToString(method),
                                                            QJsonDocument(body).toJson(
                                                                QJsonDocument::Compact));
-    reply->setParent(this);
     connect(reply, &QNetworkReply::finished, this, &HttpClient::onReplyFinish);
     connect(reply, &QNetworkReply::errorOccurred, this, &HttpClient::onErrorOccurred);
     connect(reply, &QNetworkReply::sslErrors, this, &HttpClient::onSslErrors);

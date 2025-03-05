@@ -13,7 +13,7 @@ inputs:
   qt_ver:
     description: 'qt version'
     required: false
-    default: '6.8.1'
+    default: '6.9.0'
     type: string
 
 runs:
@@ -32,7 +32,6 @@ runs:
       if: startsWith(runner.os, 'macOS')
       shell: bash
       run: |
-        brew install ninja
         ninja --version
         cmake --version
         clang --version

@@ -1,8 +1,10 @@
 #include "tcpserver.h"
 #include "thread.h"
 
+#include <QDebug>
+
 TcpServer::TcpServer(QObject *parent)
-    :QTcpServer(parent)
+    : QTcpServer(parent)
 {
     qRegisterMetaType<qintptr>("qintptr");
     qRegisterMetaType<QAtomicInt>("QAtomicInt");

@@ -1,5 +1,6 @@
 #include "sendthread.hpp"
 
+#include <QDebug>
 #include <QNetworkInterface>
 #include <QUdpSocket>
 

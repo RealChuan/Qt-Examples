@@ -2,6 +2,8 @@
 #include "subreactor.h"
 #include "thread.h"
 
+#include <QDebug>
+
 class TcpServerPrivate
 {
 public:
