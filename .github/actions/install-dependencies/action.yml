@@ -1,10 +1,6 @@
 name: 'Install Dependencies'
 description: 'Install qt environment and compile dependencies'
 inputs:
-  os_name:
-    description: 'os name'
-    required: true
-    type: string
   qt_modules:
     description: 'qt modules'
     required: false

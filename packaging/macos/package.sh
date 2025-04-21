@@ -92,5 +92,7 @@ cp -f -v ${project_root}/packaging/macos/dmg.json ${release_dir}/dmg.json
 appdmg ${release_dir}/dmg.json ${out_dmg_path}
 notarize_app "${out_dmg_path}"
 
+source ${project_root}/packaging/activate_venv.sh
 cd "$(dirname "$0")"
-./package.py
+python ./package.py
+deactivate

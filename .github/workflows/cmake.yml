@@ -42,8 +42,6 @@ jobs:
           fetch-depth: 1
 
       - uses: ./.github/actions/install-dependencies
-        with:
-          os_name: ${{ matrix.os }}
 
       - name: Configure and build windows
         if: startsWith(matrix.os, 'windows')

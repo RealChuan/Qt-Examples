@@ -1,7 +1,38 @@
----
-Checks:          'clang-analyzer-*,readability-*,performance-*,modernize-*,bugprone-*,cert-*,portability-*,llvm-*,google-*'
-WarningsAsErrors: ''
+Checks: >
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  cert-*,
+  misc-*,
+  modernize-*,
+  cppcoreguidelines-*,
+  concurrency-*,
+  -modernize-use-trailing-return-type,
+  -cppcoreguidelines-avoid-magic-numbers,
+  -llvm-header-guard,
+  -readability-identifier-length,
+  -readability-magic-numbers,
+  -modernize-pass-by-value,
+  -cert-err58-cpp,
+  -hicpp-exception-baseclass
+
+WarningsAsErrors: >
+  clang-analyzer-*,
+  bugprone-*,
+  performance-*,
+  cert-*,
+  misc-*,
+  concurrency-mt-unsafe,
+  concurrency-thread-canceltype,
+  cppcoreguidelines-pro-type-*,
+  cppcoreguidelines-owning-memory,
+  cppcoreguidelines-no-malloc,
+  hicpp-noexcept,
+  performance-no-int-to-ptr,
+  performance-trivially-destructible,
+  bugprone-exception-escape
+
 HeaderFilterRegex: '.'
-AnalyzeTemporaryDtors: false
-FormatStyle:     none
-User:            user
+AnalyzeTemporaryDtors: true
+FormatStyle: file
+User: user

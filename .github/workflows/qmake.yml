@@ -40,8 +40,6 @@ jobs:
           fetch-depth: 1
           
       - uses: ./.github/actions/install-dependencies
-        with:
-          os_name: ${{ matrix.os }}
 
       - uses: RealChuan/install-jom@main
 
