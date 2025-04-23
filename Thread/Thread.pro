@@ -1,8 +1,10 @@
+include(../common.pri)
+
 QT -= gui
 
 QT += concurrent
 
-CONFIG += c++17 console
+CONFIG += console
 CONFIG -= app_bundle
 
 # You can make your code fail to compile if it uses deprecated APIs.
@@ -15,12 +17,12 @@ SOURCES += \
         task.cc \
         thread.cc
 
-# Default rules for deployment.
-qnx: target.path = /tmp/$${TARGET}/bin
-else: unix:!android: target.path = /opt/$${TARGET}/bin
-!isEmpty(target.path): INSTALLS += target
-
 HEADERS += \
     functions.hpp \
     task.hpp \
     thread.hpp
+
+# Default rules for deployment.
+qnx: target.path = /tmp/$${TARGET}/bin
+else: unix:!android: target.path = /opt/$${TARGET}/bin
+!isEmpty(target.path): INSTALLS += target

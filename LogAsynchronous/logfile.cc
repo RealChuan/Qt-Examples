@@ -12,10 +12,11 @@ const static int g_kRollPerSeconds = 60 * 60 * 24;
 
 static auto getFileName(qint64 seconds) -> QString
 {
-    auto data = QDateTime::fromSecsSinceEpoch(seconds).toString("yyyy-MM-dd-hh-mm-ss");
-    auto filename = QString("%1/%2.%3.%4.%5.log")
+    auto data = QDateTime::fromSecsSinceEpoch(seconds).toString("yyyyMMdd_hhmmss");
+    auto filename = QString("%1/%2_%3_%4_%5_%6.log")
                         .arg(LogAsync::instance()->logPath(),
                              qAppName(),
+                             qApp->applicationVersion(),
                              data,
                              QSysInfo::machineHostName(),
                              QString::number(qApp->applicationPid()));

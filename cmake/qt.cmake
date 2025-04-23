@@ -6,4 +6,5 @@ elseif(CMAKE_HOST_LINUX)
   list(APPEND CMAKE_PREFIX_PATH "/opt/Qt/6.9.0/gcc_64")
 endif()
 
-add_definitions(-DQT_DEPRECATED_WARNINGS)
+add_definitions(-DQT_DEPRECATED_WARNINGS
+                -DQT_DISABLE_DEPRECATED_BEFORE=0x060000)

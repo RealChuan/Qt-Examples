@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     log->setLogPath(QDir::tempPath());
     log->setAutoDelFile(true);
     log->setAutoDelFileDays(7);
-    log->setOrientation(LogAsync::Orientation::StdAndFile);
+    log->setOrientation(LogAsync::Orientation::StandardAndFile);
     log->setLogLevel(QtDebugMsg);
     log->startWork();
 
@@ -44,7 +44,7 @@ void MainWindow::testLog()
             break;
         }
         qInfo() << "1234567890qwertyuiopasdfghjklzxcvbnm" << i;
-        QThread::msleep(1); //主界面无响应，上下文切换太快
+        QThread::msleep(100); //主界面无响应，上下文切换太快
     }
 
     qInfo() << timer.elapsed();
