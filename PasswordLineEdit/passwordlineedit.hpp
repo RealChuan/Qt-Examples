@@ -1,5 +1,4 @@
-#ifndef PASSWORDLINEEDIT_HPP
-#define PASSWORDLINEEDIT_HPP
+#pragma once
 
 #include <QLineEdit>
 
@@ -8,14 +7,18 @@ class PasswordLineEdit : public QLineEdit
     Q_OBJECT
 public:
     explicit PasswordLineEdit(QWidget *parent = nullptr);
+    ~PasswordLineEdit() override;
 
 private slots:
-    void onShowPassword(bool);
+    void onShowPassword(bool state);
+
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
-    QToolButton *m_toolButton;
-    QIcon m_hidden_icon;
-    QIcon m_view_icon;
-};
+    void setupUI();
+    void buildConnect();
 
-#endif // PASSWORDLINEEDIT_HPP
+    class PasswordLineEditPrivate;
+    QScopedPointer<PasswordLineEditPrivate> d_ptr;
+};
