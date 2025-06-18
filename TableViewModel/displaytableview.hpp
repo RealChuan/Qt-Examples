@@ -11,7 +11,7 @@ public:
     explicit DisplayTableView(QWidget *parent = nullptr);
     ~DisplayTableView() override;
 
-    void setDatas(const QVector<DisplayInfo> &datas);
+    void setDatas(const DisplayInfoList &datas);
 
 protected:
     void contextMenuEvent(QContextMenuEvent *event) override;

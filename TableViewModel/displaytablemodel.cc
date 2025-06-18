@@ -4,13 +4,39 @@
 #include <QApplication>
 #include <QStyle>
 
+class DisplayTableModel::DisplayTableModelPrivate
+{
+public:
+    explicit DisplayTableModelPrivate(DisplayTableModel *q)
+        : q_ptr(q)
+    {
+        auto metaEnums = QMetaEnum::fromType<Property>();
+        for (int i = 0; i < metaEnums.keyCount(); ++i) {
+            headerDatas << metaEnums.key(i);
+        }
+    }
+
+    DisplayTableModel *q_ptr;
+
+    DisplayInfoList datas;
+    QStringList headerDatas;
+};
+
 DisplayTableModel::DisplayTableModel(QObject *parent)
     : QAbstractTableModel(parent)
+    , d_ptr(new DisplayTableModelPrivate(this))
+{}
+
+DisplayTableModel::~DisplayTableModel() {}
+
+auto DisplayTableModel::rowCount(const QModelIndex &) const -> int
 {
-    auto metaEnums = QMetaEnum::fromType<Property>();
-    for (int i = 0; i < metaEnums.keyCount(); ++i) {
-        m_headerDatas << metaEnums.key(i);
-    }
+    return d_ptr->datas.size();
+}
+
+auto DisplayTableModel::columnCount(const QModelIndex &) const -> int
+{
+    return d_ptr->headerDatas.size();
 }
 
 auto DisplayTableModel::data(const QModelIndex &index, int role) const -> QVariant
@@ -22,7 +48,7 @@ auto DisplayTableModel::data(const QModelIndex &index, int role) const -> QVaria
     auto row = index.row();
     auto col = index.column();
 
-    const auto &data = m_datas.at(row);
+    const auto &data = d_ptr->datas.at(row);
     switch (role) {
     case Qt::TextAlignmentRole: return Qt::AlignCenter;
     case Qt::CheckStateRole:
@@ -70,7 +96,7 @@ auto DisplayTableModel::setData(const QModelIndex &index, const QVariant &value,
     auto row = index.row();
     auto col = index.column();
 
-    auto data = m_datas.at(row);
+    auto data = d_ptr->datas.at(row);
     switch (role) {
     case Qt::CheckStateRole:
         if (ID == col) {
@@ -97,14 +123,14 @@ auto DisplayTableModel::setData(const QModelIndex &index, const QVariant &value,
 auto DisplayTableModel::headerData(int section, Qt::Orientation orientation, int role) const
     -> QVariant
 {
-    if (section < 0 || section >= m_headerDatas.size() || orientation != Qt::Horizontal) {
+    if (section < 0 || section >= d_ptr->headerDatas.size() || orientation != Qt::Horizontal) {
         return {};
     }
     switch (role) {
     case Qt::TextAlignmentRole: return Qt::AlignCenter;
     case Qt::WhatsThisRole:
     case Qt::ToolTipRole:
-    case Qt::DisplayRole: return m_headerDatas.at(section);
+    case Qt::DisplayRole: return d_ptr->headerDatas.at(section);
     default: break;
     }
     return {};
@@ -122,4 +148,16 @@ Qt::ItemFlags DisplayTableModel::flags(const QModelIndex &index) const
         flags |= Qt::ItemIsEditable;
     }
     return flags;
+}
+
+void DisplayTableModel::setDatas(const DisplayInfoList &datas)
+{
+    beginResetModel();
+    d_ptr->datas = datas;
+    endResetModel();
+}
+
+DisplayInfoList DisplayTableModel::datas() const
+{
+    return d_ptr->datas;
 }

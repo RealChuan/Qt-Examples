@@ -1,9 +1,6 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
-
-#include "displaydata.hpp"
 
 class DisplayTableView;
 class MainWindow : public QMainWindow
@@ -21,8 +18,6 @@ private:
     void init();
     void setupUI();
 
-    DisplayTableView *m_table;
-    QVector<DisplayInfo> m_datas;
+    class MainWindowPrivate;
+    QScopedPointer<MainWindowPrivate> d_ptr;
 };
-
-#endif // MAINWINDOW_H

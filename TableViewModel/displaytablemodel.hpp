@@ -12,31 +12,24 @@ public:
     Q_ENUM(Property);
 
     explicit DisplayTableModel(QObject *parent = nullptr);
+    ~DisplayTableModel() override;
 
-    [[nodiscard]] auto rowCount(const QModelIndex & = QModelIndex()) const -> int
-    {
-        return m_datas.size();
-    }
-    [[nodiscard]] auto columnCount(const QModelIndex & = QModelIndex()) const -> int
-    {
-        return m_headerDatas.size();
-    }
+    [[nodiscard]] auto rowCount(const QModelIndex & = QModelIndex()) const -> int;
+    [[nodiscard]] auto columnCount(const QModelIndex & = QModelIndex()) const -> int;
 
     [[nodiscard]] auto data(const QModelIndex &index, int role = Qt::DisplayRole) const -> QVariant;
-    auto setData(const QModelIndex &index, const QVariant &value, int role = Qt::EditRole) -> bool;
+    [[nodiscard]] auto setData(const QModelIndex &index,
+                               const QVariant &value,
+                               int role = Qt::EditRole) -> bool;
     [[nodiscard]] auto headerData(int section,
                                   Qt::Orientation orientation,
                                   int role = Qt::DisplayRole) const -> QVariant;
     [[nodiscard]] auto flags(const QModelIndex &index) const -> Qt::ItemFlags;
 
-    void setDatas(const QVector<DisplayInfo> &datas)
-    {
-        beginResetModel();
-        m_datas = datas;
-        endResetModel();
-    }
+    void setDatas(const DisplayInfoList &datas);
+    [[nodiscard]] auto datas() const -> DisplayInfoList;
 
 private:
-    QVector<DisplayInfo> m_datas;
-    QStringList m_headerDatas;
+    class DisplayTableModelPrivate;
+    QScopedPointer<DisplayTableModelPrivate> d_ptr;
 };

@@ -81,4 +81,6 @@ private:
     QExplicitlySharedDataPointer<DisplayData> d_ptr;
 };
 
+using DisplayInfoList = QList<DisplayInfo>;
+
 Q_DECLARE_METATYPE(DisplayInfo)
