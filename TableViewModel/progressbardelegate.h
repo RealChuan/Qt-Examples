@@ -1,9 +1,6 @@
-#ifndef PROGRESSBARDELEGATE_H
-#define PROGRESSBARDELEGATE_H
+#pragma once
 
 #include <QStyledItemDelegate>
-
-class QProgressBar;
 
 class ProgressBarDelegate : public QStyledItemDelegate
 {
@@ -14,9 +11,4 @@ public:
     void paint(QPainter *painter,
                const QStyleOptionViewItem &option,
                const QModelIndex &index) const override;
-
-private:
-    QScopedPointer<QProgressBar> m_progressBarPtr;
 };
-
-#endif // PROGRESSBARDELEGATE_H

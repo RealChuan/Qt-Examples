@@ -15,9 +15,9 @@ auto textElide(Qt::TextElideMode textElideMode,
     int dotWidth = fm.horizontalAdvance("...");
     switch (textElideMode) {
     case Qt::ElideRight: {
-        qreal cutPos = doc.documentLayout()->hitTest(QPointF(rect.width() - dotWidth,
-                                                             fm.height() / 2),
-                                                     Qt::ExactHit);
+        auto cutPos = doc.documentLayout()->hitTest(QPointF(rect.width() - dotWidth,
+                                                            fm.height() / 2),
+                                                    Qt::ExactHit);
         if (cutPos >= 0) {
             QTextCursor cursor(&doc);
             cursor.setPosition(cutPos);
@@ -27,7 +27,7 @@ auto textElide(Qt::TextElideMode textElideMode,
         }
     } break;
     case Qt::ElideLeft: {
-        qreal testX = doc.size().width() - rect.width() + dotWidth;
+        auto testX = doc.size().width() - rect.width() + dotWidth;
         int cutPos = doc.documentLayout()->hitTest(QPointF(testX, fm.height() / 2), Qt::ExactHit);
         if (cutPos >= 0) {
             QTextCursor cursor(&doc);
@@ -39,16 +39,16 @@ auto textElide(Qt::TextElideMode textElideMode,
         }
     } break;
     case Qt::ElideMiddle: {
-        qreal testX = (rect.width() - dotWidth) / 2.0;
-        int cutLeft = doc.documentLayout()->hitTest(QPoint(testX, fm.height() / 2), Qt::FuzzyHit);
+        auto testX = (rect.width() - dotWidth) / 2.0;
+        auto cutLeft = doc.documentLayout()->hitTest(QPoint(testX, fm.height() / 2), Qt::FuzzyHit);
         if (cutLeft >= 0) {
             testX += (doc.size().width() - rect.width()) + dotWidth;
-            int cutRight = doc.documentLayout()->hitTest(QPoint(testX, fm.height() / 2),
-                                                         Qt::ExactHit);
+            auto cutRight = doc.documentLayout()->hitTest(QPoint(testX, fm.height() / 2),
+                                                          Qt::ExactHit);
             if (cutRight >= 0) {
                 // 减少缩略的偏移
-                int prefer = doc.documentLayout()->hitTest(QPoint(testX, fm.height() / 2),
-                                                           Qt::FuzzyHit);
+                auto prefer = doc.documentLayout()->hitTest(QPoint(testX, fm.height() / 2),
+                                                            Qt::FuzzyHit);
                 cutRight = cutRight == prefer ? (cutRight + 1) : prefer;
                 QTextCursor cursor(&doc);
                 cursor.setPosition(cutLeft);
@@ -71,55 +71,50 @@ void RichTextItemDelegate::paint(QPainter *painter,
                                  const QStyleOptionViewItem &option,
                                  const QModelIndex &index) const
 {
-    QStyleOptionViewItem viewOption(option);
-    initStyleOption(&viewOption, index);
-    painter->setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing
-                            | QPainter::SmoothPixmapTransform);
+    auto copyOption = option;
+    initStyleOption(&copyOption, index);
 
-    QFont font = viewOption.widget ? viewOption.widget->font() : QApplication::font();
-    QStyle *style = viewOption.widget ? viewOption.widget->style() : QApplication::style();
+    const auto *widget = option.widget;
+    auto font = qApp->font();
+    auto *style = qApp->style();
+    if (widget) {
+        font = widget->font();
+        style = widget->style();
+    }
 
     QTextDocument doc;
-    doc.setHtml(viewOption.text);
-    painter->setFont(font);
+    doc.setHtml(copyOption.text);
     doc.setDefaultFont(font);
-    //    QTextOption textOption;
-    //    textOption.setAlignment(Qt::AlignCenter);
-    //    doc.setDefaultTextOption(textOption);
 
     /// Painting item without text
-    viewOption.text = QString();
-    style->drawControl(QStyle::CE_ItemViewItem, &viewOption, painter, viewOption.widget);
+    copyOption.text = QString();
 
-    QAbstractTextDocumentLayout::PaintContext ctx;
-
-    // Highlighting text if item is selected
-    //    if (optionV4.state & QStyle::State_Selected)
-    //        ctx.palette.setColor(QPalette::Text,
-    //                             optionV4.palette.color(QPalette::Active, QPalette::HighlightedText));
-
-    QRect textRect = style->subElementRect(QStyle::SE_ItemViewItemText,
-                                           &viewOption,
-                                           viewOption.widget);
     painter->save();
-    //painter->translate(textRect.topLeft());
-    qreal x = textRect.topLeft().x();
-    qreal fontSize = font.pixelSize() == -1
-                         ? (font.pointSize() == -1 ? font.pointSizeF() : font.pointSize())
-                         : font.pixelSize();
-    qreal y = (textRect.topLeft().y() + textRect.bottomLeft().y()) / 2.0 - fontSize;
+    painter->setFont(font);
+    style->drawControl(QStyle::CE_ItemViewItem, &copyOption, painter, widget);
+    painter->restore();
+
+    painter->save();
+    QAbstractTextDocumentLayout::PaintContext ctx;
+    auto textRect = style->subElementRect(QStyle::SE_ItemViewItemText, &copyOption, widget);
+
+    auto x = textRect.topLeft().x();
+    auto fontSize = font.pixelSize() == -1
+                        ? (font.pointSize() == -1 ? font.pointSizeF() : font.pointSize())
+                        : font.pixelSize();
+    auto y = (textRect.topLeft().y() + textRect.bottomLeft().y()) / 2.0 - fontSize;
     painter->translate(x, y);
-    QRect clipRect = textRect.translated(-textRect.topLeft());
+    auto clipRect = textRect.translated(-textRect.topLeft());
     painter->setClipRect(clipRect);
     ctx.clip = clipRect;
 
-    bool elide = textElide(textElideMode, font, doc, clipRect);
+    bool elide = textElide(copyOption.textElideMode, font, doc, clipRect);
     if (!elide) { // 居中
-        qreal w = QFontMetrics(font).horizontalAdvance(doc.toPlainText());
-        qreal x = (textRect.width() - w) / 2.0;
-        //qDebug() << w << x << textRect.width();
+        auto w = QFontMetrics(font).horizontalAdvance(doc.toPlainText());
+        auto x = (textRect.width() - w) / 2.0;
         painter->translate(x, 0);
     }
+    painter->setFont(font);
     doc.documentLayout()->draw(painter, ctx);
     painter->restore();
 }
@@ -127,11 +122,11 @@ void RichTextItemDelegate::paint(QPainter *painter,
 auto RichTextItemDelegate::sizeHint(const QStyleOptionViewItem &option,
                                     const QModelIndex &index) const -> QSize
 {
-    QStyleOptionViewItem options = option;
-    initStyleOption(&options, index);
+    auto copyOption = option;
+    initStyleOption(&copyOption, index);
 
     QTextDocument doc;
-    doc.setHtml(options.text);
-    doc.setTextWidth(options.rect.width());
+    doc.setHtml(copyOption.text);
+    doc.setTextWidth(copyOption.rect.width());
     return {static_cast<int>(doc.idealWidth()), static_cast<int>(doc.size().height())};
 }

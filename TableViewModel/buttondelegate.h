@@ -1,5 +1,4 @@
-#ifndef BUTTONDELEGATE_H
-#define BUTTONDELEGATE_H
+#pragma once
 
 #include <QStyledItemDelegate>
 
@@ -18,9 +17,4 @@ protected:
                      QAbstractItemModel *model,
                      const QStyleOptionViewItem &option,
                      const QModelIndex &index) -> bool override;
-
-private:
-    QScopedPointer<QStyleOptionButton> m_buttonPtr;
 };
-
-#endif // BUTTONDELEGATE_H
