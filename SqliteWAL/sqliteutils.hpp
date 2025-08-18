@@ -2,15 +2,21 @@
 
 #include <QSqlDatabase>
 
-struct DataBaseConnection
+struct SqliteConnection
 {
     QString connectionName;
     QString dataBasePath;
 };
 
-QSqlDatabase getDatabase(const DataBaseConnection &dataBaseConnection);
+/*
+ * 使用新的connectionName时，第一次调用时，必须保证线程安全
+ */
+QSqlDatabase getDatabase(const SqliteConnection &dataBaseConnection);
 
-void removeDatabase(const QString &connectionName);
+/*
+ * 调用时，必须保证线程安全
+ */
+void removeDatabase(const SqliteConnection &dataBaseConnection);
 
 QString getDatabaseConnectionName();
 

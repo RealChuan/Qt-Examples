@@ -5,13 +5,13 @@ QT += core sql
 CONFIG += cmdline
 
 SOURCES += \
-        databasetest.cc \
-        databaseutils.cc \
-        main.cc
+        main.cc \
+        sqlitetest.cc \
+        sqliteutils.cc
 
 HEADERS += \
-    databasetest.hpp \
-    databaseutils.hpp
+    sqlitetest.hpp \
+    sqliteutils.hpp
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
