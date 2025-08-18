@@ -1,4 +1,4 @@
-#include "databasetest.hpp"
+#include "sqlitetest.hpp"
 
 #include <QCoreApplication>
 #include <QSqlDatabase>
@@ -7,9 +7,10 @@
 
 void insertThread(const QString &brand)
 {
-    DataBaseTest test;
+    SqliteTest test;
     for (int i = 0; i < 1000; i++) {
         test.insert(brand, i);
+        test.readLastRecord();
     }
 }
 
@@ -22,7 +23,16 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    const QStringList brands{"Apple", "Samsung", "Xiaomi", "Huawei", "Oppo", "Vivo", "Realme"};
+    const QStringList brands{"Apple",
+                             "Samsung",
+                             "Xiaomi",
+                             "Redmi",
+                             "Oppo",
+                             "Vivo",
+                             "Realme",
+                             "IQOO",
+                             "OnePlus",
+                             "Pixel"};
     std::vector<std::thread> threads;
     for (const auto &brand : std::as_const(brands)) {
         threads.emplace_back(insertThread, brand);
