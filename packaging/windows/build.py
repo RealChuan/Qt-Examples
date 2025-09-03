@@ -8,7 +8,7 @@ import sys
 
 build_list = [
     {
-        "qmake": r"C:\Qt\6.9.1\msvc2022_64\bin\qmake.exe",
+        "qmake": r"C:\Qt\6.9.2\msvc2022_64\bin\qmake.exe",
         "qmake_params": r'"CONFIG+=qtquickcompiler"',
         "jom": r"C:\Qt\Tools\QtCreator\bin\jom\jom.exe",
         "env_bat": r'C:\"Program Files"\"Microsoft Visual Studio"\2022\Community\VC\Auxiliary\Build\vcvarsall.bat x64',
