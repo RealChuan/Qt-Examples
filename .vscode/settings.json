@@ -4,6 +4,6 @@
     },
     "cmake.generator": "Ninja",
     "cmake.environment": {
-        "PATH": "C:\\Qt\\6.9.1\\msvc2022_64\\bin;${env:PATH};"
+        "PATH": "C:\\Qt\\6.9.2\\msvc2022_64\\bin;${env:PATH};"
     }
 }
