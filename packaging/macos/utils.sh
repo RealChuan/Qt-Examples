@@ -1,56 +1,59 @@
-#!/bin/bash -ex
+#!/bin/bash
+set -euo pipefail
+# ----------- 硬编码区 ---------------
+APPLE_ID="***@***"
+TEAM_ID="*********"
+NOTARY_PWD="*********"
+# ------------------------------------
 
-delete_file_or_dir() {
-    local target=$1
-
-    if [ -e "$target" ]; then
-        if [ -d "$target" ]; then
-            rm -rf "$target"
-            echo "Directory deleted: $target"
-        else
-            rm "$target"
-            echo "File deleted: $target"
-        fi
-    else
-        echo "Error: $target does not exist."
-    fi
+log() { echo "[$(date +%F\ %T)] $*"; }
+die() {
+	log "FATAL: $*"
+	exit 1
 }
 
+# 安全删除
+safe_rm() {
+	local target=$1
+	[[ -e $target ]] || {
+		log "Skip: $target not exist"
+		return 0
+	}
+	if [[ -d $target ]]; then
+		rm -rf "$target" && log "DIR  deleted: $target"
+	else
+		rm -f "$target" && log "FILE deleted: $target"
+	fi
+}
+
+# 处理 plist
 process_plist() {
-    local plist_path="$1"
-
-    if [ -z "$plist_path" ]; then
-        echo "Error: Plist file path is not provided."
-        return 1
-    fi
-
-    if [ ! -f "$plist_path" ]; then
-        echo "Error: Plist file does not exist at path: $plist_path"
-        return 1
-    fi
-
-    echo "Converting plist to XML format..."
-    plutil -convert xml1 "$plist_path" 2>/dev/null
-
-    echo "Linting plist file..."
-    plutil -lint "$plist_path" 2>/dev/null
-
-    if [ $? -eq 0 ]; then
-        echo "Plist file processed successfully."
-    else
-        echo "Error occurred while processing plist file."
-        return 2
-    fi
+	local plist=$1
+	[[ -n $plist && -f $plist ]] || {
+		log "Skip plist: file missing"
+		return 0
+	}
+	log "Convert plist → XML"
+	plutil -convert xml1 "$plist"
+	log "Lint plist"
+	plutil -lint "$plist" >/dev/null || die "Plist lint failed"
+	log "Plist processed OK"
 }
 
+# 公证 + staple
 notarize_app() {
-    local target=$1
-    if [ ! -f "$target" ]; then
-        echo "Error: $target does not exist."
-        exit 1
-    fi
+	local target=$1
+	[[ -f $target ]] || die "Notarize target missing: $target"
 
-    xcrun notarytool submit $target --apple-id "***@***" \
-        --team-id "******" --password "******" --wait
-    xcrun stapler staple $target
+	log "Submitting for notarization..."
+	xcrun notarytool submit "$target" \
+		--apple-id "$APPLE_ID" \
+		--team-id "$TEAM_ID" \
+		--password "$NOTARY_PWD" \
+		--wait
+
+	log "Stapling ticket..."
+	xcrun stapler staple "$target"
+
+	log "Notarize & staple finished: $target"
 }

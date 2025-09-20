@@ -8,7 +8,7 @@ project_root=$PWD
 echo "Project root: ${project_root}"
 
 echo "Start compiling..."
-qmake="/Users/runner/Qt/6.9.1/macos/bin/qmake"
+qmake="/Users/runner/Qt/6.9.2/macos/bin/qmake"
 build_dir="${project_root}/build/Desktop_Qt_6_8_1_macosbit-Release"
 
 rm -rf ${build_dir}
@@ -26,10 +26,10 @@ mkdir -p ${packet_dir}
 mkdir -p ${release_dir}
 
 cp -af -v ${project_root}/bin-64/Release/Qt-App.app ${packet_dir}/
-delete_file_or_dir "${release_dir}/Qt-App.app"
+safe_rm "${release_dir}/Qt-App.app"
 
 # deploy Qt-App
-macdeployqt="/Users/fxy/Qt/6.9.1/macos/bin/macdeployqt"
+macdeployqt="/Users/fxy/Qt/6.9.2/macos/bin/macdeployqt"
 ${macdeployqt} ${packet_dir}/Qt-App.app -always-overwrite
 cp -af -v ${packet_dir}/Qt-App.app ${release_dir}/
 
@@ -57,10 +57,10 @@ out_pkg_path="${release_dir}/${pkg_name}"
 dmg_name="Qt-App.dmg"
 out_dmg_path="${release_dir}/${dmg_name}"
 
-delete_file_or_dir "${release_dir}/output"
-delete_file_or_dir "${out_pkg_path}"
-delete_file_or_dir "${pkg_tmp_path}"
-delete_file_or_dir "${out_dmg_path}"
+safe_rm "${release_dir}/output"
+safe_rm "${out_pkg_path}"
+safe_rm "${pkg_tmp_path}"
+safe_rm "${out_dmg_path}"
 
 mkdir -p ${release_dir}/output
 
@@ -79,7 +79,7 @@ productbuild --distribution ${project_root}/packaging/macos/distribution.xml \
     --version ${version} ${pkg_tmp_path}
 # sign pkg
 productsign --sign "${certificate}" ${pkg_tmp_path} ${out_pkg_path}
-delete_file_or_dir "${pkg_tmp_path}"
+safe_rm "${pkg_tmp_path}"
 notarize_app "${out_pkg_path}"
 
 # install appdmg
@@ -94,5 +94,5 @@ notarize_app "${out_dmg_path}"
 
 source ${project_root}/packaging/activate_venv.sh
 cd "$(dirname "$0")"
-python ./package.py
+python ${project_root}/packaging/upload.py macos_aarch64
 deactivate

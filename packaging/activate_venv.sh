@@ -19,6 +19,3 @@ source "$VENV_NAME/bin/activate"
 
 # 提示用户后续操作
 echo "虚拟环境已激活，当前 Python 路径: $(which python)"
-
-current_path=$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")
-pip install -r "${current_path}/requirements.txt" -i https://pypi.tuna.tsinghua.edu.cn/simple
