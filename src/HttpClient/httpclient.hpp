@@ -1,5 +1,7 @@
 #pragma once
 
+#include <LifecycleCallback/lifecyclecallback.hpp>
+
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
@@ -9,8 +11,8 @@ class HttpClient : public QNetworkAccessManager
 {
     Q_OBJECT
 public:
-    using CallBack = std::function<void(const QJsonObject &)>;
-    using ProgressCallBack = std::function<void(qint64 download, qint64 total)>;
+    using JsonCallback = LifecycleCallback<const QJsonObject &>;
+    using ProgressCallback = LifecycleCallback<qint64, qint64>;
     using HttpHeaders = QHash<QString, QString>;
     enum class Method : int { GET, POST, PUT, DELETE };
 
@@ -23,7 +25,7 @@ public:
                                const QJsonObject &body,
                                int timeout = -1,
                                bool verifyCertificate = true,
-                               CallBack callBack = nullptr);
+                               JsonCallback callback = {});
 
     QJsonObject sync(QNetworkReply *reply);
     void cancel(QNetworkReply *reply);
@@ -32,30 +34,30 @@ public:
                             const QString &filePath,
                             int timeout = -1,
                             bool verifyCertificate = true,
-                            ProgressCallBack progressCallBack = nullptr,
-                            CallBack callBack = nullptr);
+                            ProgressCallback progressCallback = {},
+                            JsonCallback callback = {});
 
     QNetworkReply *upload_put(const QUrl &url,
                               const QString &filePath,
                               int timeout = -1,
                               bool verifyCertificate = true,
-                              CallBack callBack = nullptr);
+                              JsonCallback callback = {});
     QNetworkReply *upload_put(const QUrl &url,
                               const QByteArray &data,
                               int timeout = -1,
                               bool verifyCertificate = true,
-                              CallBack callBack = nullptr);
+                              JsonCallback callback = {});
     QNetworkReply *upload_post(const QUrl &url,
                                const QString &filePath,
                                int timeout = -1,
                                bool verifyCertificate = true,
-                               CallBack callBack = nullptr);
+                               JsonCallback callback = {});
     QNetworkReply *upload_post(const QUrl &url,
                                const QString &filename,
                                const QByteArray &data,
                                int timeout = -1,
                                bool verifyCertificate = true,
-                               CallBack callBack = nullptr);
+                               JsonCallback callback = {});
 
 signals:
     void timeOut();
@@ -69,13 +71,12 @@ private slots:
     void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
     void onDownloadReadyRead();
     void onDownloadFinish();
-    void onUploadFinish();
 
 protected:
     virtual QJsonObject hookResult(const QJsonObject &object);
 
 private:
-    void connectUploadSlots(QNetworkReply *reply, int timeout, CallBack callBack);
+    void connectUploadSlots(QNetworkReply *reply, int timeout, JsonCallback callback);
     void queryResult(QNetworkReply *reply, const QJsonObject &object);
 
     class HttpClientPrivate;

@@ -17,7 +17,7 @@ runs:
 
   steps:
     - name: Install dependencies on windows
-      if: startsWith(runner.os, 'Windows')
+      if: runner.os == 'Windows'
       shell: bash
       run: |
         choco install ninja
@@ -25,7 +25,7 @@ runs:
         cmake --version
 
     - name: Install dependencies on macos
-      if: startsWith(runner.os, 'macOS')
+      if: runner.os == 'macOS'
       shell: bash
       run: |
         ninja --version
@@ -33,7 +33,7 @@ runs:
         clang --version
 
     - name: Install dependencies on linux
-      if: startsWith(runner.os, 'Linux')
+      if: runner.os == 'Linux'
       shell: bash
       run: |
         sudo apt-get update

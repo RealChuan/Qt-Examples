@@ -112,7 +112,13 @@ auto LogFile::rollFile(int count) -> bool
             d_ptr->file.close();
         }
         d_ptr->file.setFileName(filename);
-        d_ptr->file.open(QIODevice::WriteOnly | QIODevice::Append | QIODevice::Unbuffered);
+        auto ret = d_ptr->file.open(QIODevice::WriteOnly | QIODevice::Append
+                                    | QIODevice::Unbuffered);
+        if (!ret) {
+            qWarning() << "Failed to open log file:" << filename
+                       << "Error:" << d_ptr->file.errorString();
+            return false;
+        }
         d_ptr->stream.setDevice(&d_ptr->file);
         fprintf(stderr, "%s\n", filename.toUtf8().constData());
         return true;

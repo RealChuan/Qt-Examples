@@ -16,6 +16,7 @@ SUBDIRS += \
     HttpClient \
     IconButton \
     ImageCarousel \
+    LifecycleCallback \
     LoadingIndicator \
     LogAsynchronous \
     MulClient \

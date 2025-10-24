@@ -1,13 +1,11 @@
 include(../../qmake/ProjectSettings.pri)
 
-QT       += core network testlib
+QT       += core  testlib
 
 SOURCES += \
-    httpclient.cc  \
-    httpclient_unittest.cc
+    lifecyclecallback_unittest.cc
 
-HEADERS += \
-    httpclient.hpp
+HEADERS += 
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

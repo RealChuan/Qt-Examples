@@ -57,7 +57,7 @@
 
 - 自定义样式气泡对话框
 - 可用作增强型工具提示
-- <img src="BubbleWindow/picture/Bubble.png" width="300" alt="气泡对话框">
+- <img src="src/BubbleWindow/picture/Bubble.png" width="300" alt="气泡对话框">
 
 ### [Chart](src/Chart/) - 数据可视化图表(QtCharts 模块 Desprecated)
 
@@ -113,6 +113,10 @@
 
 - 自动图片轮播
 - <img src="src/ImageCarousel/picture/ImageCarousel.jpg" width="90%" alt="图片轮播">
+
+### [LifecycleCallback](src/LifecycleCallback/) - 生命周期感知的回调包装器
+
+- 支持 QObject、std::shared_ptr 管理的对象以及自由函数，在对象被销毁时自动使回调无效，防止悬空指针和内存安全问题。
 
 ### [LoadingIndicator](src/LoadingIndicator/) - 加载动画
 
