@@ -88,7 +88,25 @@ tags
 *.dll
 *.exe
 
+# 编译 & 打包产出
+build/
+debian/tmp/
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/*.log
+debian/*.substvars
+*.deb
+*.changes
+*.buildinfo
+*.upload
+obj-x86_64-linux-gnu/
+
 # Others
+.cache
 .vscode
-bin-*
-build
+binaries
+output
+packet
+releases
+install

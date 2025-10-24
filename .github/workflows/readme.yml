@@ -9,12 +9,11 @@ on:
       - README.md
 
 jobs:
-  build:
+  Translate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
+      - uses: actions/setup-node@v6
       # ISO Langusge Codes: https://cloud.google.com/translate/docs/languages  
       - name: Adding README - English
         uses: dephraiim/translate-readme@main

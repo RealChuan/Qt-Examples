@@ -2,25 +2,38 @@ name: QMake Build
 
 on: 
   push:
-    paths-ignore: # 下列文件的变更不触发部署，可以自行添加
-        - '**/picture/**'
-        - 'cmake/**'
+    paths-ignore:
+        - 'cmake/**' 
+        - 'docs/**'
         - 'packaging/**'
-        - '.clang-*'
-        - '.gitignore'
-        - 'CMake*'
-        - 'LICENSE'
-        - 'README*'
+        - 'translations/**'
+        - '**/CMakeLists.txt'
+        - '**/*.md'
+        - '**/*.txt'
+        - '**/.clang-*'
+        - '**/.gitignore'
+        - '**/LICENSE*'
+        - '**/README*'
+        - 'vcpkg.json'    
   pull_request:
-    paths-ignore: # 下列文件的变更不触发部署，可以自行添加
-        - '**/picture/**'
-        - 'cmake/**'
+    paths-ignore:
+        - 'cmake/**' 
+        - 'docs/**'
         - 'packaging/**'
-        - '.clang-*'
-        - '.gitignore'
-        - 'CMake*'
-        - 'LICENSE'
-        - 'README*'
+        - 'translations/**'
+        - '**/CMakeLists.txt'
+        - '**/*.md'
+        - '**/*.txt'
+        - '**/.clang-*'
+        - '**/.gitignore'
+        - '**/LICENSE*'
+        - '**/README*'
+        - 'vcpkg.json'  
+
+env:
+  MACOSX_DEPLOYMENT_TARGET: 13.0
+  MACOSX_BUILD_ARCHS: 'x86_64 arm64'
+  BUILD_DIR: build
 
 jobs:
   build:
@@ -43,30 +56,31 @@ jobs:
 
       - uses: RealChuan/install-jom@main
 
-      - name: mkdir build
+      - name: Create build directory
         shell: bash
-        run: |
-          mkdir build
+        run: mkdir -p ${{ env.BUILD_DIR }}
 
-      - name: msvc-build
-        if: startsWith(matrix.os, 'windows')
+      - name: Build windows
+        if: runner.os == 'Windows'
+        working-directory: ${{ env.BUILD_DIR }}
         shell: pwsh
         run: |
           ..\packaging\windows\Enter-VsDevShell.ps1
-          & qmake ./../.
+          & qmake ..\.
           & jom
-        working-directory: build
-      - name: ubuntu-build
-        if: startsWith(matrix.os, 'ubuntu')
+        
+      - name: Build linux
+        if: runner.os == 'Linux'
+        working-directory: ${{ env.BUILD_DIR }}
         shell: bash
         run: |
-          qmake ./../.
+          qmake ../.
           make -j $(nproc)
-        working-directory: build
-      - name: macos-build
-        if: startsWith(matrix.os, 'macos')
+
+      - name: Build macos
+        if: runner.os == 'macOS'
+        working-directory: ${{ env.BUILD_DIR }}
         shell: bash
         run: |
-          qmake ./../.
+          qmake QMAKE_APPLE_DEVICE_ARCHS="${{ env.MACOSX_BUILD_ARCHS }}" ../.
           make -j $(sysctl -n hw.ncpu)
-        working-directory: build

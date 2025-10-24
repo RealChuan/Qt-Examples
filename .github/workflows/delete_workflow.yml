@@ -42,7 +42,7 @@ on:
         required: false
 
 jobs:
-  del_runs:
+  delete-workflow-runs:
     runs-on: ubuntu-latest
     permissions:
       actions: write

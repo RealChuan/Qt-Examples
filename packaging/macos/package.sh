@@ -8,7 +8,7 @@ project_root=$PWD
 echo "Project root: ${project_root}"
 
 echo "Start compiling..."
-qmake="/Users/runner/Qt/6.9.2/macos/bin/qmake"
+qmake="/Users/runner/Qt/6.10.0/macos/bin/qmake"
 build_dir="${project_root}/build/Desktop_Qt_6_8_1_macosbit-Release"
 
 rm -rf ${build_dir}
@@ -29,7 +29,7 @@ cp -af -v ${project_root}/bin-64/Release/Qt-App.app ${packet_dir}/
 safe_rm "${release_dir}/Qt-App.app"
 
 # deploy Qt-App
-macdeployqt="/Users/fxy/Qt/6.9.2/macos/bin/macdeployqt"
+macdeployqt="/Users/fxy/Qt/6.10.0/macos/bin/macdeployqt"
 ${macdeployqt} ${packet_dir}/Qt-App.app -always-overwrite
 cp -af -v ${packet_dir}/Qt-App.app ${release_dir}/
 

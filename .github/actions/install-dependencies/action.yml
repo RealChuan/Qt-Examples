@@ -4,12 +4,12 @@ inputs:
   qt_modules:
     description: 'qt modules'
     required: false
-    default: 'qtcharts qt5compat qtnetworkauth qtimageformats'
+    default: 'qt5compat qtnetworkauth qtimageformats'
     type: string
   qt_ver:
     description: 'qt version'
     required: false
-    default: '6.9.2'
+    default: '6.10.0'
     type: string
 
 runs:
