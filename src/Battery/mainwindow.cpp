@@ -6,17 +6,194 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
+    // 创建电池控件
     auto *battery = new BatteryWidget(this);
-    auto *slider = new QSlider(this);
-    slider->setRange(0, 100);
-    connect(slider, &QSlider::valueChanged, battery, &BatteryWidget::valueChanged);
+    battery->setValue(75); // 设置初始电量
 
-    auto *widget = new QWidget(this);
-    auto *layout = new QHBoxLayout(widget);
-    layout->addWidget(battery);
-    layout->addWidget(slider);
-    setCentralWidget(widget);
-    resize(300, 160);
+    // 创建滑动条控制电量
+    auto *slider = new QSlider(Qt::Vertical, this);
+    slider->setRange(0, 100);
+    slider->setValue(75);
+
+    // 创建充电控制复选框
+    auto *chargingCheckbox = new QCheckBox(tr("Charging state"), this);
+    chargingCheckbox->setChecked(false);
+
+    // 创建报警阈值设置
+    auto *alarmSlider = new QSlider(Qt::Horizontal, this);
+    alarmSlider->setRange(0, 50);
+    alarmSlider->setValue(20);
+    auto *alarmLabel = new QLabel(tr("Alarm threshold: 20%"), this);
+
+    // 创建颜色选择控件
+    auto *powerColorButton = new QPushButton(tr("Battery level color"), this);
+    auto *alarmColorButton = new QPushButton(tr("Alarm color"), this);
+    auto *borderColorButton = new QPushButton(tr("Border color"), this);
+
+    // 创建动画控制
+    auto *animationCheckbox = new QCheckBox(tr("Enable animation"), this);
+    animationCheckbox->setChecked(true);
+    auto *animationDurationSlider = new QSlider(Qt::Horizontal, this);
+    animationDurationSlider->setRange(100, 2000);
+    animationDurationSlider->setValue(500);
+    auto *durationLabel = new QLabel(tr("Animation duration: 500ms"), this);
+
+    // 创建快速操作按钮
+    auto *increaseButton = new QPushButton("+10%", this);
+    auto *decreaseButton = new QPushButton("-10%", this);
+    auto *resetButton = new QPushButton(tr("Reset"), this);
+
+    // 创建状态显示标签
+    auto *statusLabel = new QLabel(tr("Status: Normal"), this);
+    statusLabel->setAlignment(Qt::AlignCenter);
+
+    // 布局设置
+    auto *mainWidget = new QWidget(this);
+    auto *mainLayout = new QVBoxLayout(mainWidget);
+
+    // 电池和滑动条布局
+    auto *batteryLayout = new QHBoxLayout();
+    batteryLayout->addWidget(battery);
+    batteryLayout->addWidget(slider);
+
+    // 充电和动画控制布局
+    auto *controlLayout = new QHBoxLayout();
+    controlLayout->addWidget(chargingCheckbox);
+    controlLayout->addWidget(animationCheckbox);
+
+    // 颜色选择布局
+    auto *colorLayout = new QHBoxLayout();
+    colorLayout->addWidget(powerColorButton);
+    colorLayout->addWidget(alarmColorButton);
+    colorLayout->addWidget(borderColorButton);
+
+    // 阈值和动画时长布局
+    auto *settingsLayout = new QGridLayout();
+    settingsLayout->addWidget(alarmLabel, 0, 0);
+    settingsLayout->addWidget(alarmSlider, 0, 1);
+    settingsLayout->addWidget(durationLabel, 1, 0);
+    settingsLayout->addWidget(animationDurationSlider, 1, 1);
+
+    // 快速操作布局
+    auto *quickActionsLayout = new QHBoxLayout();
+    quickActionsLayout->addWidget(increaseButton);
+    quickActionsLayout->addWidget(decreaseButton);
+    quickActionsLayout->addWidget(resetButton);
+
+    // 主布局组装
+    mainLayout->addLayout(batteryLayout);
+    mainLayout->addLayout(controlLayout);
+    mainLayout->addLayout(colorLayout);
+    mainLayout->addLayout(settingsLayout);
+    mainLayout->addLayout(quickActionsLayout);
+    mainLayout->addWidget(statusLabel);
+
+    setCentralWidget(mainWidget);
+    resize(650, 400);
+    setWindowTitle(tr("Battery Widget Example"));
+
+    // 连接信号和槽
+
+    // 电量控制
+    connect(slider, &QSlider::valueChanged, battery, [battery, animationCheckbox](int value) {
+        if (animationCheckbox->isChecked()) {
+            battery->setValueAnimated(value);
+        } else {
+            battery->setValue(value);
+        }
+    });
+
+    // 充电状态
+    connect(chargingCheckbox, &QCheckBox::toggled, battery, &BatteryWidget::setCharging);
+
+    // 报警阈值
+    connect(alarmSlider, &QSlider::valueChanged, battery, [battery, alarmLabel](int value) {
+        battery->setAlarmValue(value);
+        alarmLabel->setText(tr("Alarm threshold: %1%").arg(value));
+    });
+
+    // 动画控制
+    connect(animationDurationSlider,
+            &QSlider::valueChanged,
+            battery,
+            [battery, durationLabel](int value) {
+                battery->setAnimationDuration(value);
+                durationLabel->setText(tr("Animation duration: %1ms").arg(value));
+            });
+
+    // 颜色选择
+    connect(powerColorButton, &QPushButton::clicked, this, [this, battery]() {
+        QColor color = QColorDialog::getColor(battery->powerColor(),
+                                              this,
+                                              tr("Select the battery color"));
+        if (color.isValid()) {
+            battery->setPowerColor(color);
+        }
+    });
+
+    connect(alarmColorButton, &QPushButton::clicked, this, [this, battery]() {
+        QColor color = QColorDialog::getColor(battery->alarmColor(),
+                                              this,
+                                              tr("Select the alarm color"));
+        if (color.isValid()) {
+            battery->setAlarmColor(color);
+        }
+    });
+
+    connect(borderColorButton, &QPushButton::clicked, this, [this, battery]() {
+        QColor color = QColorDialog::getColor(battery->borderColor(),
+                                              this,
+                                              tr("Select the border color"));
+        if (color.isValid()) {
+            battery->setBorderColor(color);
+        }
+    });
+
+    // 快速操作
+    connect(increaseButton, &QPushButton::clicked, battery, [battery]() {
+        battery->increaseValue(10);
+    });
+
+    connect(decreaseButton, &QPushButton::clicked, battery, [battery]() {
+        battery->decreaseValue(10);
+    });
+
+    connect(resetButton, &QPushButton::clicked, battery, &BatteryWidget::reset);
+
+    connect(battery, &BatteryWidget::alarmStateChanged, this, [statusLabel](bool isAlarm) {
+        if (isAlarm) {
+            statusLabel->setText(tr("Status: Low battery alarm!"));
+            statusLabel->setStyleSheet("color: red; font-weight: bold;");
+        } else {
+            statusLabel->setText(tr("Status: Normal"));
+            statusLabel->setStyleSheet("");
+        }
+    });
+
+    connect(battery,
+            &BatteryWidget::chargingChanged,
+            this,
+            [statusLabel, chargingCheckbox](bool charging) {
+                chargingCheckbox->setChecked(charging);
+                if (charging) {
+                    statusLabel->setText(tr("Status: Charging..."));
+                    statusLabel->setStyleSheet("color: blue;");
+                }
+            });
+
+    connect(battery,
+            &BatteryWidget::animationStarted,
+            this,
+            [statusLabel](int oldValue, int newValue) {
+                statusLabel->setText(tr("Animation: %1% → %2%").arg(oldValue).arg(newValue));
+            });
+
+    connect(battery, &BatteryWidget::animationFinished, this, [statusLabel](int value) {
+        statusLabel->setText(tr("The animation is completed: %1%").arg(value));
+    });
+
+    // 初始化状态
+    battery->setValue(75);
 }
 
 MainWindow::~MainWindow() {}
