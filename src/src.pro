@@ -3,7 +3,6 @@ CONFIG += ordered
 
 SUBDIRS += \
     Battery \
-    BatteryQuick \
     Bootstrap \
     BubbleWindow \
 #    Chart \
