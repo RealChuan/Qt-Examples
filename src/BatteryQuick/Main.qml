@@ -10,7 +10,7 @@ ApplicationWindow {
     width: 650
     height: 400
     visible: true
-    title: qsTr("Battery Widget Example")
+    title: qsTr("Battery Quick Example")
 
     // 颜色对话框
     ColorDialog {

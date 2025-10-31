@@ -498,12 +498,15 @@ void DashBoardWidget::drawArc(QPainter *painter, double minSize)
     QPen pen;
     pen.setWidthF(arcWidth);
     pen.setCapStyle(Qt::FlatCap);
+    pen.setColor(d_ptr->arcColor);
 
     // 圆弧背景
     const double angle = d_ptr->endAngle - d_ptr->startAngle;
-    pen.setColor(d_ptr->arcColor);
+
+    painter->save();
     painter->setPen(pen);
     painter->drawArc(rect, d_ptr->startAngle * 16, angle * 16);
+    painter->restore();
 }
 
 void DashBoardWidget::drawScale(QPainter *painter, double minSize)
