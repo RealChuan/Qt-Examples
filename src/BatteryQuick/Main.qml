@@ -4,7 +4,7 @@ import QtQuick.Controls
 import QtQuick.Dialogs
 import QtQuick.Controls.Fusion
 
-Window {
+ApplicationWindow {
     id: root
 
     width: 650
@@ -15,19 +15,17 @@ Window {
     // 颜色对话框
     ColorDialog {
         id: colorDialog
-        title: "Choose color"
+        title: qsTr("Choose color")
     }
 
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 10
-        spacing: 10
 
         // 电池和滑动条布局
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 10
 
             Battery {
                 id: battery
@@ -57,39 +55,12 @@ Window {
                         }
                     }
                 }
-
-                background: Rectangle {
-                    x: slider.leftPadding + slider.availableWidth / 2 - width / 2
-                    y: slider.topPadding
-                    width: 4
-                    height: slider.availableHeight
-                    radius: 2
-                    color: "#21be2b"
-
-                    Rectangle {
-                        width: parent.width
-                        height: slider.visualPosition * parent.height
-                        color: "#bdbebf"
-                        radius: 2
-                    }
-                }
-
-                handle: Rectangle {
-                    x: slider.leftPadding + slider.availableWidth / 2 - width / 2
-                    y: slider.topPadding + slider.visualPosition * (slider.availableHeight - height)
-                    implicitWidth: 26
-                    implicitHeight: 26
-                    radius: 13
-                    color: slider.pressed ? "#f0f0f0" : "#f6f6f6"
-                    border.color: "#bdbebf"
-                }
             }
         }
 
         // 充电和动画控制布局
         RowLayout {
             Layout.fillWidth: true
-            spacing: 20
 
             CheckBox {
                 id: chargingCheckbox
@@ -112,7 +83,6 @@ Window {
         // 颜色选择布局
         RowLayout {
             Layout.fillWidth: true
-            spacing: 5
 
             Button {
                 text: qsTr("Battery level color")
@@ -164,8 +134,6 @@ Window {
         GridLayout {
             Layout.fillWidth: true
             columns: 2
-            rowSpacing: 10
-            columnSpacing: 10
 
             Label {
                 id: alarmLabel
@@ -207,7 +175,6 @@ Window {
         // 快速操作布局
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
 
             Button {
                 text: "+10%"
@@ -234,8 +201,6 @@ Window {
             Layout.fillWidth: true
             text: qsTr("Status: Normal")
             horizontalAlignment: Text.AlignHCenter
-            font.pixelSize: 14
-            color: "black"
         }
     }
 
@@ -251,7 +216,7 @@ Window {
                 statusLabel.font.bold = true;
             } else {
                 statusLabel.text = qsTr("Status: Normal");
-                statusLabel.color = "black";
+                statusLabel.color = "";
                 statusLabel.font.bold = false;
             }
         }

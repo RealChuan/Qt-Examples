@@ -1,5 +1,11 @@
-set(PROJECT_SOURCES main.cpp mainwindow.cpp mainwindow.h bubblewidget.h
-                    bubblewidget.cpp)
+set(PROJECT_SOURCES
+    bubblewidget.h
+    bubblewidget.cpp
+    bubblewrapperwidget.cc
+    bubblewrapperwidget.hpp
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h)
 
 qt_add_executable(BubbleWindow MANUAL_FINALIZATION ${PROJECT_SOURCES})
 target_link_libraries(BubbleWindow PRIVATE Qt::Widgets)

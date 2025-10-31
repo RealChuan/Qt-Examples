@@ -6,11 +6,13 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
     bubblewidget.cpp \
+    bubblewrapperwidget.cc \
     main.cpp \
     mainwindow.cpp
 
 HEADERS += \
     bubblewidget.h \
+    bubblewrapperwidget.hpp \
     mainwindow.h
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
