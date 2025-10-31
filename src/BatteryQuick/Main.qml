@@ -58,18 +58,21 @@ ApplicationWindow {
             }
         }
 
-        // 充电和动画控制布局
-        RowLayout {
+        // 使用GridLayout来组织控件，与C++版本一致
+        GridLayout {
             Layout.fillWidth: true
+            columns: 2
+            rowSpacing: 10
+            columnSpacing: 10
 
+            // 第一行：充电状态和动画控制
             CheckBox {
                 id: chargingCheckbox
                 text: qsTr("Charging state")
                 checked: false
+                Layout.columnSpan: 1
                 onToggled: {
-                    if (checked !== undefined) {
-                        battery.charging = checked;
-                    }
+                    battery.charging = checked;
                 }
             }
 
@@ -77,68 +80,100 @@ ApplicationWindow {
                 id: animationCheckbox
                 text: qsTr("Enable animation")
                 checked: true
+                Layout.columnSpan: 1
             }
-        }
 
-        // 颜色选择布局
-        RowLayout {
-            Layout.fillWidth: true
+            // 第二行：电池颜色选择
+            Label {
+                text: qsTr("Battery color:")
+            }
 
             Button {
-                text: qsTr("Battery level color")
+                id: powerColorButton
                 Layout.fillWidth: true
                 onClicked: {
                     colorDialog.selectedColor = battery.powerColor;
                     colorDialog.accepted.connect(function () {
-                        if (colorDialog.selectedColor !== undefined) {
+                        if (colorDialog.selectedColor) {
                             battery.powerColor = colorDialog.selectedColor;
+                            updateColorButton(powerColorButton, colorDialog.selectedColor);
                         }
                         colorDialog.accepted.disconnect(arguments.callee);
                     });
                     colorDialog.open();
                 }
+
+                background: Rectangle {
+                    color: battery.powerColor
+                    border.color: "gray"
+                    border.width: 1
+                }
+
+                contentItem: Item {} // 隐藏默认文本
+            }
+
+            // 第三行：报警颜色选择
+            Label {
+                text: qsTr("Alarm color:")
             }
 
             Button {
-                text: qsTr("Alarm color")
+                id: alarmColorButton
                 Layout.fillWidth: true
                 onClicked: {
                     colorDialog.selectedColor = battery.alarmColor;
                     colorDialog.accepted.connect(function () {
-                        if (colorDialog.selectedColor !== undefined) {
+                        if (colorDialog.selectedColor) {
                             battery.alarmColor = colorDialog.selectedColor;
+                            updateColorButton(alarmColorButton, colorDialog.selectedColor);
                         }
                         colorDialog.accepted.disconnect(arguments.callee);
                     });
                     colorDialog.open();
                 }
+
+                background: Rectangle {
+                    color: battery.alarmColor
+                    border.color: "gray"
+                    border.width: 1
+                }
+
+                contentItem: Item {} // 隐藏默认文本
+            }
+
+            // 第四行：边框颜色选择
+            Label {
+                text: qsTr("Border color:")
             }
 
             Button {
-                text: qsTr("Border color")
+                id: borderColorButton
                 Layout.fillWidth: true
                 onClicked: {
                     colorDialog.selectedColor = battery.borderColor;
                     colorDialog.accepted.connect(function () {
-                        if (colorDialog.selectedColor !== undefined) {
+                        if (colorDialog.selectedColor) {
                             battery.borderColor = colorDialog.selectedColor;
+                            updateColorButton(borderColorButton, colorDialog.selectedColor);
                         }
                         colorDialog.accepted.disconnect(arguments.callee);
                     });
                     colorDialog.open();
                 }
+
+                background: Rectangle {
+                    color: battery.borderColor
+                    border.color: "gray"
+                    border.width: 1
+                }
+
+                contentItem: Item {} // 隐藏默认文本
             }
-        }
 
-        // 阈值和动画时长布局
-        GridLayout {
-            Layout.fillWidth: true
-            columns: 2
-
+            // 第五行：报警阈值
             Label {
                 id: alarmLabel
                 text: qsTr("Alarm threshold: 20%")
-                Layout.fillWidth: true
             }
 
             Slider {
@@ -153,10 +188,10 @@ ApplicationWindow {
                 }
             }
 
+            // 第六行：动画时长
             Label {
                 id: durationLabel
                 text: qsTr("Animation duration: 500ms")
-                Layout.fillWidth: true
             }
 
             Slider {
@@ -201,7 +236,13 @@ ApplicationWindow {
             Layout.fillWidth: true
             text: qsTr("Status: Normal")
             horizontalAlignment: Text.AlignHCenter
+            padding: 10
         }
+    }
+
+    // 更新颜色按钮预览的函数
+    function updateColorButton(button, color) {
+        // 颜色已经在background中自动更新，因为绑定了电池的颜色属性
     }
 
     // 连接电池信号
@@ -222,11 +263,8 @@ ApplicationWindow {
         }
 
         // 充电状态变化
-        function onChargingChanged(charging) {
-            if (charging !== undefined) {
-                chargingCheckbox.checked = charging;
-            }
-            if (charging === true) {
+        function onChargingChanged() {
+            if (battery.charging === true) {
                 statusLabel.text = qsTr("Status: Charging...");
                 statusLabel.color = "blue";
             } else {
@@ -237,26 +275,20 @@ ApplicationWindow {
         // 动画开始
         function onAnimationStarted(oldValue, newValue) {
             statusLabel.text = qsTr("Animation: %1% → %2%").arg(oldValue).arg(newValue);
+            statusLabel.color = "green";
         }
 
         // 动画完成
         function onAnimationFinished(value) {
             statusLabel.text = qsTr("The animation is completed: %1%").arg(value);
+            statusLabel.color = "";
         }
+    }
 
-        // 值增加
-        function onValueIncreased(newValue) {
-            console.log("Value increased to:", newValue);
-        }
-
-        // 值减少
-        function onValueDecreased(newValue) {
-            console.log("Value decreased to:", newValue);
-        }
-
-        // 值重置
-        function onValueReset() {
-            console.log("Value reset");
-        }
+    // 初始化
+    Component.onCompleted: {
+        // 设置初始值
+        battery.value = 75;
+        // 初始化颜色按钮预览（通过绑定自动处理）
     }
 }

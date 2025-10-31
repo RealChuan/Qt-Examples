@@ -25,10 +25,15 @@ MainWindow::MainWindow(QWidget *parent)
     alarmSlider->setValue(20);
     auto *alarmLabel = new QLabel(tr("Alarm threshold: 20%"), this);
 
-    // 创建颜色选择控件
-    auto *powerColorButton = new QPushButton(tr("Battery level color"), this);
-    auto *alarmColorButton = new QPushButton(tr("Alarm color"), this);
-    auto *borderColorButton = new QPushButton(tr("Border color"), this);
+    // 创建颜色选择控件 - 使用颜色预览按钮
+    auto *powerColorLabel = new QLabel(tr("Battery color:"), this);
+    auto *powerColorButton = new QPushButton(this);
+
+    auto *alarmColorLabel = new QLabel(tr("Alarm color:"), this);
+    auto *alarmColorButton = new QPushButton(this);
+
+    auto *borderColorLabel = new QLabel(tr("Border color:"), this);
+    auto *borderColorButton = new QPushButton(this);
 
     // 创建动画控制
     auto *animationCheckbox = new QCheckBox(tr("Enable animation"), this);
@@ -57,22 +62,19 @@ MainWindow::MainWindow(QWidget *parent)
     batteryLayout->addWidget(slider);
 
     // 充电和动画控制布局
-    auto *controlLayout = new QHBoxLayout();
-    controlLayout->addWidget(chargingCheckbox);
-    controlLayout->addWidget(animationCheckbox);
-
-    // 颜色选择布局
-    auto *colorLayout = new QHBoxLayout();
-    colorLayout->addWidget(powerColorButton);
-    colorLayout->addWidget(alarmColorButton);
-    colorLayout->addWidget(borderColorButton);
-
-    // 阈值和动画时长布局
-    auto *settingsLayout = new QGridLayout();
-    settingsLayout->addWidget(alarmLabel, 0, 0);
-    settingsLayout->addWidget(alarmSlider, 0, 1);
-    settingsLayout->addWidget(durationLabel, 1, 0);
-    settingsLayout->addWidget(animationDurationSlider, 1, 1);
+    auto *gridLayout = new QGridLayout;
+    gridLayout->addWidget(chargingCheckbox, 0, 0);
+    gridLayout->addWidget(animationCheckbox, 0, 1);
+    gridLayout->addWidget(powerColorLabel, 1, 0);
+    gridLayout->addWidget(powerColorButton, 1, 1);
+    gridLayout->addWidget(alarmColorLabel, 2, 0);
+    gridLayout->addWidget(alarmColorButton, 2, 1);
+    gridLayout->addWidget(borderColorLabel, 3, 0);
+    gridLayout->addWidget(borderColorButton, 3, 1);
+    gridLayout->addWidget(alarmLabel, 4, 0);
+    gridLayout->addWidget(alarmSlider, 4, 1);
+    gridLayout->addWidget(durationLabel, 5, 0);
+    gridLayout->addWidget(animationDurationSlider, 5, 1);
 
     // 快速操作布局
     auto *quickActionsLayout = new QHBoxLayout();
@@ -82,9 +84,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 主布局组装
     mainLayout->addLayout(batteryLayout);
-    mainLayout->addLayout(controlLayout);
-    mainLayout->addLayout(colorLayout);
-    mainLayout->addLayout(settingsLayout);
+    mainLayout->addLayout(gridLayout);
     mainLayout->addLayout(quickActionsLayout);
     mainLayout->addWidget(statusLabel);
 
@@ -121,33 +121,54 @@ MainWindow::MainWindow(QWidget *parent)
                 durationLabel->setText(tr("Animation duration: %1ms").arg(value));
             });
 
-    // 颜色选择
-    connect(powerColorButton, &QPushButton::clicked, this, [this, battery]() {
-        QColor color = QColorDialog::getColor(battery->powerColor(),
-                                              this,
-                                              tr("Select the battery color"));
-        if (color.isValid()) {
-            battery->setPowerColor(color);
-        }
-    });
+    // 颜色选择 - 更新按钮颜色预览
+    auto updateColorButton = [](QPushButton *button, const QColor &color) {
+        button->setStyleSheet(
+            QString("background-color: %1; border: 1px solid gray;").arg(color.name()));
+    };
 
-    connect(alarmColorButton, &QPushButton::clicked, this, [this, battery]() {
-        QColor color = QColorDialog::getColor(battery->alarmColor(),
-                                              this,
-                                              tr("Select the alarm color"));
-        if (color.isValid()) {
-            battery->setAlarmColor(color);
-        }
-    });
+    updateColorButton(powerColorButton, battery->powerColor());
+    updateColorButton(alarmColorButton, battery->alarmColor());
+    updateColorButton(borderColorButton, battery->borderColor());
 
-    connect(borderColorButton, &QPushButton::clicked, this, [this, battery]() {
-        QColor color = QColorDialog::getColor(battery->borderColor(),
-                                              this,
-                                              tr("Select the border color"));
-        if (color.isValid()) {
-            battery->setBorderColor(color);
-        }
-    });
+    connect(powerColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, battery, powerColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(battery->powerColor(),
+                                                      this,
+                                                      tr("Select the battery color"));
+                if (color.isValid()) {
+                    battery->setPowerColor(color);
+                    updateColorButton(powerColorButton, color);
+                }
+            });
+
+    connect(alarmColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, battery, alarmColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(battery->alarmColor(),
+                                                      this,
+                                                      tr("Select the alarm color"));
+                if (color.isValid()) {
+                    battery->setAlarmColor(color);
+                    updateColorButton(alarmColorButton, color);
+                }
+            });
+
+    connect(borderColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, battery, borderColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(battery->borderColor(),
+                                                      this,
+                                                      tr("Select the border color"));
+                if (color.isValid()) {
+                    battery->setBorderColor(color);
+                    updateColorButton(borderColorButton, color);
+                }
+            });
 
     // 快速操作
     connect(increaseButton, &QPushButton::clicked, battery, [battery]() {

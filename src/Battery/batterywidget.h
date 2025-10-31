@@ -17,7 +17,6 @@ public:
     explicit BatteryWidget(QWidget *parent = nullptr);
     ~BatteryWidget() override;
 
-    [[nodiscard]] auto sizeHint() const -> QSize override;
     [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
     // 颜色设置

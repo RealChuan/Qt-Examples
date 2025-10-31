@@ -1,8 +1,7 @@
 #include "clockwidget.h"
 
-#include <QDebug>
 #include <QPainter>
-#include <QPropertyAnimation>
+#include <QPainterPath>
 #include <QTime>
 #include <QTimer>
 #include <QtMath>
@@ -10,46 +9,78 @@
 class ClockWidget::ClockWidgetPrivate
 {
 public:
-    explicit ClockWidgetPrivate(QWidget *parent)
-        : q_ptr(parent)
-    {
-        QTime time = QTime::currentTime();
-        hour = time.hour();
-        minute = time.minute();
-        second = time.minute();
-        microSecond = time.msec();
-    }
+    explicit ClockWidgetPrivate(ClockWidget *q)
+        : q_ptr(q)
+    {}
 
-    QWidget *q_ptr;
+    ClockWidget *q_ptr;
 
-    QColor borderColor = QColor(254, 254, 254);
-    QColor backgroundColor = QColor(80, 80, 80);
-    QColor foregroundColor = QColor(254, 254, 254);
-    QColor hourColor = QColor(160, 160, 160);
-    QColor minuteColor = QColor(174, 174, 174);
-    QColor secondColor = QColor(159, 159, 159);
-    int hour = 0;
-    int minute = 0;
-    int second = 0;
-    int microSecond = 0;
-    QTimer timer;
+    // 可配置属性
+    QColor borderColor = QColor(80, 80, 80);
+    QColor backgroundColor = QColor(50, 50, 50);
+    QColor foregroundColor = QColor(220, 220, 220);
+    QColor hourColor = QColor(240, 240, 240);
+    QColor minuteColor = QColor(220, 220, 220);
+    QColor secondColor = QColor(255, 80, 80);
+    QColor textColor = QColor(240, 240, 240);
+
+    // 动画设置
+    bool smoothAnimation = true;
+    int animationDuration = 200;
+    int updateInterval = 50; // 平滑动画更新间隔
+
+    // 显示设置
+    bool showSeconds = true;
+
+    // 时间数据
+    QTime currentTime;
+    QTimer *updateTimer = nullptr;
+
+    // 计算属性
+    double centerX = 0;
+    double centerY = 0;
+    double radius = 0;
+
+    // 常量定义
+    static constexpr double BORDER_WIDTH_RATIO = 1.0 / 20.0;
+    static constexpr double HOUR_HAND_LENGTH_RATIO = 0.5;
+    static constexpr double MINUTE_HAND_LENGTH_RATIO = 0.7;
+    static constexpr double SECOND_HAND_LENGTH_RATIO = 0.8;
+    static constexpr double HAND_WIDTH_RATIO = 1.0 / 100.0;
+    static constexpr double CENTER_DOT_RADIUS_RATIO = 1.0 / 40.0;
+    static constexpr double SCALE_LENGTH_RATIO = 1.0 / 15.0;
+    static constexpr double NUMBER_RADIUS_RATIO = 0.75;
 };
 
 ClockWidget::ClockWidget(QWidget *parent)
     : QWidget(parent)
     , d_ptr(new ClockWidgetPrivate(this))
 {
+    d_ptr->currentTime = QTime::currentTime();
+
+    // 创建更新定时器
+    d_ptr->updateTimer = new QTimer(this);
+    connect(d_ptr->updateTimer, &QTimer::timeout, this, &ClockWidget::onSmoothAnimationTimeout);
+
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    connect(&d_ptr->timer, &QTimer::timeout, this, &ClockWidget::setOffset);
-    d_ptr->timer.start(1000);
+    startSmoothAnimation();
 }
 
 ClockWidget::~ClockWidget() = default;
 
+auto ClockWidget::minimumSizeHint() const -> QSize
+{
+    return {150, 150};
+}
+
+// Border color
 void ClockWidget::setBorderColor(const QColor &color)
 {
-    d_ptr->borderColor = color;
-    update();
+    if (d_ptr->borderColor != color) {
+        d_ptr->borderColor = color;
+        update();
+        emit borderColorChanged(color);
+    }
 }
 
 auto ClockWidget::borderColor() const -> QColor
@@ -57,10 +88,14 @@ auto ClockWidget::borderColor() const -> QColor
     return d_ptr->borderColor;
 }
 
+// Background color
 void ClockWidget::setBackgroundColor(const QColor &color)
 {
-    d_ptr->backgroundColor = color;
-    update();
+    if (d_ptr->backgroundColor != color) {
+        d_ptr->backgroundColor = color;
+        update();
+        emit backgroundColorChanged(color);
+    }
 }
 
 auto ClockWidget::backgroundColor() const -> QColor
@@ -68,10 +103,14 @@ auto ClockWidget::backgroundColor() const -> QColor
     return d_ptr->backgroundColor;
 }
 
+// Foreground color
 void ClockWidget::setForegroundColor(const QColor &color)
 {
-    d_ptr->foregroundColor = color;
-    update();
+    if (d_ptr->foregroundColor != color) {
+        d_ptr->foregroundColor = color;
+        update();
+        emit foregroundColorChanged(color);
+    }
 }
 
 auto ClockWidget::foregroundColor() const -> QColor
@@ -79,10 +118,14 @@ auto ClockWidget::foregroundColor() const -> QColor
     return d_ptr->foregroundColor;
 }
 
+// Hour color
 void ClockWidget::setHourColor(const QColor &color)
 {
-    d_ptr->hourColor = color;
-    update();
+    if (d_ptr->hourColor != color) {
+        d_ptr->hourColor = color;
+        update();
+        emit hourColorChanged(color);
+    }
 }
 
 auto ClockWidget::hourColor() const -> QColor
@@ -90,10 +133,14 @@ auto ClockWidget::hourColor() const -> QColor
     return d_ptr->hourColor;
 }
 
+// Minute color
 void ClockWidget::setMinuteColor(const QColor &color)
 {
-    d_ptr->minuteColor = color;
-    update();
+    if (d_ptr->minuteColor != color) {
+        d_ptr->minuteColor = color;
+        update();
+        emit minuteColorChanged(color);
+    }
 }
 
 auto ClockWidget::minuteColor() const -> QColor
@@ -101,10 +148,14 @@ auto ClockWidget::minuteColor() const -> QColor
     return d_ptr->minuteColor;
 }
 
+// Second color
 void ClockWidget::setSecondColor(const QColor &color)
 {
-    d_ptr->secondColor = color;
-    update();
+    if (d_ptr->secondColor != color) {
+        d_ptr->secondColor = color;
+        update();
+        emit secondColorChanged(color);
+    }
 }
 
 auto ClockWidget::secondColor() const -> QColor
@@ -112,178 +163,322 @@ auto ClockWidget::secondColor() const -> QColor
     return d_ptr->secondColor;
 }
 
-auto ClockWidget::sizeHint() const -> QSize
+// Text color
+void ClockWidget::setTextColor(const QColor &color)
 {
-    return {500, 500};
+    if (d_ptr->textColor != color) {
+        d_ptr->textColor = color;
+        update();
+        emit textColorChanged(color);
+    }
 }
 
-auto ClockWidget::minimumSizeHint() const -> QSize
+auto ClockWidget::textColor() const -> QColor
 {
-    return {300, 300};
+    return d_ptr->textColor;
 }
 
+// Smooth animation
+void ClockWidget::setSmoothAnimation(bool enabled)
+{
+    if (d_ptr->smoothAnimation != enabled) {
+        d_ptr->smoothAnimation = enabled;
+
+        if (enabled) {
+            startSmoothAnimation();
+        } else {
+            stopSmoothAnimation();
+        }
+
+        update();
+        emit smoothAnimationChanged(enabled);
+    }
+}
+
+bool ClockWidget::smoothAnimation() const
+{
+    return d_ptr->smoothAnimation;
+}
+
+// Animation duration
+void ClockWidget::setAnimationDuration(int duration)
+{
+    if (duration > 0 && d_ptr->animationDuration != duration) {
+        d_ptr->animationDuration = duration;
+        emit animationDurationChanged(duration);
+    }
+}
+
+auto ClockWidget::animationDuration() const -> int
+{
+    return d_ptr->animationDuration;
+}
+
+// Show seconds
+void ClockWidget::setShowSeconds(bool show)
+{
+    if (d_ptr->showSeconds != show) {
+        d_ptr->showSeconds = show;
+        update();
+        emit showSecondsChanged(show);
+    }
+}
+
+bool ClockWidget::showSeconds() const
+{
+    return d_ptr->showSeconds;
+}
+
+// Public slots
+void ClockWidget::updateTime()
+{
+    d_ptr->currentTime = QTime::currentTime();
+    update();
+    emit timeUpdated(d_ptr->currentTime);
+}
+
+void ClockWidget::startSmoothAnimation()
+{
+    if (d_ptr->updateTimer) {
+        d_ptr->updateTimer->start(d_ptr->updateInterval);
+    }
+}
+
+void ClockWidget::stopSmoothAnimation()
+{
+    if (d_ptr->updateTimer) {
+        d_ptr->updateTimer->stop();
+    }
+}
+
+void ClockWidget::toggleSmoothAnimation()
+{
+    setSmoothAnimation(!d_ptr->smoothAnimation);
+}
+
+// Painting
 void ClockWidget::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
-    QPainter painter(this);
-    painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
-    painter.translate(width() / 2, height() / 2);
-    double linew = 2 * painter.pen().widthF() / painter.transform().m11();
 
-    // 外边框
+    QPainter painter(this);
+    painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing
+                           | QPainter::SmoothPixmapTransform);
+
+    // 更新几何计算
+    updateGeometry();
+
+    // 绘制顺序
     drawBorder(&painter);
-    // 背景
     drawBackground(&painter);
-    // 刻度线
-    drawScale(&painter, linew);
-    // 刻度值
-    drawScaleNum(&painter);
-    // 时钟指针
-    drawHour(&painter);
-    // 分钟指针
-    drawMinute(&painter);
-    // 秒钟指针
-    drawSecond(&painter);
-    // 中心盖板
-    drawDot(&painter);
+    drawScale(&painter);
+    drawScaleNumbers(&painter);
+    drawHourHand(&painter);
+    drawMinuteHand(&painter);
+
+    if (d_ptr->showSeconds) {
+        drawSecondHand(&painter);
+    }
+
+    drawCenterDot(&painter);
 }
 
-void ClockWidget::setOffset()
+void ClockWidget::resizeEvent(QResizeEvent *event)
 {
-    QTime time = QTime::currentTime();
-    d_ptr->hour = time.hour();
-    d_ptr->minute = time.minute();
-    d_ptr->second = time.second();
-    d_ptr->microSecond = time.msec();
-    update();
+    QWidget::resizeEvent(event);
+    updateGeometry();
+}
+
+// Private slots
+void ClockWidget::onSmoothAnimationTimeout()
+{
+    updateTime();
+}
+
+// Private methods
+void ClockWidget::updateGeometry()
+{
+    d_ptr->centerX = width() / 2.0;
+    d_ptr->centerY = height() / 2.0;
+    d_ptr->radius = qMin(d_ptr->centerX, d_ptr->centerY) * 0.9;
 }
 
 void ClockWidget::drawBorder(QPainter *painter)
 {
-    double min = qMin(width(), height());
-    double radius = min / 2.0 - min / 10.0;
-    painter->setPen(Qt::NoPen);
-    painter->setBrush(d_ptr->borderColor);
-    painter->drawEllipse(-radius, -radius, radius * 2, radius * 2);
+    double borderWidth = d_ptr->radius * ClockWidgetPrivate::BORDER_WIDTH_RATIO;
+
+    painter->save();
+    painter->setPen(QPen(d_ptr->borderColor, borderWidth));
+    painter->setBrush(Qt::NoBrush);
+    painter->drawEllipse(QPointF(d_ptr->centerX, d_ptr->centerY),
+                         d_ptr->radius - borderWidth / 2,
+                         d_ptr->radius - borderWidth / 2);
+    painter->restore();
 }
 
 void ClockWidget::drawBackground(QPainter *painter)
 {
-    double min = qMin(width(), height());
-    double radius = min / 2.0 - min / 9.0;
     painter->save();
     painter->setPen(Qt::NoPen);
     painter->setBrush(d_ptr->backgroundColor);
-    painter->drawEllipse(-radius, -radius, radius * 2, radius * 2);
+    painter->drawEllipse(QPointF(d_ptr->centerX, d_ptr->centerY), d_ptr->radius, d_ptr->radius);
     painter->restore();
 }
 
-void ClockWidget::drawScale(QPainter *painter, const double linew)
+void ClockWidget::drawScale(QPainter *painter)
 {
     painter->save();
-    double min = qMin(width(), height());
-    double radius = min / 2 - min / 8;
-    QPen pen(d_ptr->foregroundColor);
-    pen.setCapStyle(Qt::RoundCap);
+    painter->translate(d_ptr->centerX, d_ptr->centerY);
 
-    for (int i = 0; i <= 60; i++) {
+    double scaleLength = d_ptr->radius * ClockWidgetPrivate::SCALE_LENGTH_RATIO;
+    QPen scalePen(d_ptr->foregroundColor);
+
+    for (int i = 0; i < 60; ++i) {
         if (i % 5 == 0) {
-            pen.setWidthF(linew * 1.5);
-            painter->setPen(pen);
-            painter->drawLine(0, radius - 10, 0, radius);
+            // 小时刻度
+            scalePen.setWidthF(qMax(1.0, d_ptr->radius * 0.02));
+            painter->setPen(scalePen);
+            painter->drawLine(0,
+                              -d_ptr->radius + scaleLength * 0.5,
+                              0,
+                              -d_ptr->radius + scaleLength);
         } else {
-            pen.setWidthF(linew * 0.5);
-            painter->setPen(pen);
-            painter->drawLine(0, radius - 5, 0, radius);
+            // 分钟刻度
+            scalePen.setWidthF(qMax(1.0, d_ptr->radius * 0.01));
+            painter->setPen(scalePen);
+            painter->drawLine(0,
+                              -d_ptr->radius + scaleLength * 0.7,
+                              0,
+                              -d_ptr->radius + scaleLength);
         }
-        painter->rotate(6);
+        painter->rotate(6.0);
     }
+
     painter->restore();
 }
 
-void ClockWidget::drawScaleNum(QPainter *painter)
+void ClockWidget::drawScaleNumbers(QPainter *painter)
 {
-    double min = qMin(width(), height());
-    double radius = min / 2.0 - min / 4.8;
-    painter->setPen(d_ptr->foregroundColor);
-    QFont font("Microsoft YaHei", min / 20);
+    painter->save();
+    painter->setPen(d_ptr->textColor);
+
+    QFont font = this->font();
+    font.setPixelSize(qMax(10, int(d_ptr->radius * 0.1)));
+    font.setBold(true);
     painter->setFont(font);
 
-    double startRad = 60 * (M_PI / 180);
-    double deltaRad = 30 * (M_PI / 180);
+    double numberRadius = d_ptr->radius * ClockWidgetPrivate::NUMBER_RADIUS_RATIO;
 
-    QFontMetrics fontMetrics(font);
-    for (int i = 0; i < 12; i++) {
-        double sina = qSin(startRad - i * deltaRad);
-        double cosa = qCos(startRad - i * deltaRad);
-        QString strValue = QString::number(i + 1);
+    for (int i = 1; i <= 12; ++i) {
+        double angle = (i - 3) * 30.0 * M_PI / 180.0;
+        double x = d_ptr->centerX + numberRadius * qCos(angle);
+        double y = d_ptr->centerY + numberRadius * qSin(angle);
 
-        double textWidth = fontMetrics.horizontalAdvance(strValue);
-        double textHeight = fontMetrics.height();
-        int x = radius * cosa - textWidth / 2;
-        int y = -radius * sina + textHeight / 4;
-        painter->drawText(x, y, strValue);
+        QString number = QString::number(i);
+        QRectF textRect(x - d_ptr->radius * 0.1,
+                        y - d_ptr->radius * 0.05,
+                        d_ptr->radius * 0.2,
+                        d_ptr->radius * 0.1);
+        painter->drawText(textRect, Qt::AlignCenter, number);
     }
-}
 
-void ClockWidget::drawHour(QPainter *painter)
-{
-    painter->save();
-    QPen pen;
-    pen.setCapStyle(Qt::RoundCap);
-    painter->setPen(d_ptr->hourColor);
-    painter->setBrush(d_ptr->hourColor);
-
-    double min = qMin(width(), height()) / 6.0;
-    QPolygonF pts;
-    pts << QPointF(-3, 8) << QPointF(3, 8) << QPointF(2, -min) << QPointF(-2, -min);
-    painter->rotate(30.0 * ((d_ptr->hour + d_ptr->minute / 60.0)));
-    painter->drawConvexPolygon(pts);
     painter->restore();
 }
 
-void ClockWidget::drawMinute(QPainter *painter)
+void ClockWidget::drawHourHand(QPainter *painter)
 {
     painter->save();
-    QPen pen;
-    pen.setCapStyle(Qt::RoundCap);
-    painter->setPen(d_ptr->minuteColor);
-    painter->setBrush(d_ptr->minuteColor);
+    painter->translate(d_ptr->centerX, d_ptr->centerY);
 
-    double min = qMin(width(), height()) / 5.0;
-    QPolygonF pts;
-    pts << QPointF(-2, 8) << QPointF(2, 8) << QPointF(1, -min) << QPointF(-1, -min);
-    painter->rotate(6.0 * (d_ptr->minute + d_ptr->second / 60.0));
-    painter->drawConvexPolygon(pts);
-    painter->restore();
-}
+    double hourAngle = 30.0 * (d_ptr->currentTime.hour() + d_ptr->currentTime.minute() / 60.0);
+    painter->rotate(hourAngle);
 
-void ClockWidget::drawSecond(QPainter *painter)
-{
-    painter->save();
-    QPen pen;
-    pen.setCapStyle(Qt::RoundCap);
-    painter->setPen(d_ptr->secondColor);
-    painter->setBrush(d_ptr->secondColor);
+    double handLength = d_ptr->radius * ClockWidgetPrivate::HOUR_HAND_LENGTH_RATIO;
+    double handWidth = d_ptr->radius * ClockWidgetPrivate::HAND_WIDTH_RATIO;
 
-    double min = qMin(width(), height()) / 4.0;
-    QPolygonF pts;
-    pts << QPointF(-1, 10) << QPointF(1, 10) << QPointF(0, -min);
-    painter->rotate(6.0 * (d_ptr->second + d_ptr->microSecond / 1000.0));
-    painter->drawConvexPolygon(pts);
-    painter->restore();
-}
+    QPainterPath path;
+    path.moveTo(0, handLength * 0.1);
+    path.lineTo(-handWidth, 0);
+    path.lineTo(0, -handLength);
+    path.lineTo(handWidth, 0);
+    path.closeSubpath();
 
-void ClockWidget::drawDot(QPainter *painter)
-{
-    painter->save();
-    QConicalGradient coneGradient(0, 0, -90.0);
-    coneGradient.setColorAt(0.0, d_ptr->backgroundColor);
-    coneGradient.setColorAt(0.5, d_ptr->foregroundColor);
-    coneGradient.setColorAt(1.0, d_ptr->backgroundColor);
-    painter->setOpacity(0.9);
     painter->setPen(Qt::NoPen);
-    painter->setBrush(coneGradient);
-    painter->drawEllipse(-5, -5, 10, 10);
+    painter->setBrush(d_ptr->hourColor);
+    painter->drawPath(path);
+
+    painter->restore();
+}
+
+void ClockWidget::drawMinuteHand(QPainter *painter)
+{
+    painter->save();
+    painter->translate(d_ptr->centerX, d_ptr->centerY);
+
+    double minuteAngle = 6.0 * (d_ptr->currentTime.minute() + d_ptr->currentTime.second() / 60.0);
+    painter->rotate(minuteAngle);
+
+    double handLength = d_ptr->radius * ClockWidgetPrivate::MINUTE_HAND_LENGTH_RATIO;
+    double handWidth = d_ptr->radius * ClockWidgetPrivate::HAND_WIDTH_RATIO * 0.8;
+
+    QPainterPath path;
+    path.moveTo(0, handLength * 0.1);
+    path.lineTo(-handWidth, 0);
+    path.lineTo(0, -handLength);
+    path.lineTo(handWidth, 0);
+    path.closeSubpath();
+
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(d_ptr->minuteColor);
+    painter->drawPath(path);
+
+    painter->restore();
+}
+
+void ClockWidget::drawSecondHand(QPainter *painter)
+{
+    if (!d_ptr->showSeconds)
+        return;
+
+    painter->save();
+    painter->translate(d_ptr->centerX, d_ptr->centerY);
+
+    double secondAngle = 6.0
+                         * (d_ptr->currentTime.second()
+                            + (d_ptr->smoothAnimation ? d_ptr->currentTime.msec() / 1000.0 : 0));
+    painter->rotate(secondAngle);
+
+    double handLength = d_ptr->radius * ClockWidgetPrivate::SECOND_HAND_LENGTH_RATIO;
+    double handWidth = d_ptr->radius * ClockWidgetPrivate::HAND_WIDTH_RATIO * 0.4;
+
+    QPainterPath path;
+    path.moveTo(0, handLength * 0.2);
+    path.lineTo(-handWidth, 0);
+    path.lineTo(0, -handLength);
+    path.lineTo(handWidth, 0);
+    path.closeSubpath();
+
+    painter->setPen(Qt::NoPen);
+    painter->setBrush(d_ptr->secondColor);
+    painter->drawPath(path);
+
+    painter->restore();
+}
+
+void ClockWidget::drawCenterDot(QPainter *painter)
+{
+    double dotRadius = d_ptr->radius * ClockWidgetPrivate::CENTER_DOT_RADIUS_RATIO;
+
+    painter->save();
+    painter->setPen(Qt::NoPen);
+
+    // 中心圆点渐变
+    QRadialGradient gradient(d_ptr->centerX, d_ptr->centerY, dotRadius);
+    gradient.setColorAt(0, d_ptr->foregroundColor);
+    gradient.setColorAt(1, d_ptr->borderColor);
+
+    painter->setBrush(gradient);
+    painter->drawEllipse(QPointF(d_ptr->centerX, d_ptr->centerY), dotRadius, dotRadius);
+
     painter->restore();
 }
