@@ -220,39 +220,33 @@ MainWindow::MainWindow(QWidget *parent)
         }
     };
 
-    connect(penColorButton,
-            &QPushButton::clicked,
-            [this, bubble, penColorLabel, createColorDialog]() {
-                createColorDialog(
-                    tr("Select Border Color"),
-                    bubble->pen().color(),
-                    [bubble](const QColor &color) {
-                        QPen pen = bubble->pen();
-                        pen.setColor(color);
-                        bubble->setPen(pen);
-                    },
-                    penColorLabel);
-            });
+    connect(penColorButton, &QPushButton::clicked, [bubble, penColorLabel, createColorDialog]() {
+        createColorDialog(
+            tr("Select Border Color"),
+            bubble->pen().color(),
+            [bubble](const QColor &color) {
+                QPen pen = bubble->pen();
+                pen.setColor(color);
+                bubble->setPen(pen);
+            },
+            penColorLabel);
+    });
 
-    connect(brushColorButton,
-            &QPushButton::clicked,
-            [this, bubble, brushColorLabel, createColorDialog]() {
-                createColorDialog(
-                    tr("Select Background Color"),
-                    bubble->brush().color(),
-                    [bubble](const QColor &color) { bubble->setBrush(QBrush(color)); },
-                    brushColorLabel);
-            });
+    connect(brushColorButton, &QPushButton::clicked, [bubble, brushColorLabel, createColorDialog]() {
+        createColorDialog(
+            tr("Select Background Color"),
+            bubble->brush().color(),
+            [bubble](const QColor &color) { bubble->setBrush(QBrush(color)); },
+            brushColorLabel);
+    });
 
-    connect(textColorButton,
-            &QPushButton::clicked,
-            [this, bubble, textColorLabel, createColorDialog]() {
-                createColorDialog(
-                    tr("Select Text Color"),
-                    bubble->textColor(),
-                    [bubble](const QColor &color) { bubble->setTextColor(color); },
-                    textColorLabel);
-            });
+    connect(textColorButton, &QPushButton::clicked, [bubble, textColorLabel, createColorDialog]() {
+        createColorDialog(
+            tr("Select Text Color"),
+            bubble->textColor(),
+            [bubble](const QColor &color) { bubble->setTextColor(color); },
+            textColorLabel);
+    });
 
     // 动画控制连接
     connect(animationDurationSlider,

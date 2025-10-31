@@ -1,59 +1,68 @@
-#ifndef DASHBOARDWIDGET_H
-#define DASHBOARDWIDGET_H
+#pragma once
 
 #include <QWidget>
 
 class DashBoardWidget : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(double value READ value WRITE setValue)
-    Q_PROPERTY(double min READ min WRITE setMin)
-    Q_PROPERTY(double max READ max WRITE setmax)
+    Q_PROPERTY(double value READ value WRITE setValue NOTIFY valueChanged)
+    Q_PROPERTY(double minValue READ minValue WRITE setMinValue)
+    Q_PROPERTY(double maxValue READ maxValue WRITE setMaxValue)
     Q_PROPERTY(double startAngle READ startAngle WRITE setStartAngle)
     Q_PROPERTY(double endAngle READ endAngle WRITE setEndAngle)
     Q_PROPERTY(int scaleMajor READ scaleMajor WRITE setScaleMajor)
     Q_PROPERTY(int scaleMinor READ scaleMinor WRITE setScaleMinor)
     Q_PROPERTY(QString unit READ unit WRITE setUnit)
-    Q_PROPERTY(QString text READ text WRITE setText)
+    Q_PROPERTY(QString title READ title WRITE setTitle)
     Q_PROPERTY(QColor arcColor READ arcColor WRITE setArcColor)
     Q_PROPERTY(QColor scaleColor READ scaleColor WRITE setScaleColor)
     Q_PROPERTY(QColor pointerColor READ pointerColor WRITE setPointerColor)
     Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
     Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
+    Q_PROPERTY(QColor valueColor READ valueColor WRITE setValueColor)
+    Q_PROPERTY(QColor titleColor READ titleColor WRITE setTitleColor)
+    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration)
+    Q_PROPERTY(bool animationEnabled READ isAnimationEnabled WRITE setAnimationEnabled)
+
 public:
     explicit DashBoardWidget(QWidget *parent = nullptr);
     ~DashBoardWidget() override;
 
-    [[nodiscard]] auto sizeHint() const -> QSize override;
     [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
+    // 数值设置
+    void setValue(double value);
+    void setValueAnimated(double value);
     [[nodiscard]] auto value() const -> double;
-    void setValue(const double value);
 
-    void setMin(const double min);
-    [[nodiscard]] auto min() const -> double;
+    void setMinValue(double min);
+    [[nodiscard]] auto minValue() const -> double;
 
-    void setmax(const double max);
-    [[nodiscard]] auto max() const -> double;
+    void setMaxValue(double max);
+    [[nodiscard]] auto maxValue() const -> double;
 
-    void setStartAngle(const double startAngle);
+    // 角度设置
+    void setStartAngle(double startAngle);
     [[nodiscard]] auto startAngle() const -> double;
 
-    void setEndAngle(const double endAngle);
+    void setEndAngle(double endAngle);
     [[nodiscard]] auto endAngle() const -> double;
 
-    void setScaleMajor(const int scale);
+    // 刻度设置
+    void setScaleMajor(int scale);
     [[nodiscard]] auto scaleMajor() const -> int;
 
-    void setScaleMinor(const int scale);
+    void setScaleMinor(int scale);
     [[nodiscard]] auto scaleMinor() const -> int;
 
+    // 文本设置
     void setUnit(const QString &unit);
     [[nodiscard]] auto unit() const -> QString;
 
-    void setText(const QString &text);
-    [[nodiscard]] auto text() const -> QString;
+    void setTitle(const QString &title);
+    [[nodiscard]] auto title() const -> QString;
 
+    // 颜色设置
     void setArcColor(const QColor &color);
     [[nodiscard]] auto arcColor() const -> QColor;
 
@@ -69,24 +78,51 @@ public:
     void setBackgroundColor(const QColor &color);
     [[nodiscard]] auto backgroundColor() const -> QColor;
 
-signals:
-    void valueChanged(const double value);
+    void setValueColor(const QColor &color);
+    [[nodiscard]] auto valueColor() const -> QColor;
 
-private slots:
-    void onStartAnimation(const double value);
+    void setTitleColor(const QColor &color);
+    [[nodiscard]] auto titleColor() const -> QColor;
+
+    // 动画设置
+    void setAnimationDuration(int duration);
+    [[nodiscard]] auto animationDuration() const -> int;
+
+    void setAnimationEnabled(bool enabled);
+    [[nodiscard]] bool isAnimationEnabled() const;
+
+    bool isAnimating() const;
+
+public slots:
+    void increaseValue(double increment = 1.0);
+    void decreaseValue(double decrement = 1.0);
+    void reset();
+
+signals:
+    void valueChanged(double value);
+    void valueIncreased(double newValue);
+    void valueDecreased(double newValue);
+    void valueReset();
+    void animationStarted(double oldValue, double newValue);
+    void animationFinished(double value);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
 
-private:
-    void drawArc(QPainter *painter);
-    void drawScale(QPainter *painter);
-    void drawScaleNum(QPainter *painter);
-    void drawPointer(QPainter *painter);
-    void drawValue(QPainter *painter);
+private slots:
+    void onAnimationFinished();
 
-    struct DashBoardWidgetPrivate;
+private:
+    void setupFont(QPainter *painter, double minSize, double ratio);
+    QRectF getTextRect(double minSize, double verticalRatio, double heightRatio) const;
+    void drawArc(QPainter *painter, double minSize);
+    void drawScale(QPainter *painter, double minSize);
+    void drawScaleNumbers(QPainter *painter, double minSize);
+    void drawPointer(QPainter *painter, double minSize);
+    void drawValue(QPainter *painter, double minSize);
+    void drawTitle(QPainter *painter, double minSize);
+    void startAnimation(double targetValue);
+
+    class DashBoardWidgetPrivate;
     QScopedPointer<DashBoardWidgetPrivate> d_ptr;
 };
-
-#endif // DASHBOARDWIDGET_H

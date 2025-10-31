@@ -144,21 +144,20 @@ MainWindow::MainWindow(QWidget *parent)
     // 连接信号和槽
 
     // 颜色设置 - 使用统一的颜色选择处理
-    auto setupColorConnection =
-        [this, clock, updateColorButton](QPushButton *button,
-                                         std::function<void(const QColor &)> setter,
-                                         std::function<QColor()> getter) {
-            connect(button,
-                    &QPushButton::clicked,
-                    this,
-                    [this, clock, button, setter, getter, updateColorButton]() {
-                        QColor color = QColorDialog::getColor(getter(), this, tr("Select color"));
-                        if (color.isValid()) {
-                            setter(color);
-                            updateColorButton(button, color);
-                        }
-                    });
-        };
+    auto setupColorConnection = [this, updateColorButton](QPushButton *button,
+                                                          std::function<void(const QColor &)> setter,
+                                                          std::function<QColor()> getter) {
+        connect(button,
+                &QPushButton::clicked,
+                this,
+                [this, button, setter, getter, updateColorButton]() {
+                    QColor color = QColorDialog::getColor(getter(), this, tr("Select color"));
+                    if (color.isValid()) {
+                        setter(color);
+                        updateColorButton(button, color);
+                    }
+                });
+    };
 
     setupColorConnection(
         borderColorButton,
@@ -211,8 +210,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(classicThemeButton,
             &QPushButton::clicked,
             this,
-            [this,
-             clock,
+            [clock,
              updateColorButton,
              borderColorButton,
              backgroundColorButton,
@@ -240,8 +238,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(darkThemeButton,
             &QPushButton::clicked,
             this,
-            [this,
-             clock,
+            [clock,
              updateColorButton,
              borderColorButton,
              backgroundColorButton,
@@ -269,8 +266,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(modernThemeButton,
             &QPushButton::clicked,
             this,
-            [this,
-             clock,
+            [clock,
              updateColorButton,
              borderColorButton,
              backgroundColorButton,
@@ -299,8 +295,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(resetColorsButton,
             &QPushButton::clicked,
             this,
-            [this,
-             clock,
+            [clock,
              updateColorButton,
              borderColorButton,
              backgroundColorButton,
@@ -338,7 +333,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 初始化状态
     clock->updateTime();
-    QTimer::singleShot(100, [clock, timeLabel]() {
+    QTimer::singleShot(100, [timeLabel]() {
         timeLabel->setText(tr("Current time: %1").arg(QTime::currentTime().toString("hh:mm:ss")));
     });
 }

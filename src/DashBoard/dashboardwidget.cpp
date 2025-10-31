@@ -4,74 +4,170 @@
 #include <QPropertyAnimation>
 #include <QtMath>
 
-struct DashBoardWidget::DashBoardWidgetPrivate
+class DashBoardWidget::DashBoardWidgetPrivate
 {
-    double maxValue = 100;
-    double minValue = 0;
-    double startAngle = -50;
-    double endAngle = 230;
+public:
+    explicit DashBoardWidgetPrivate(DashBoardWidget *q)
+        : q_ptr(q)
+    {}
+
+    DashBoardWidget *q_ptr;
+
+    // 可配置属性
+    double maxValue = 100.0;
+    double minValue = 0.0;
+    double startAngle = -50.0;
+    double endAngle = 230.0;
     double value = minValue;
     int scaleMajor = 10;
     int scaleMinor = 5;
     QString unit = "unit";
-    QString text = "test";
+    QString title = "test";
 
+    // 颜色配置 - 保持原有默认颜色
     QColor arcColor = QColor(56, 61, 74);
     QColor scaleColor = QColor(4, 168, 173);
     QColor pointerColor = QColor(4, 181, 200);
     QColor textColor = QColor(144, 133, 116);
     QColor backgroundColor = Qt::transparent;
+    QColor valueColor = QColor(144, 133, 116);
+    QColor titleColor = QColor(144, 133, 116);
 
-    QPropertyAnimation *animation;
+    // 动画配置
+    int animationDuration = 500;
+    bool animationEnabled = true;
+
+    // 动画
+    QPropertyAnimation *animation = nullptr;
+    double targetValue = 0.0;
+
+    // 常量定义
+    static constexpr double ARC_WIDTH_RATIO = 1.0 / 15.0;
+    static constexpr double POINTER_WIDTH_RATIO = 1.0 / 60.0;
+    static constexpr double POINTER_LENGTH_RATIO = 1.0 / 3.0;
+    static constexpr double SCALE_MAJOR_LENGTH_RATIO = 1.0 / 20.0;
+    static constexpr double SCALE_MINOR_LENGTH_RATIO = 1.0 / 30.0;
+    static constexpr double VALUE_FONT_RATIO = 1.0 / 20.0;
+    static constexpr double TITLE_FONT_RATIO = 1.0 / 20.0;
+    static constexpr double SCALE_FONT_RATIO = 1.0 / 25.0;
 };
 
 DashBoardWidget::DashBoardWidget(QWidget *parent)
     : QWidget(parent)
-    , d_ptr(new DashBoardWidgetPrivate)
+    , d_ptr(new DashBoardWidgetPrivate(this))
 {
     d_ptr->animation = new QPropertyAnimation(this, "value", this);
+    d_ptr->animation->setDuration(d_ptr->animationDuration);
+    d_ptr->animation->setEasingCurve(QEasingCurve::OutCubic);
+
+    connect(d_ptr->animation,
+            &QPropertyAnimation::finished,
+            this,
+            &DashBoardWidget::onAnimationFinished);
+
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    connect(this, &DashBoardWidget::valueChanged, this, &DashBoardWidget::onStartAnimation);
 }
 
 DashBoardWidget::~DashBoardWidget() = default;
 
-auto DashBoardWidget::sizeHint() const -> QSize
-{
-    return {300, 300};
-}
-
 auto DashBoardWidget::minimumSizeHint() const -> QSize
 {
-    return {200, 200};
+    return {150, 150};
 }
 
-void DashBoardWidget::setMin(const double min)
+// Value
+auto DashBoardWidget::value() const -> double
 {
-    d_ptr->minValue = min;
-    update();
+    return d_ptr->value;
 }
 
-auto DashBoardWidget::min() const -> double
+void DashBoardWidget::setValue(double value)
+{
+    value = qBound(d_ptr->minValue, value, d_ptr->maxValue);
+
+    if (qFuzzyCompare(value, d_ptr->value)) {
+        return;
+    }
+
+    double oldValue = d_ptr->value;
+    d_ptr->value = value;
+    update();
+
+    // 只有在非动画过程中或者动画完成时才发出valueChanged信号
+    if (!isAnimating() || qFuzzyCompare(value, d_ptr->targetValue)) {
+        emit valueChanged(value);
+
+        if (value > oldValue) {
+            emit valueIncreased(value);
+        } else if (value < oldValue) {
+            emit valueDecreased(value);
+        }
+    }
+}
+
+void DashBoardWidget::setValueAnimated(double value)
+{
+    value = qBound(d_ptr->minValue, value, d_ptr->maxValue);
+
+    if (qFuzzyCompare(value, d_ptr->value)) {
+        return;
+    }
+
+    if (!d_ptr->animationEnabled) {
+        setValue(value);
+        return;
+    }
+
+    // 记录目标值
+    d_ptr->targetValue = value;
+
+    // 发出动画开始信号
+    emit animationStarted(d_ptr->value, value);
+
+    startAnimation(value);
+}
+
+// Min value
+void DashBoardWidget::setMinValue(double min)
+{
+    if (!qFuzzyCompare(d_ptr->minValue, min)) {
+        d_ptr->minValue = min;
+        if (d_ptr->value < min) {
+            setValue(min);
+        }
+        update();
+    }
+}
+
+auto DashBoardWidget::minValue() const -> double
 {
     return d_ptr->minValue;
 }
 
-void DashBoardWidget::setmax(const double max)
+// Max value
+void DashBoardWidget::setMaxValue(double max)
 {
-    d_ptr->maxValue = max;
-    update();
+    if (!qFuzzyCompare(d_ptr->maxValue, max)) {
+        d_ptr->maxValue = max;
+        if (d_ptr->value > max) {
+            setValue(max);
+        }
+        update();
+    }
 }
 
-auto DashBoardWidget::max() const -> double
+auto DashBoardWidget::maxValue() const -> double
 {
     return d_ptr->maxValue;
 }
 
-void DashBoardWidget::setStartAngle(const double startAngle)
+// Start angle
+void DashBoardWidget::setStartAngle(double startAngle)
 {
-    d_ptr->startAngle = startAngle;
-    update();
+    if (!qFuzzyCompare(d_ptr->startAngle, startAngle)) {
+        d_ptr->startAngle = startAngle;
+        update();
+    }
 }
 
 auto DashBoardWidget::startAngle() const -> double
@@ -79,10 +175,13 @@ auto DashBoardWidget::startAngle() const -> double
     return d_ptr->startAngle;
 }
 
-void DashBoardWidget::setEndAngle(const double endAngle)
+// End angle
+void DashBoardWidget::setEndAngle(double endAngle)
 {
-    d_ptr->endAngle = endAngle;
-    update();
+    if (!qFuzzyCompare(d_ptr->endAngle, endAngle)) {
+        d_ptr->endAngle = endAngle;
+        update();
+    }
 }
 
 auto DashBoardWidget::endAngle() const -> double
@@ -90,10 +189,13 @@ auto DashBoardWidget::endAngle() const -> double
     return d_ptr->endAngle;
 }
 
-void DashBoardWidget::setScaleMajor(const int scale)
+// Scale major
+void DashBoardWidget::setScaleMajor(int scale)
 {
-    d_ptr->scaleMajor = scale;
-    update();
+    if (scale > 0 && d_ptr->scaleMajor != scale) {
+        d_ptr->scaleMajor = scale;
+        update();
+    }
 }
 
 auto DashBoardWidget::scaleMajor() const -> int
@@ -101,10 +203,13 @@ auto DashBoardWidget::scaleMajor() const -> int
     return d_ptr->scaleMajor;
 }
 
-void DashBoardWidget::setScaleMinor(const int scale)
+// Scale minor
+void DashBoardWidget::setScaleMinor(int scale)
 {
-    d_ptr->scaleMinor = scale;
-    update();
+    if (scale > 0 && d_ptr->scaleMinor != scale) {
+        d_ptr->scaleMinor = scale;
+        update();
+    }
 }
 
 auto DashBoardWidget::scaleMinor() const -> int
@@ -112,10 +217,13 @@ auto DashBoardWidget::scaleMinor() const -> int
     return d_ptr->scaleMinor;
 }
 
+// Unit
 void DashBoardWidget::setUnit(const QString &unit)
 {
-    d_ptr->unit = unit;
-    update();
+    if (d_ptr->unit != unit) {
+        d_ptr->unit = unit;
+        update();
+    }
 }
 
 auto DashBoardWidget::unit() const -> QString
@@ -123,21 +231,27 @@ auto DashBoardWidget::unit() const -> QString
     return d_ptr->unit;
 }
 
-void DashBoardWidget::setText(const QString &text)
+// Title
+void DashBoardWidget::setTitle(const QString &title)
 {
-    d_ptr->text = text;
-    update();
+    if (d_ptr->title != title) {
+        d_ptr->title = title;
+        update();
+    }
 }
 
-auto DashBoardWidget::text() const -> QString
+auto DashBoardWidget::title() const -> QString
 {
-    return d_ptr->text;
+    return d_ptr->title;
 }
 
+// Arc color
 void DashBoardWidget::setArcColor(const QColor &color)
 {
-    d_ptr->arcColor = color;
-    update();
+    if (d_ptr->arcColor != color) {
+        d_ptr->arcColor = color;
+        update();
+    }
 }
 
 auto DashBoardWidget::arcColor() const -> QColor
@@ -145,10 +259,13 @@ auto DashBoardWidget::arcColor() const -> QColor
     return d_ptr->arcColor;
 }
 
+// Scale color
 void DashBoardWidget::setScaleColor(const QColor &color)
 {
-    d_ptr->scaleColor = color;
-    update();
+    if (d_ptr->scaleColor != color) {
+        d_ptr->scaleColor = color;
+        update();
+    }
 }
 
 auto DashBoardWidget::scaleColor() const -> QColor
@@ -156,10 +273,13 @@ auto DashBoardWidget::scaleColor() const -> QColor
     return d_ptr->scaleColor;
 }
 
+// Pointer color
 void DashBoardWidget::setPointerColor(const QColor &color)
 {
-    d_ptr->pointerColor = color;
-    update();
+    if (d_ptr->pointerColor != color) {
+        d_ptr->pointerColor = color;
+        update();
+    }
 }
 
 auto DashBoardWidget::pointerColor() const -> QColor
@@ -167,10 +287,13 @@ auto DashBoardWidget::pointerColor() const -> QColor
     return d_ptr->pointerColor;
 }
 
+// Text color
 void DashBoardWidget::setTextColor(const QColor &color)
 {
-    d_ptr->textColor = color;
-    update();
+    if (d_ptr->textColor != color) {
+        d_ptr->textColor = color;
+        update();
+    }
 }
 
 auto DashBoardWidget::textColor() const -> QColor
@@ -178,10 +301,13 @@ auto DashBoardWidget::textColor() const -> QColor
     return d_ptr->textColor;
 }
 
+// Background color
 void DashBoardWidget::setBackgroundColor(const QColor &color)
 {
-    d_ptr->backgroundColor = color;
-    update();
+    if (d_ptr->backgroundColor != color) {
+        d_ptr->backgroundColor = color;
+        update();
+    }
 }
 
 auto DashBoardWidget::backgroundColor() const -> QColor
@@ -189,89 +315,206 @@ auto DashBoardWidget::backgroundColor() const -> QColor
     return d_ptr->backgroundColor;
 }
 
+// Value color
+void DashBoardWidget::setValueColor(const QColor &color)
+{
+    if (d_ptr->valueColor != color) {
+        d_ptr->valueColor = color;
+        update();
+    }
+}
+
+auto DashBoardWidget::valueColor() const -> QColor
+{
+    return d_ptr->valueColor;
+}
+
+// Title color
+void DashBoardWidget::setTitleColor(const QColor &color)
+{
+    if (d_ptr->titleColor != color) {
+        d_ptr->titleColor = color;
+        update();
+    }
+}
+
+auto DashBoardWidget::titleColor() const -> QColor
+{
+    return d_ptr->titleColor;
+}
+
+// Animation duration
+void DashBoardWidget::setAnimationDuration(int duration)
+{
+    if (duration >= 0 && d_ptr->animationDuration != duration) {
+        d_ptr->animationDuration = duration;
+        d_ptr->animation->setDuration(duration);
+    }
+}
+
+auto DashBoardWidget::animationDuration() const -> int
+{
+    return d_ptr->animationDuration;
+}
+
+// Animation enabled
+void DashBoardWidget::setAnimationEnabled(bool enabled)
+{
+    if (d_ptr->animationEnabled != enabled) {
+        d_ptr->animationEnabled = enabled;
+    }
+}
+
+bool DashBoardWidget::isAnimationEnabled() const
+{
+    return d_ptr->animationEnabled;
+}
+
+// Animation state
+bool DashBoardWidget::isAnimating() const
+{
+    return d_ptr->animation && d_ptr->animation->state() == QPropertyAnimation::Running;
+}
+
+// Public slots implementation
+void DashBoardWidget::increaseValue(double increment)
+{
+    if (increment <= 0.0)
+        return;
+
+    double newValue = qMin(d_ptr->maxValue, d_ptr->value + increment);
+    if (!qFuzzyCompare(newValue, d_ptr->value)) {
+        if (d_ptr->animationEnabled) {
+            setValueAnimated(newValue);
+        } else {
+            setValue(newValue);
+        }
+    }
+}
+
+void DashBoardWidget::decreaseValue(double decrement)
+{
+    if (decrement <= 0.0)
+        return;
+
+    double newValue = qMax(d_ptr->minValue, d_ptr->value - decrement);
+    if (!qFuzzyCompare(newValue, d_ptr->value)) {
+        if (d_ptr->animationEnabled) {
+            setValueAnimated(newValue);
+        } else {
+            setValue(newValue);
+        }
+    }
+}
+
+void DashBoardWidget::reset()
+{
+    if (!qFuzzyCompare(d_ptr->value, d_ptr->minValue)) {
+        if (d_ptr->animationEnabled) {
+            setValueAnimated(d_ptr->minValue);
+        } else {
+            setValue(d_ptr->minValue);
+        }
+        emit valueReset();
+    }
+}
+
+// Painting
 void DashBoardWidget::paintEvent(QPaintEvent *event)
 {
     QWidget::paintEvent(event);
+
     QPainter painter(this);
     painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 
-    // 背景
+    // 绘制背景
     if (d_ptr->backgroundColor != Qt::transparent) {
-        painter.setPen(Qt::NoPen);
         painter.fillRect(rect(), d_ptr->backgroundColor);
     }
 
-    // 平移中心
-    painter.translate(width() / 2, height() / 2);
+    // 平移坐标系到中心
+    painter.translate(width() / 2.0, height() / 2.0);
 
-    // 圆环
-    drawArc(&painter);
+    // 计算常用尺寸
+    const double minSize = qMin(width(), height());
 
-    // 刻度线
-    drawScale(&painter);
-
-    // 刻度值
-    drawScaleNum(&painter);
-
-    // 指示器
-    drawPointer(&painter);
-
-    // 当前值
-    drawValue(&painter);
+    // 绘制顺序
+    drawArc(&painter, minSize);
+    drawScale(&painter, minSize);
+    drawScaleNumbers(&painter, minSize);
+    drawPointer(&painter, minSize);
+    drawValue(&painter, minSize);
+    drawTitle(&painter, minSize);
 }
 
-void DashBoardWidget::onStartAnimation(const double value)
+void DashBoardWidget::startAnimation(double targetValue)
 {
-    if (value < d_ptr->minValue || value > d_ptr->maxValue || value == d_ptr->value) {
+    if (qFuzzyCompare(targetValue, d_ptr->value) || !d_ptr->animation) {
         return;
-}
-    
-    int start = d_ptr->value;
-    int end = value;
-    
-    d_ptr->animation->setStartValue(start);
-    d_ptr->animation->setEndValue(end);
+    }
+
+    // 如果动画正在运行，停止它
+    if (d_ptr->animation->state() == QPropertyAnimation::Running) {
+        d_ptr->animation->stop();
+    }
+
+    d_ptr->animation->setStartValue(d_ptr->value);
+    d_ptr->animation->setEndValue(targetValue);
     d_ptr->animation->start();
 }
 
-auto DashBoardWidget::value() const -> double
+void DashBoardWidget::onAnimationFinished()
 {
-    return d_ptr->value;
+    // 动画完成时发出完成信号
+    emit animationFinished(d_ptr->value);
+
+    // 确保最终值发出valueChanged信号
+    if (qFuzzyCompare(d_ptr->value, d_ptr->targetValue)) {
+        emit valueChanged(d_ptr->value);
+    }
 }
 
-void DashBoardWidget::setValue(const double value)
+// 辅助函数：设置字体
+void DashBoardWidget::setupFont(QPainter *painter, double minSize, double ratio)
 {
-    d_ptr->value = value;
-    update();
+    auto font = painter->font();
+    font.setPixelSize(static_cast<int>(minSize * ratio));
+    painter->setFont(font);
 }
 
-void DashBoardWidget::drawArc(QPainter *painter)
+// 辅助函数：获取文本矩形
+QRectF DashBoardWidget::getTextRect(double minSize, double verticalRatio, double heightRatio) const
 {
-    double min = qMin(width(), height());
-    double arcWidth = min / 15.0;
-    double radius = min / 3 - arcWidth;
-    QRectF rect = QRectF(-radius, -radius, radius * 2, radius * 2);
+    const double radius = minSize / 2.0 - minSize / 4.8;
+    return QRectF(-radius, radius * verticalRatio, radius * 2, radius * heightRatio);
+}
+
+void DashBoardWidget::drawArc(QPainter *painter, double minSize)
+{
+    const double arcWidth = minSize * DashBoardWidgetPrivate::ARC_WIDTH_RATIO;
+    const double radius = minSize / 3 - arcWidth;
+    const QRectF rect = QRectF(-radius, -radius, radius * 2, radius * 2);
+
     QPen pen;
     pen.setWidthF(arcWidth);
     pen.setCapStyle(Qt::FlatCap);
 
     // 圆弧背景
-    double angle = d_ptr->endAngle - d_ptr->startAngle;
+    const double angle = d_ptr->endAngle - d_ptr->startAngle;
     pen.setColor(d_ptr->arcColor);
     painter->setPen(pen);
     painter->drawArc(rect, d_ptr->startAngle * 16, angle * 16);
 }
 
-void DashBoardWidget::drawScale(QPainter *painter)
+void DashBoardWidget::drawScale(QPainter *painter, double minSize)
 {
     painter->save();
-    
+
     painter->rotate(270 - d_ptr->endAngle);
-    int steps = (d_ptr->scaleMajor * d_ptr->scaleMinor);
-    double angleStep = (d_ptr->endAngle - d_ptr->startAngle) / steps;
-    double min = qMin(width(), height());
-    double radius = min / 3;
-    
+    const int steps = (d_ptr->scaleMajor * d_ptr->scaleMinor);
+    const double angleStep = (d_ptr->endAngle - d_ptr->startAngle) / steps;
+    const double radius = minSize / 3;
+
     QPen pen(d_ptr->scaleColor);
     pen.setCapStyle(Qt::RoundCap);
 
@@ -292,74 +535,83 @@ void DashBoardWidget::drawScale(QPainter *painter)
     painter->restore();
 }
 
-void DashBoardWidget::drawScaleNum(QPainter *painter)
+void DashBoardWidget::drawScaleNumbers(QPainter *painter, double minSize)
 {
     painter->save();
     painter->setPen(d_ptr->scaleColor);
-    double min = qMin(width(), height());
-    double radius = min / 2.4;
-    QFont font("Microsoft YaHei", min / 25);
-    painter->setFont(font);
-    
-    double startRad = d_ptr->endAngle * (M_PI / 180);
-    double deltaRad = (d_ptr->endAngle - d_ptr->startAngle) * (M_PI / 180) / d_ptr->scaleMajor;
 
-    QFontMetrics fontMetrics(font);
+    // 设置刻度数字字体
+    setupFont(painter, minSize, DashBoardWidgetPrivate::SCALE_FONT_RATIO);
+
+    const double radius = minSize / 2.4;
+    const double startRad = d_ptr->endAngle * (M_PI / 180);
+    const double deltaRad = (d_ptr->endAngle - d_ptr->startAngle) * (M_PI / 180)
+                            / d_ptr->scaleMajor;
+
+    const QFontMetrics fontMetrics(painter->font());
     for (int i = 0; i <= d_ptr->scaleMajor; i++) {
-        double sina = qSin(startRad - i * deltaRad);
-        double cosa = qCos(startRad - i * deltaRad);
-        double value = 1.0 * i * ((d_ptr->maxValue - d_ptr->minValue) / d_ptr->scaleMajor) + d_ptr->minValue;
+        const double sina = qSin(startRad - i * deltaRad);
+        const double cosa = qCos(startRad - i * deltaRad);
+        const double value = 1.0 * i * ((d_ptr->maxValue - d_ptr->minValue) / d_ptr->scaleMajor)
+                             + d_ptr->minValue;
 
-        QString strValue = QString("%1").arg(value, 0, 'f', 2);
-        double textWidth = fontMetrics.horizontalAdvance(strValue);
-        double textHeight = fontMetrics.height();
-        int x = radius * cosa - textWidth / 2;
-        int y = -radius * sina + textHeight / 4;
+        const QString strValue = QString("%1").arg(value, 0, 'f', 2);
+        const double textWidth = fontMetrics.horizontalAdvance(strValue);
+        const double textHeight = fontMetrics.height();
+        const int x = radius * cosa - textWidth / 2;
+        const int y = -radius * sina + textHeight / 4;
         painter->drawText(x, y, strValue);
     }
 
     painter->restore();
 }
 
-void DashBoardWidget::drawPointer(QPainter *painter)
+void DashBoardWidget::drawPointer(QPainter *painter, double minSize)
 {
     painter->save();
     painter->setPen(Qt::NoPen);
     painter->setBrush(d_ptr->pointerColor);
 
-    double radius = qMin(width(), height()) / 3.0;
+    const double radius = minSize / 3.0;
 
     QPolygonF pts;
     pts << QPointF(-5, 0) << QPointF(0, -8) << QPointF(5, 0) << QPointF(0, radius);
-    
+
     painter->rotate(270 - d_ptr->endAngle);
-    double degRotate = (d_ptr->endAngle - d_ptr->startAngle) / (d_ptr->maxValue - d_ptr->minValue)
-                       * (d_ptr->value - d_ptr->minValue);
+    const double degRotate = (d_ptr->endAngle - d_ptr->startAngle)
+                             / (d_ptr->maxValue - d_ptr->minValue)
+                             * (d_ptr->value - d_ptr->minValue);
     painter->rotate(degRotate);
     painter->drawConvexPolygon(pts);
 
     painter->restore();
 }
 
-void DashBoardWidget::drawValue(QPainter *painter)
+void DashBoardWidget::drawValue(QPainter *painter, double minSize)
 {
     painter->save();
-    painter->setPen(d_ptr->textColor);
+    painter->setPen(d_ptr->valueColor);
 
-    double min = qMin(width(), height());
-    double radius = min / 2.0 - min / 4.8;
-    QFont font("Microsoft YaHei", min / 25);
-    painter->setFont(font);
-    
-    QString strValue = QString("%1").arg(d_ptr->value, 0, 'f', 2);
-    strValue = QString("%1 %2").arg(strValue, d_ptr->unit);
-    QRectF valueRect(-radius, radius / 2.5, radius * 2, radius / 3.5);
+    // 设置数值字体
+    setupFont(painter, minSize, DashBoardWidgetPrivate::VALUE_FONT_RATIO);
+
+    const QString strValue = QString("%1 %2").arg(d_ptr->value, 0, 'f', 2).arg(d_ptr->unit);
+    const QRectF valueRect = getTextRect(minSize, 1.0 / 2.5, 1.0 / 3.5);
     painter->drawText(valueRect, Qt::AlignCenter, strValue);
 
-    QRectF textRect(-radius, radius / 1.5, radius * 2, radius / 2.5);
-    //font.setPixelSize(12);
-    painter->setFont(font);
-    painter->drawText(textRect, Qt::AlignCenter, d_ptr->text);
+    painter->restore();
+}
+
+void DashBoardWidget::drawTitle(QPainter *painter, double minSize)
+{
+    painter->save();
+    painter->setPen(d_ptr->titleColor);
+
+    // 设置标题字体
+    setupFont(painter, minSize, DashBoardWidgetPrivate::TITLE_FONT_RATIO);
+
+    const QRectF textRect = getTextRect(minSize, 1.0 / 1.5, 1.0 / 2.5);
+    painter->drawText(textRect, Qt::AlignCenter, d_ptr->title);
 
     painter->restore();
 }
