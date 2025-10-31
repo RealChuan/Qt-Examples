@@ -1,16 +1,11 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
 
-class QPushButton;
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-
-private:
-    void setupUI();
+    ~MainWindow() override;
 };
-#endif // MAINWINDOW_H
