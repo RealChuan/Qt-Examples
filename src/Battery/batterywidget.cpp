@@ -64,15 +64,9 @@ BatteryWidget::BatteryWidget(QWidget *parent)
 
 BatteryWidget::~BatteryWidget() = default;
 
-// Size hints
-auto BatteryWidget::sizeHint() const -> QSize
-{
-    return {150, 80};
-}
-
 auto BatteryWidget::minimumSizeHint() const -> QSize
 {
-    return {80, 45};
+    return {50, 30};
 }
 
 // Border color
