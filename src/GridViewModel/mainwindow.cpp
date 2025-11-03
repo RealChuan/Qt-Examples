@@ -1,40 +1,46 @@
 #include "mainwindow.h"
+#include "gridmodel.h"
+#include "gridview.h"
 
 #include <QPainter>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
 {
-    setupUI();
-    resize(1000, 618);
-}
+    // 创建网格视图
+    auto gridView = new GridView(this);
 
-MainWindow::~MainWindow()
-{
-    qDeleteAll(m_imageVector);
-}
+    // 创建简单的演示数据
+    GridCellList cellList;
 
-void MainWindow::setupUI()
-{
-    auto view = new GridView(this);
+    // 生成简单的颜色单元格
+    QStringList colorNames = QColor::colorNames();
 
-    m_imageVector.clear();
-    auto colorNames = QColor::colorNames();
-    for (const QString &colorName : std::as_const(colorNames)) {
-        QImage image(WIDTH, WIDTH, QImage::Format_ARGB32);
+    for (int i = 0; i < colorNames.size(); ++i) { // 限制数量避免过多
+        QString colorName = colorNames.at(i % colorNames.size());
+        QImage image(GRID_CELL_SIZE - 2, GRID_CELL_SIZE - 2, QImage::Format_ARGB32);
         image.fill(Qt::transparent);
+
         QPainter painter(&image);
         painter.setRenderHint(QPainter::Antialiasing);
-        painter.setPen(Qt::transparent);
         painter.setBrush(QColor(colorName));
-        QRect rect = image.rect();
-        rect.adjust(1, 1, -1, -1);
-        double radius = (WIDTH - 2) / 2.0;
+        painter.setPen(Qt::NoPen);
+
+        // 绘制简单的圆角矩形
+        QRect rect = image.rect().adjusted(2, 2, -2, -2);
+        auto radius = rect.width() / 2;
         painter.drawRoundedRect(rect, radius, radius);
 
-        m_imageVector.append(new ImageInfo{image, colorName});
+        // 添加编号标签
+        cellList.append(GridCell{image, QString("Cell %1").arg(i + 1)});
     }
-    view->setImageVector(m_imageVector);
 
-    setCentralWidget(view);
+    // 设置数据到视图
+    gridView->setCellList(cellList);
+
+    // 设置为主窗口的中心部件
+    setCentralWidget(gridView);
+
+    resize(800, 500);
+    setWindowTitle("Grid View Model Example");
 }

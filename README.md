@@ -65,10 +65,12 @@
 
 ### [FlowLayout](https://doc.qt.io/qt-6/qtwidgets-layouts-flowlayout-example.html) - Qt 官方Flow Layout Example
 
-### [GridViewModel](src/GridViewModel/) - 自适应网格视图
+# [GridViewModel](src/GridViewModel/) - 自适应网格布局
 
-- 基于 QListView 的自适应网格布局
-- <img src="src/GridViewModel/picture/GridView.png" width="90%" alt="网格视图">
+- 基于 Qt Model-View 架构的网格布局组件
+- 支持自适应列数和自定义单元格
+- 内置多选功能和流畅的交互体验
+- <img src="src/GridViewModel/images/grid_view_model.png" width="800" alt="网格布局视图">
 
 ### [HttpClient](src/HttpClient/) - HTTP 客户端实现
 

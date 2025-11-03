@@ -1,11 +1,11 @@
 set(PROJECT_SOURCES
-    main.cpp
-    mainwindow.cpp
-    mainwindow.h
     gridmodel.h
     gridmodel.cpp
     gridview.h
-    gridview.cpp)
+    gridview.cpp
+    main.cpp
+    mainwindow.cpp
+    mainwindow.h)
 
 qt_add_executable(GridViewModel MANUAL_FINALIZATION ${PROJECT_SOURCES})
 target_link_libraries(GridViewModel PRIVATE Qt::Widgets)

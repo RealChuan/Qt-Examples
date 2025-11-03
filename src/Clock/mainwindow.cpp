@@ -333,9 +333,13 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 初始化状态
     clock->updateTime();
-    QTimer::singleShot(100, [timeLabel]() {
-        timeLabel->setText(tr("Current time: %1").arg(QTime::currentTime().toString("hh:mm:ss")));
-    });
+    QMetaObject::invokeMethod(
+        this,
+        [timeLabel]() {
+            timeLabel->setText(
+                tr("Current time: %1").arg(QTime::currentTime().toString("hh:mm:ss")));
+        },
+        Qt::QueuedConnection);
 }
 
 MainWindow::~MainWindow() {}

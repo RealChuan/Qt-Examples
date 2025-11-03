@@ -1,28 +1,27 @@
-#ifndef GRIDVIEW_H
-#define GRIDVIEW_H
-
-#include <QListView>
+#pragma once
 
 #include "gridmodel.h"
 
+#include <QListView>
+
 class GridView : public QListView
 {
+    Q_OBJECT
+
 public:
     explicit GridView(QWidget *parent = nullptr);
+    ~GridView() override;
 
-    void setImageVector(const ImageVector &imageVector)
-    {
-        m_gridModel->setImageVector(imageVector);
-    }
+    void setCellList(const GridCellList &cellList);
+    void clearCells();
 
 private slots:
-    void onSelectChanged();
+    void onSelectionChanged();
 
 private:
     void setupUI();
     void buildConnect();
 
-    GridModel *m_gridModel;
+    class GridViewPrivate;
+    QScopedPointer<GridViewPrivate> d_ptr;
 };
-
-#endif // GRIDVIEW_H

@@ -1,9 +1,6 @@
-#ifndef MAINWINDOW_H
-#define MAINWINDOW_H
+#pragma once
 
 #include <QMainWindow>
-
-#include "gridview.h"
 
 class MainWindow : public QMainWindow
 {
@@ -11,11 +8,5 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = nullptr);
-    ~MainWindow() override;
-
-private:
-    void setupUI();
-
-    ImageVector m_imageVector;
+    ~MainWindow() override = default;
 };
-#endif // MAINWINDOW_H

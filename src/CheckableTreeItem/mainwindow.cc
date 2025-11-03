@@ -21,128 +21,132 @@ void buildFileSystemTreeImpl(QStandardItemModel *model,
     mainLayout->insertWidget(2, loadingLabel); // 插入到树视图上方
 
     // 使用单次定时器延迟构建，确保UI先显示
-    QTimer::singleShot(100, [=]() {
-        loadingLabel->setText("Building root directory...");
+    QMetaObject::invokeMethod(
+        qApp,
+        [=]() {
+            loadingLabel->setText("Building root directory...");
 
-        // 获取根目录路径（跨平台）
-        QList<QPair<QString, QString>> rootPaths;
+            // 获取根目录路径（跨平台）
+            QList<QPair<QString, QString>> rootPaths;
 
 #ifdef Q_OS_WIN
-        // Windows系统：获取所有驱动器
-        QFileInfoList drives = QDir::drives();
-        for (const QFileInfo &drive : drives) {
-            rootPaths.append(qMakePair(drive.absoluteFilePath(), drive.absoluteFilePath()));
-        }
+            // Windows系统：获取所有驱动器
+            QFileInfoList drives = QDir::drives();
+            for (const QFileInfo &drive : drives) {
+                rootPaths.append(qMakePair(drive.absoluteFilePath(), drive.absoluteFilePath()));
+            }
 #else
-        // Unix/Linux/Mac系统：使用用户主目录和常见系统目录
-        rootPaths.append(qMakePair(QDir::homePath(), "Home Directory"));
-        rootPaths.append(qMakePair("/", "Root Directory"));
-        rootPaths.append(qMakePair("/etc", "System Configuration"));
-        rootPaths.append(qMakePair("/usr", "User Programs"));
+            // Unix/Linux/Mac系统：使用用户主目录和常见系统目录
+            rootPaths.append(qMakePair(QDir::homePath(), "Home Directory"));
+            rootPaths.append(qMakePair("/", "Root Directory"));
+            rootPaths.append(qMakePair("/etc", "System Configuration"));
+            rootPaths.append(qMakePair("/usr", "User Programs"));
 #endif
 
-        progressBar->setVisible(true);
-        statusLabel->setVisible(true);
+            progressBar->setVisible(true);
+            statusLabel->setVisible(true);
 
-        int totalPaths = rootPaths.size();
-        int processed = 0;
+            int totalPaths = rootPaths.size();
+            int processed = 0;
 
-        // 清空模型
-        model->clear();
+            // 清空模型
+            model->clear();
 
-        // 构建根节点
-        CheckableTreeItem *rootItem = new CheckableTreeItem("Local File System");
-        model->appendRow(rootItem);
+            // 构建根节点
+            CheckableTreeItem *rootItem = new CheckableTreeItem("Local File System");
+            model->appendRow(rootItem);
 
-        // 递归构建文件树函数
-        std::function<void(CheckableTreeItem *, const QString &, int)> buildTree;
-        buildTree = [&](CheckableTreeItem *parentItem, const QString &path, int depth) {
-            if (depth >= 5) { // 限制最大层级为5层
-                return;
-            }
-
-            QDir dir(path);
-            if (!dir.exists()) {
-                return;
-            }
-
-            // 设置过滤器：只显示目录，不显示隐藏文件和系统文件
-            dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
-            dir.setSorting(QDir::Name | QDir::IgnoreCase);
-
-            QFileInfoList entries;
-            try {
-                entries = dir.entryInfoList();
-            } catch (...) {
-                // 跳过无权限访问的目录
-                return;
-            }
-
-            // 限制每个目录下最多显示10个子项，避免过多
-            int maxChildren = 10;
-            int count = 0;
-
-            for (const QFileInfo &entry : entries) {
-                if (count >= maxChildren)
-                    break;
-
-                QString entryName = entry.fileName();
-                QString fullPath = entry.absoluteFilePath();
-
-                // 跳过一些系统目录和无关目录
-                if (entryName.startsWith(".") || entryName == "System32" || entryName == "Windows"
-                    || entryName == "proc" || entryName == "sys" || entryName == "dev") {
-                    continue;
+            // 递归构建文件树函数
+            std::function<void(CheckableTreeItem *, const QString &, int)> buildTree;
+            buildTree = [&](CheckableTreeItem *parentItem, const QString &path, int depth) {
+                if (depth >= 5) { // 限制最大层级为5层
+                    return;
                 }
 
-                CheckableTreeItem *item = new CheckableTreeItem(entryName);
-                item->setToolTip(fullPath);
-                parentItem->appendRow(item);
+                QDir dir(path);
+                if (!dir.exists()) {
+                    return;
+                }
 
-                // 递归构建子目录（深度+1）
-                buildTree(item, fullPath, depth + 1);
+                // 设置过滤器：只显示目录，不显示隐藏文件和系统文件
+                dir.setFilter(QDir::Dirs | QDir::NoDotAndDotDot | QDir::NoSymLinks);
+                dir.setSorting(QDir::Name | QDir::IgnoreCase);
 
-                count++;
+                QFileInfoList entries;
+                try {
+                    entries = dir.entryInfoList();
+                } catch (...) {
+                    // 跳过无权限访问的目录
+                    return;
+                }
+
+                // 限制每个目录下最多显示10个子项，避免过多
+                int maxChildren = 10;
+                int count = 0;
+
+                for (const QFileInfo &entry : entries) {
+                    if (count >= maxChildren)
+                        break;
+
+                    QString entryName = entry.fileName();
+                    QString fullPath = entry.absoluteFilePath();
+
+                    // 跳过一些系统目录和无关目录
+                    if (entryName.startsWith(".") || entryName == "System32"
+                        || entryName == "Windows" || entryName == "proc" || entryName == "sys"
+                        || entryName == "dev") {
+                        continue;
+                    }
+
+                    CheckableTreeItem *item = new CheckableTreeItem(entryName);
+                    item->setToolTip(fullPath);
+                    parentItem->appendRow(item);
+
+                    // 递归构建子目录（深度+1）
+                    buildTree(item, fullPath, depth + 1);
+
+                    count++;
+                }
+            };
+
+            // 为每个根路径构建子树
+            for (const auto &rootPair : rootPaths) {
+                QString path = rootPair.first;
+                QString displayName = rootPair.second;
+
+                statusLabel->setText(QString("Scanning: %1").arg(path));
+                qApp->processEvents(); // 处理事件，更新UI
+
+                CheckableTreeItem *driveItem = new CheckableTreeItem(displayName);
+                driveItem->setToolTip(path);
+                rootItem->appendRow(driveItem);
+
+                buildTree(driveItem, path, 1);
+
+                processed++;
+                progressBar->setValue((processed * 100) / totalPaths);
+                qApp->processEvents(); // 处理事件，更新UI
             }
-        };
 
-        // 为每个根路径构建子树
-        for (const auto &rootPair : rootPaths) {
-            QString path = rootPair.first;
-            QString displayName = rootPair.second;
+            // 完成构建，隐藏进度条和加载标签
+            progressBar->setVisible(false);
+            statusLabel->setVisible(false);
+            loadingLabel->setVisible(false);
+            loadingLabel->deleteLater();
 
-            statusLabel->setText(QString("Scanning: %1").arg(path));
-            qApp->processEvents(); // 处理事件，更新UI
+            // 展开根节点
+            treeView->expand(rootItem->index());
 
-            CheckableTreeItem *driveItem = new CheckableTreeItem(displayName);
-            driveItem->setToolTip(path);
-            rootItem->appendRow(driveItem);
+            // 显示统计信息
+            int totalItems = countTreeItems(rootItem);
+            statusLabel->setText(QString("Loaded %1 directory items").arg(totalItems));
+            statusLabel->setVisible(true);
 
-            buildTree(driveItem, path, 1);
-
-            processed++;
-            progressBar->setValue((processed * 100) / totalPaths);
-            qApp->processEvents(); // 处理事件，更新UI
-        }
-
-        // 完成构建，隐藏进度条和加载标签
-        progressBar->setVisible(false);
-        statusLabel->setVisible(false);
-        loadingLabel->setVisible(false);
-        loadingLabel->deleteLater();
-
-        // 展开根节点
-        treeView->expand(rootItem->index());
-
-        // 显示统计信息
-        int totalItems = countTreeItems(rootItem);
-        statusLabel->setText(QString("Loaded %1 directory items").arg(totalItems));
-        statusLabel->setVisible(true);
-
-        // 初始计数
-        int checkedCount = countCheckedItems(rootItem);
-        countLabel->setText(QString("Checked Items: %1").arg(checkedCount));
-    });
+            // 初始计数
+            int checkedCount = countCheckedItems(rootItem);
+            countLabel->setText(QString("Checked Items: %1").arg(checkedCount));
+        },
+        Qt::QueuedConnection);
 }
 
 } // namespace

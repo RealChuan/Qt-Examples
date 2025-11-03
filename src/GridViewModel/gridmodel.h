@@ -1,39 +1,37 @@
-#ifndef GRIDMODEL_H
-#define GRIDMODEL_H
+#pragma once
 
 #include <QAbstractListModel>
 #include <QImage>
+#include <QList>
 
-#define WIDTH 80
+#define GRID_CELL_SIZE 80
 
-struct ImageInfo
+struct GridCell
 {
     QImage image;
-    QString color;
+    QString label;
 };
 
-using ImageVector = QVector<ImageInfo *>;
+using GridCellList = QList<GridCell>;
 
 class GridModel : public QAbstractListModel
 {
+    Q_OBJECT
+
 public:
     explicit GridModel(QObject *parent = nullptr);
-    [[nodiscard]] auto rowCount(const QModelIndex & = QModelIndex()) const -> int override
-    {
-        return m_imageVector.size();
-    }
-    [[nodiscard]] auto data(const QModelIndex &index, int role = Qt::DisplayRole) const
-        -> QVariant override;
+    ~GridModel() override;
 
-    void setImageVector(const ImageVector &imageVector)
-    {
-        beginResetModel();
-        m_imageVector = imageVector;
-        endResetModel();
-    }
+    [[nodiscard]] int rowCount(const QModelIndex &parent = QModelIndex()) const override;
+    [[nodiscard]] QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
+
+    void setCellList(const GridCellList &cellList);
+    void clearCells();
+
+    void setCellSize(int width, int height);
+    QSize cellSize() const;
 
 private:
-    ImageVector m_imageVector;
+    class GridModelPrivate;
+    QScopedPointer<GridModelPrivate> d_ptr;
 };
-
-#endif // GRIDMODEL_H
