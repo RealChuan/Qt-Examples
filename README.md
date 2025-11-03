@@ -14,7 +14,7 @@
 - **Windows**：用户注册表 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`，系统注册表 `HKEY_LOCAL_MACHINE\...\Run`
 - **macOS**：`~/Library/LaunchAgents/com.{appname}.plist`
 - **Linux**：`~/.config/autostart/{appname}.desktop`
-- <img src="src/AutoStartManager/images/auto_start.png" width="300" alt="开机自启动">
+- <img src="src/AutoStartManager/images/auto_start.png" width="500" alt="开机自启动">
 
 ### [Battery](src/Battery/) - 电池电量显示控件
 
@@ -63,15 +63,7 @@
 - 高度可定制的颜色和文本样式
 - <img src="src/DashBoard/images/dashboard.png" width="800" alt="仪表盘控件截图">
 
-### [DragDrop](src/DragDrop/) - 拖放功能实现
-
-- 自定义拖放功能
-- 基于 Qt 的拖放拼图示例
-
-### [FlowLayout](src/FlowLayout/) - 流式布局容器
-
-- 自适应流式布局，用于动态内容排列
-- <img src="src/FlowLayout/picture/FlowLayout.png" width="90%" alt="流式布局">
+### [FlowLayout](https://doc.qt.io/qt-6/qtwidgets-layouts-flowlayout-example.html) - Qt 官方Flow Layout Example
 
 ### [GridViewModel](src/GridViewModel/) - 自适应网格视图
 

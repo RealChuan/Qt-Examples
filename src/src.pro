@@ -9,8 +9,6 @@ SUBDIRS += \
     CheckableTreeItem \
     Clock \
     DashBoard \
-    DragDrop \
-    FlowLayout \
     GridViewModel \
     HttpClient \
     IconButton \
