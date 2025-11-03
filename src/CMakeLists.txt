@@ -1,6 +1,6 @@
+add_subdirectory(AutoStartManager)
 add_subdirectory(Battery)
 add_subdirectory(BatteryQuick)
-add_subdirectory(Bootstrap)
 add_subdirectory(Bubble)
 # add_subdirectory(Chart)
 add_subdirectory(CheckableTreeItem)

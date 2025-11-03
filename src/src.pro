@@ -2,8 +2,8 @@ TEMPLATE = subdirs
 CONFIG += ordered
 
 SUBDIRS += \
+    AutoStartManager \
     Battery \
-    Bootstrap \
     Bubble \
 #    Chart \
     CheckableTreeItem \

@@ -5,25 +5,24 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    main.cc
+    main.cc \
+    mainwindow.cpp
 
 HEADERS += \
-    bootstrap.hpp
+    autostartmanager.hpp \
+    mainwindow.h
 
 win32 {
-    SOURCES += bootstrap_win.cc
+    SOURCES += autostartmanager_windows.cc
 }
 
 macx {
-    SOURCES += bootstrap_mac.cc
+    SOURCES += autostartmanager_macos.cc
 }
 
 unix:!macx {
-    SOURCES += bootstrap_linux.cc
+    SOURCES += autostartmanager_linux.cc
 }
-
-RESOURCES += \
-    resouce.qrc
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

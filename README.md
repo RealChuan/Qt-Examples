@@ -9,6 +9,13 @@
 
 ## 示例
 
+# [AutoStartManager](src/AutoStartManager/) - 开机自启动
+
+- **Windows**：用户注册表 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`，系统注册表 `HKEY_LOCAL_MACHINE\...\Run`
+- **macOS**：`~/Library/LaunchAgents/com.{appname}.plist`
+- **Linux**：`~/.config/autostart/{appname}.desktop`
+- <img src="src/AutoStartManager/images/auto_start.png" width="300" alt="开机自启动">
+
 ### [Battery](src/Battery/) - 电池电量显示控件
 
 - 支持充电状态显示和闪电符号
@@ -19,37 +26,6 @@
 ### [BatteryQuick](src/BatteryQuick/) - 电池电量显示控件 (QtQuick版本)
 
 - <img src="src/BatteryQuick/images/battery.png" width="300" alt="电池控件截图">
-
-### [Bootstrap](src/Bootstrap/) - 开机自启动管理
-
-跨平台的开机自启动管理模块，支持 Windows、macOS 和 Linux 系统。
-
-#### 核心功能
-
-- **一键设置**：简单 API 控制自启动开关
-- **状态检测**：实时检测自启动状态
-- **权限适配**：自动处理不同平台权限要求
-- **延迟启动**：解决 Linux 图形界面依赖问题
-
-#### 平台实现
-
-##### Windows
-
-- **用户级**：`HKEY_CURRENT_USER\...\Run` (无需管理员权限)
-- **系统级**：`HKEY_LOCAL_MACHINE\...\Run` (需要管理员权限)
-- 通过 `QSettings` 操作注册表
-
-##### macOS
-
-- LaunchAgent 机制
-- plist 文件配置到 `~/Library/LaunchAgents/`
-- 使用 `launchctl` 命令管理
-
-##### Linux
-
-- **推荐**：systemd user service (`~/.config/systemd/user/`)
-- **备选**：Desktop 文件自启动 (`~/.config/autostart/`)
-- 支持延迟启动避免图形界面依赖问题
 
 ### [Bubble](src/Bubble/) - 气泡对话框控件
 
