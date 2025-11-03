@@ -4,9 +4,9 @@ CONFIG += ordered
 SUBDIRS += \
     Battery \
     Bootstrap \
-    BubbleWindow \
+    Bubble \
 #    Chart \
-    CheckBoxStandardItem \
+    CheckableTreeItem \
     Clock \
     DashBoard \
     DragDrop \

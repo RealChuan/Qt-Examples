@@ -7,6 +7,6 @@ set(PROJECT_SOURCES
     mainwindow.cpp
     mainwindow.h)
 
-qt_add_executable(BubbleWindow MANUAL_FINALIZATION ${PROJECT_SOURCES})
-target_link_libraries(BubbleWindow PRIVATE Qt::Widgets)
-qt_finalize_executable(BubbleWindow)
+qt_add_executable(Bubble MANUAL_FINALIZATION ${PROJECT_SOURCES})
+target_link_libraries(Bubble PRIVATE Qt::Widgets)
+qt_finalize_executable(Bubble)

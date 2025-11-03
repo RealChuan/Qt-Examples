@@ -5,12 +5,12 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    checkboxstandarditem.cc \
+    checkabletreeitem.cc \
     main.cc \
     mainwindow.cc
 
 HEADERS += \
-    checkboxstandarditem.hpp \
+    checkabletreeitem.hpp \
     mainwindow.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY

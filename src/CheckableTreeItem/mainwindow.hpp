@@ -1,5 +1,4 @@
-#ifndef MAINWINDOW_HPP
-#define MAINWINDOW_HPP
+#pragma once
 
 #include <QMainWindow>
 
@@ -10,4 +9,3 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 };
-#endif // MAINWINDOW_HPP

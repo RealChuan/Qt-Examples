@@ -89,7 +89,7 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addWidget(statusLabel);
 
     setCentralWidget(mainWidget);
-    resize(650, 400);
+    resize(300, 350);
     setWindowTitle(tr("Battery Widget Example"));
 
     // 连接信号和槽

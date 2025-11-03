@@ -7,10 +7,10 @@ import QtQuick.Controls.Fusion
 ApplicationWindow {
     id: root
 
-    width: 650
-    height: 400
+    width: 320
+    height: 370
     visible: true
-    title: qsTr("Battery Widget Example")
+    title: qsTr("Battery Quick Example")
 
     // 颜色对话框
     ColorDialog {

@@ -216,7 +216,7 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addWidget(controlPanel);
 
     setCentralWidget(mainWidget);
-    resize(1000, 618);
+    resize(800, 500);
     setWindowTitle(tr("DashBoard Widget Example"));
 
     // 初始化颜色按钮
@@ -382,13 +382,13 @@ MainWindow::MainWindow(QWidget *parent)
                 dashboard->setTitleColor(QColor(144, 133, 116));
 
                 // 更新按钮颜色
-                updateColorButton(arcColorButton, QColor(56, 61, 74));
-                updateColorButton(scaleColorButton, QColor(4, 168, 173));
-                updateColorButton(pointerColorButton, QColor(4, 181, 200));
-                updateColorButton(textColorButton, QColor(144, 133, 116));
-                updateColorButton(backgroundColorButton, Qt::transparent);
-                updateColorButton(valueColorButton, QColor(144, 133, 116));
-                updateColorButton(titleColorButton, QColor(144, 133, 116));
+                updateColorButton(arcColorButton, dashboard->arcColor());
+                updateColorButton(scaleColorButton, dashboard->scaleColor());
+                updateColorButton(pointerColorButton, dashboard->pointerColor());
+                updateColorButton(textColorButton, dashboard->textColor());
+                updateColorButton(backgroundColorButton, dashboard->backgroundColor());
+                updateColorButton(valueColorButton, dashboard->valueColor());
+                updateColorButton(titleColorButton, dashboard->titleColor());
             });
 
     connect(darkThemeButton,
@@ -413,13 +413,13 @@ MainWindow::MainWindow(QWidget *parent)
                 dashboard->setTitleColor(QColor(224, 108, 117));
 
                 // 更新按钮颜色
-                updateColorButton(arcColorButton, QColor(40, 44, 52));
-                updateColorButton(scaleColorButton, QColor(97, 175, 239));
-                updateColorButton(pointerColorButton, QColor(198, 120, 221));
-                updateColorButton(textColorButton, QColor(171, 178, 191));
-                updateColorButton(backgroundColorButton, QColor(33, 37, 43));
-                updateColorButton(valueColorButton, QColor(152, 195, 121));
-                updateColorButton(titleColorButton, QColor(224, 108, 117));
+                updateColorButton(arcColorButton, dashboard->arcColor());
+                updateColorButton(scaleColorButton, dashboard->scaleColor());
+                updateColorButton(pointerColorButton, dashboard->pointerColor());
+                updateColorButton(textColorButton, dashboard->textColor());
+                updateColorButton(backgroundColorButton, dashboard->backgroundColor());
+                updateColorButton(valueColorButton, dashboard->valueColor());
+                updateColorButton(titleColorButton, dashboard->titleColor());
             });
 
     connect(modernThemeButton,
@@ -444,13 +444,13 @@ MainWindow::MainWindow(QWidget *parent)
                 dashboard->setTitleColor(QColor(65, 105, 225));
 
                 // 更新按钮颜色
-                updateColorButton(arcColorButton, QColor(70, 130, 180));
-                updateColorButton(scaleColorButton, QColor(100, 149, 237));
-                updateColorButton(pointerColorButton, QColor(220, 20, 60));
-                updateColorButton(textColorButton, QColor(47, 79, 79));
-                updateColorButton(backgroundColorButton, QColor(240, 248, 255));
-                updateColorButton(valueColorButton, QColor(25, 25, 112));
-                updateColorButton(titleColorButton, QColor(65, 105, 225));
+                updateColorButton(arcColorButton, dashboard->arcColor());
+                updateColorButton(scaleColorButton, dashboard->scaleColor());
+                updateColorButton(pointerColorButton, dashboard->pointerColor());
+                updateColorButton(textColorButton, dashboard->textColor());
+                updateColorButton(backgroundColorButton, dashboard->backgroundColor());
+                updateColorButton(valueColorButton, dashboard->valueColor());
+                updateColorButton(titleColorButton, dashboard->titleColor());
             });
 
     // 仪表盘信号连接

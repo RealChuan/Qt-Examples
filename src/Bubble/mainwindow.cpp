@@ -86,8 +86,6 @@ MainWindow::MainWindow(QWidget *parent)
     // 状态显示
     auto *statusLabel = new QLabel(tr("Ready"), this);
     statusLabel->setAlignment(Qt::AlignCenter);
-    statusLabel->setStyleSheet(
-        "QLabel { background: #f0f0f0; padding: 8px; border: 1px solid #ccc; }");
 
     // ========== 创建标签用于显示数值 ==========
 
@@ -166,7 +164,7 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addStretch();
 
     setCentralWidget(mainWidget);
-    resize(800, 450);
+    resize(450, 280);
     setWindowTitle(tr("Bubble Widget Demo"));
 
     // ========== 信号连接 ==========

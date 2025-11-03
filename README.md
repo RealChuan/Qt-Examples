@@ -9,18 +9,16 @@
 
 ## 示例
 
-### [Battery](src/Battery/) - 电池电量指示器小部件
+### [Battery](src/Battery/) - 电池电量显示控件
 
-- 自定义小部件显示电池电量，带有视觉指示器
-- 支持报警和正常状态
-- <img src="src/Battery/picture/AlarmBattery.png" width="200" alt="低电量电池">
-  <img src="src/Battery/picture/HealthyBattery.png" width="200" alt="正常电池">
+- 支持充电状态显示和闪电符号
+- 可设置低电量报警阈值和颜色
+- 支持数值动画过渡效果
+- <img src="src/Battery/images/battery.png" width="300" alt="电池控件截图">
 
-### [BatteryQuick](src/BatteryQuick/) - 电池小部件 (QtQuick)
+### [BatteryQuick](src/BatteryQuick/) - 电池电量显示控件 (QtQuick版本)
 
-- 使用 QtQuick 实现的电池指示器
-
-好的，这是对 `Bootstrap` 示例的详细说明部分，您可以将其替换到 README 中。
+- <img src="src/BatteryQuick/images/battery.png" width="300" alt="电池控件截图">
 
 ### [Bootstrap](src/Bootstrap/) - 开机自启动管理
 
@@ -53,11 +51,12 @@
 - **备选**：Desktop 文件自启动 (`~/.config/autostart/`)
 - 支持延迟启动避免图形界面依赖问题
 
-### [BubbleWindow](src/BubbleWindow/) - 气泡式对话框/工具提示
+### [Bubble](src/Bubble/) - 气泡对话框控件
 
-- 自定义样式气泡对话框
-- 可用作增强型工具提示
-- <img src="src/BubbleWindow/picture/Bubble.png" width="300" alt="气泡对话框">
+- 支持四个方向的箭头定位
+- 包含淡入淡出动画和阴影效果
+- 可自定义边框、背景颜色和圆角
+- <img src="src/Bubble/images/bubble.png" width="600" alt="气泡对话框截图">
 
 ### [Chart](src/Chart/) - 数据可视化图表(QtCharts 模块 Desprecated)
 
@@ -67,21 +66,26 @@
 - <img src="src/Chart/picture/Chart_1.png" width="90%" alt="动态图表">
   <img src="src/Chart/picture/Chart_2.png" width="90%" alt="滚动图表">
 
-### [CheckBoxStandardItem](src/CheckBoxStandardItem/) - 可勾选的树形项
+### [CheckableTreeItem](src/CheckableTreeItem/) - 层次化复选框树
 
-- 带复选框功能的标准项
-- 自动父/子状态同步
-- <img src="src/CheckBoxStandardItem/picture/checkBoxStandardItem.png" width="90%" alt="复选框项">
+- 父子节点复选框状态自动联动
+- 支持三态显示（选中/未选中/部分选中）
+- 包含文件系统树结构演示
+- <img src="src/CheckableTreeItem/images/checkable_tree.png" width="800" alt="层次化复选框树">
 
-### [Clock](src/Clock/) - 模拟时钟小部件
+### [Clock](src/Clock/) - 模拟时钟控件
 
-- 自定义绘制的模拟时钟
-- <img src="src/Clock/picture/Clock.png" width="400" alt="时钟小部件">
+- 支持秒针平滑动画效果
+- 可自定义表盘、刻度、指针颜色
+- 提供多种预设颜色主题
+- <img src="src/Clock/images/clock.png" width="800" alt="时钟控件截图">
 
-### [DashBoard](src/DashBoard/) - 仪表盘指示器
+### [DashBoard](src/DashBoard/) - 仪表盘控件
 
-- 自定义仪表盘指示器小部件
-- <img src="src/DashBoard/picture/DashBoard.png" width="400" alt="仪表盘指示器">
+- 可调节刻度范围和角度区间
+- 支持指针数值动画过渡
+- 高度可定制的颜色和文本样式
+- <img src="src/DashBoard/images/dashboard.png" width="800" alt="仪表盘控件截图">
 
 ### [DragDrop](src/DragDrop/) - 拖放功能实现
 

@@ -219,20 +219,20 @@ MainWindow::MainWindow(QWidget *parent)
              secondColorButton,
              textColorButton]() {
                 // 设置经典主题颜色
-                clock->setBorderColor(Qt::black);
-                clock->setBackgroundColor(Qt::white);
-                clock->setHourColor(Qt::black);
-                clock->setMinuteColor(Qt::darkGray);
-                clock->setSecondColor(Qt::red);
-                clock->setTextColor(Qt::black);
+                clock->setBorderColor(QColor(80, 80, 80));
+                clock->setBackgroundColor(QColor(50, 50, 50));
+                clock->setHourColor(QColor(240, 240, 240));
+                clock->setMinuteColor(QColor(220, 220, 220));
+                clock->setSecondColor(QColor(255, 80, 80));
+                clock->setTextColor(QColor(240, 240, 240));
 
                 // 更新按钮颜色
-                updateColorButton(borderColorButton, Qt::black);
-                updateColorButton(backgroundColorButton, Qt::white);
-                updateColorButton(hourColorButton, Qt::black);
-                updateColorButton(minuteColorButton, Qt::darkGray);
-                updateColorButton(secondColorButton, Qt::red);
-                updateColorButton(textColorButton, Qt::black);
+                updateColorButton(borderColorButton, clock->borderColor());
+                updateColorButton(backgroundColorButton, clock->backgroundColor());
+                updateColorButton(hourColorButton, clock->hourColor());
+                updateColorButton(minuteColorButton, clock->minuteColor());
+                updateColorButton(secondColorButton, clock->secondColor());
+                updateColorButton(textColorButton, clock->textColor());
             });
 
     connect(darkThemeButton,
@@ -255,12 +255,12 @@ MainWindow::MainWindow(QWidget *parent)
                 clock->setTextColor(Qt::white);
 
                 // 更新按钮颜色
-                updateColorButton(borderColorButton, Qt::white);
-                updateColorButton(backgroundColorButton, Qt::darkGray);
-                updateColorButton(hourColorButton, Qt::white);
-                updateColorButton(minuteColorButton, Qt::lightGray);
-                updateColorButton(secondColorButton, Qt::yellow);
-                updateColorButton(textColorButton, Qt::white);
+                updateColorButton(borderColorButton, clock->borderColor());
+                updateColorButton(backgroundColorButton, clock->backgroundColor());
+                updateColorButton(hourColorButton, clock->hourColor());
+                updateColorButton(minuteColorButton, clock->minuteColor());
+                updateColorButton(secondColorButton, clock->secondColor());
+                updateColorButton(textColorButton, clock->textColor());
             });
 
     connect(modernThemeButton,
@@ -283,12 +283,12 @@ MainWindow::MainWindow(QWidget *parent)
                 clock->setTextColor(QColor(47, 79, 79));          // Dark Slate Gray
 
                 // 更新按钮颜色
-                updateColorButton(borderColorButton, QColor(70, 130, 180));
-                updateColorButton(backgroundColorButton, QColor(240, 248, 255));
-                updateColorButton(hourColorButton, QColor(25, 25, 112));
-                updateColorButton(minuteColorButton, QColor(65, 105, 225));
-                updateColorButton(secondColorButton, QColor(220, 20, 60));
-                updateColorButton(textColorButton, QColor(47, 79, 79));
+                updateColorButton(borderColorButton, clock->borderColor());
+                updateColorButton(backgroundColorButton, clock->backgroundColor());
+                updateColorButton(hourColorButton, clock->hourColor());
+                updateColorButton(minuteColorButton, clock->minuteColor());
+                updateColorButton(secondColorButton, clock->secondColor());
+                updateColorButton(textColorButton, clock->textColor());
             });
 
     // 重置颜色
