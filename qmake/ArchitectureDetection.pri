@@ -76,7 +76,7 @@ defineReplace(detect_architecture) {
             for(arch, QMAKE_APPLE_DEVICE_ARCHS) {
                 normalized_arch = $$normalize_arch_name($$arch)
                 is_valid_architecture($$arch) {
-                    valid_arch_count = $$val(valid_arch_count) + 1
+                    valid_arch_count = $$eval(valid_arch_count) + 1
                     supported_archs = $$supported_archs $$normalized_arch
                 } else {
                     message("Warning: Unsupported architecture '$$arch' in QMAKE_APPLE_DEVICE_ARCHS")
