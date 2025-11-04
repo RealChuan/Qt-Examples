@@ -3,7 +3,5 @@ set(PROJECT_SOURCES loadingindicator.cc loadingindicator.hpp main.cc
 
 qt_add_resources(SOURCES resource.qrc)
 
-qt_add_executable(LoadingIndicator MANUAL_FINALIZATION ${PROJECT_SOURCES}
-                  ${SOURCES})
+qt_add_executable(LoadingIndicator ${PROJECT_SOURCES} ${SOURCES})
 target_link_libraries(LoadingIndicator PRIVATE Qt::Widgets)
-qt_finalize_executable(LoadingIndicator)

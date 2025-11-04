@@ -13,6 +13,5 @@ set(PROJECT_SOURCES
     thread.h
     thread.cpp)
 
-qt_add_executable(ReactorServer MANUAL_FINALIZATION ${PROJECT_SOURCES})
+qt_add_executable(ReactorServer ${PROJECT_SOURCES})
 target_link_libraries(ReactorServer PRIVATE Qt::Widgets Qt::Network)
-qt_finalize_executable(ReactorServer)

@@ -7,6 +7,5 @@ set(PROJECT_SOURCES
     thread.cc
     thread.hpp)
 
-qt_add_executable(Thread MANUAL_FINALIZATION ${PROJECT_SOURCES})
+qt_add_executable(Thread ${PROJECT_SOURCES})
 target_link_libraries(Thread PRIVATE Qt::Core Qt::Concurrent)
-qt_finalize_executable(Thread)

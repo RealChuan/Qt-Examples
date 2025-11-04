@@ -7,6 +7,5 @@ set(PROJECT_SOURCES
     mainwindow.cc
     mainwindow.hpp)
 
-qt_add_executable(ImageCarousel MANUAL_FINALIZATION ${PROJECT_SOURCES})
+qt_add_executable(ImageCarousel ${PROJECT_SOURCES})
 target_link_libraries(ImageCarousel PRIVATE Qt::Widgets)
-qt_finalize_executable(ImageCarousel)

@@ -1,6 +1,5 @@
 set(PROJECT_SOURCES main.cpp mainwindow.cpp mainwindow.h slipbutton.h
                     slipbutton.cpp)
 
-qt_add_executable(SlipButton MANUAL_FINALIZATION ${PROJECT_SOURCES})
+qt_add_executable(SlipButton ${PROJECT_SOURCES})
 target_link_libraries(SlipButton PRIVATE Qt::Widgets)
-qt_finalize_executable(SlipButton)

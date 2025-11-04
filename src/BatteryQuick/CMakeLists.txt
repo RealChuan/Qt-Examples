@@ -1,6 +1,5 @@
 qt_add_executable(appBatteryQuick main.cc)
 target_link_libraries(appBatteryQuick PRIVATE Qt::Quick)
-qt_finalize_executable(Battery)
 
 qt_add_qml_module(
   appBatteryQuick

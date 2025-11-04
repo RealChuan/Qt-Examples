@@ -17,6 +17,5 @@ set(PROJECT_SOURCES
     treeview.hpp
     treeview.cc)
 
-qt_add_executable(TreeViewModel MANUAL_FINALIZATION ${PROJECT_SOURCES})
+qt_add_executable(TreeViewModel ${PROJECT_SOURCES})
 target_link_libraries(TreeViewModel PRIVATE Qt::Widgets)
-qt_finalize_executable(TreeViewModel)
