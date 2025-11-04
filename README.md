@@ -41,6 +41,16 @@
 - 基于事件过滤器的自动状态检测
 - 可应用于 QPushButton、QToolButton 等多种按钮类型
 
+### [Carousel3DView](src/Carousel3DView/) - 3D轮播图控件
+
+- 支持立体3D效果的图片轮播展示
+- 可自定义动画持续时间和自动轮播间隔
+- 鼠标悬停暂停自动轮播，移出后恢复
+- 支持点击图片直接跳转到中心位置
+- 响应式设计，适应不同窗口尺寸
+- 提供完整的控制接口和状态反馈
+- <img src="src/Carousel3DView/images/carousel.png" width="650" alt="3D轮播图控件截图">
+
 ### [Chart](src/Chart/) - 数据可视化图表(QtCharts 模块 Desprecated)
 
 - 多种图表类型：面积图、折线图、饼图、柱状图
@@ -82,19 +92,17 @@
 ### [HttpClient](src/HttpClient/) - HTTP 客户端
 
 - 支持GET/POST/PUT/DELETE方法
-- JSON请求和响应自动处理  
-- 文件上传下载带进度回调
+- 文件上传下载，支持断点续传和进度回调
+- JSON请求和响应自动处理
 - 超时控制和SSL证书配置
-- 同步/异步请求支持
-
-### [ImageCarousel](src/ImageCarousel/) - 图片轮播组件
-
-- 自动图片轮播
-- <img src="src/ImageCarousel/picture/ImageCarousel.jpg" width="90%" alt="图片轮播">
+- 集成生命周期安全回调机制
 
 ### [LifecycleCallback](src/LifecycleCallback/) - 生命周期感知的回调包装器
 
-- 支持 QObject、std::shared_ptr 管理的对象以及自由函数，在对象被销毁时自动使回调无效，防止悬空指针和内存安全问题。
+- 自动检测对象销毁，避免悬空回调
+- 支持QObject、std::shared_ptr和自由函数
+- 类型安全，提供便捷创建函数
+- 适用于异步操作和事件处理场景
 
 ### [LoadingIndicator](src/LoadingIndicator/) - 加载动画
 

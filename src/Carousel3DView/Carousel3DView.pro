@@ -5,14 +5,14 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    graphicspixmapitem.cc \
-    imagecarousel.cc \
+    carousel3dview.cc \
+    interactiveimageitem.cc \
     main.cc \
     mainwindow.cc
 
 HEADERS += \
-    graphicspixmapitem.hpp \
-    imagecarousel.hpp \
+    carousel3dview.hpp \
+    interactiveimageitem.hpp \
     mainwindow.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY

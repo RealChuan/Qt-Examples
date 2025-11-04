@@ -67,6 +67,7 @@ void freeFunctionMessage(const QString &message)
     static int callCount = 0;
     callCount++;
     Q_UNUSED(message)
+    Q_UNUSED(callCount)
 }
 
 void freeFunctionJson(const QJsonObject &json)
@@ -74,6 +75,7 @@ void freeFunctionJson(const QJsonObject &json)
     static int callCount = 0;
     callCount++;
     Q_UNUSED(json)
+    Q_UNUSED(callCount)
 }
 
 class TestLifecycleCallback : public QObject

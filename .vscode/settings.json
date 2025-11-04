@@ -5,8 +5,5 @@
     "cmake.generator": "Ninja",
     "cmake.environment": {
         "PATH": "C:\\Qt\\6.10.0\\msvc2022_64\\bin;${env:PATH};"
-    },
-    "files.associations": {
-        "functional": "cpp"
     }
 }

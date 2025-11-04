@@ -6,13 +6,13 @@ SUBDIRS += \
     Battery \
     Bubble \
     ButtonIconStateManager \
+    Carousel3DView \
 #    Chart \
     CheckableTreeItem \
     Clock \
     DashBoard \
     GridViewModel \
     HttpClient \
-    ImageCarousel \
     LifecycleCallback \
     LoadingIndicator \
     LogAsynchronous \
