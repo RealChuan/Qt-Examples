@@ -34,6 +34,13 @@
 - 可自定义边框、背景颜色和圆角
 - <img src="src/Bubble/images/bubble.png" width="600" alt="气泡对话框截图">
 
+### [ButtonIconStateManager](src/ButtonIconStateManager/) - 按钮图标状态管理器
+
+- 智能管理按钮在不同状态下的图标切换
+- 支持正常、悬停、按下、选中四种状态
+- 基于事件过滤器的自动状态检测
+- 可应用于 QPushButton、QToolButton 等多种按钮类型
+
 ### [Chart](src/Chart/) - 数据可视化图表(QtCharts 模块 Desprecated)
 
 - 多种图表类型：面积图、折线图、饼图、柱状图
@@ -65,23 +72,20 @@
 
 ### [FlowLayout](https://doc.qt.io/qt-6/qtwidgets-layouts-flowlayout-example.html) - Qt 官方Flow Layout Example
 
-# [GridViewModel](src/GridViewModel/) - 自适应网格布局
+### [GridViewModel](src/GridViewModel/) - 自适应网格布局
 
 - 基于 Qt Model-View 架构的网格布局组件
 - 支持自适应列数和自定义单元格
 - 内置多选功能和流畅的交互体验
 - <img src="src/GridViewModel/images/grid_view_model.png" width="800" alt="网格布局视图">
 
-### [HttpClient](src/HttpClient/) - HTTP 客户端实现
+### [HttpClient](src/HttpClient/) - HTTP 客户端
 
-- 支持 JSON 请求的 HTTP 客户端
-- 文件上传/下载功能
-- 支持 DELETE 请求
-
-### [IconButton](src/IconButton/) - 状态感知图标按钮
-
-- 具有状态相关图标的按钮
-- 事件过滤器实现
+- 支持GET/POST/PUT/DELETE方法
+- JSON请求和响应自动处理  
+- 文件上传下载带进度回调
+- 超时控制和SSL证书配置
+- 同步/异步请求支持
 
 ### [ImageCarousel](src/ImageCarousel/) - 图片轮播组件
 

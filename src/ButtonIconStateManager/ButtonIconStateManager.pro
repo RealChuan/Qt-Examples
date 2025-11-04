@@ -5,12 +5,12 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    iconfliter.cc \
+    buttoniconstatemanager.cc \
     main.cc \
     mainwindow.cc
 
 HEADERS += \
-    iconfliter.hpp \
+    buttoniconstatemanager.hpp \
     mainwindow.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY

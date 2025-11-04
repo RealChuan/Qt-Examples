@@ -5,13 +5,13 @@ SUBDIRS += \
     AutoStartManager \
     Battery \
     Bubble \
+    ButtonIconStateManager \
 #    Chart \
     CheckableTreeItem \
     Clock \
     DashBoard \
     GridViewModel \
     HttpClient \
-    IconButton \
     ImageCarousel \
     LifecycleCallback \
     LoadingIndicator \

@@ -327,6 +327,7 @@ void HttpClientTest::testCancelRequest()
     bool callbackCalled = false;
 
     HttpClient::JsonCallback callback = ([&](const QJsonObject &json) {
+        Q_UNUSED(json);
         callbackCalled = true;
         loop.quit();
     });
@@ -376,7 +377,11 @@ void HttpClientTest::testLifecycleCallbackSafety()
             : QObject(parent)
         {}
 
-        void callback(const QJsonObject &json) { QFAIL("This should not be called"); }
+        void callback(const QJsonObject &json)
+        {
+            Q_UNUSED(json);
+            QFAIL("This should not be called");
+        }
     };
 
     // 测试QObject生命周期安全
