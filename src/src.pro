@@ -15,8 +15,6 @@ SUBDIRS += \
     HttpClient \
     LifecycleCallback \
     LoadingIndicator \
-    MulClient \
-    MulServer \
     NavigationProgressBar \
     PasswordLineEdit \
     ProgressArc \

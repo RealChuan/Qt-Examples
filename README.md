@@ -142,15 +142,26 @@
 - 控制台输出长度限制，避免过长日志刷屏
 - 内置信号槽机制，确保多线程环境下的数据安全
 
-### [MulClient](src/MulClient/) - 多线程 TCP 客户端
+### [MultithreadedTcpServer](https://doc.qt.io/qt-6/qtcpserver.html#incomingConnection) - 多线程TCP服务器实现机制说明
 
-- 多客户端连接
-- 每个客户端一个线程的架构
+**核心机制**：重写 `QTcpServer::incomingConnection(qintptr socketDescriptor)` 方法
 
-### [MulServer](src/MulServer/) - 多线程 TCP 服务器
+- **线程间传递**：将原生套接字描述符传递给工作线程
+- **线程内创建**：在工作线程中创建 `QTcpSocket` 并调用 `setSocketDescriptor()`
+- **连接管理**：自定义socket需调用 `addPendingConnection()` 加入连接机制
 
-- 每个客户端一个线程的服务器实现
-- 实时 TCP 通信
+```cpp
+// 核心实现模式
+void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
+{
+    // 创建工作线程并传递socketDescriptor
+    ClientThread *thread = new ClientThread(socketDescriptor, this);
+    connect(thread, &ClientThread::finished, thread, &QObject::deleteLater);
+    thread->start();
+}
+```
+
+**参考文档**：[QTcpServer Class - Qt 6 Documentation](https://doc.qt.io/qt-6/qtcpserver.html#incomingConnection)
 
 ### [NavigationProgressBar](src/NavigationProgressBar/) - 导航进度条
 
