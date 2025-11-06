@@ -22,7 +22,6 @@ class DashBoardWidget : public QWidget
     Q_PROPERTY(QColor valueColor READ valueColor WRITE setValueColor)
     Q_PROPERTY(QColor titleColor READ titleColor WRITE setTitleColor)
     Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration)
-    Q_PROPERTY(bool animationEnabled READ isAnimationEnabled WRITE setAnimationEnabled)
 
 public:
     explicit DashBoardWidget(QWidget *parent = nullptr);
@@ -31,8 +30,8 @@ public:
     [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
     // 数值设置
-    void setValue(double value);
     void setValueAnimated(double value);
+    void setValue(double value);
     [[nodiscard]] auto value() const -> double;
 
     void setMinValue(double min);
@@ -88,10 +87,7 @@ public:
     void setAnimationDuration(int duration);
     [[nodiscard]] auto animationDuration() const -> int;
 
-    void setAnimationEnabled(bool enabled);
-    [[nodiscard]] bool isAnimationEnabled() const;
-
-    bool isAnimating() const;
+    [[nodiscard]] bool isAnimating() const;
 
 public slots:
     void increaseValue(double increment = 1.0);

@@ -7,8 +7,8 @@ import QtQuick.Controls.Fusion
 ApplicationWindow {
     id: mainWindow
 
-    width: 320
-    height: 370
+    width: 600
+    height: 450
     visible: true
     title: qsTr("Battery Quick Example")
 
@@ -22,70 +22,87 @@ ApplicationWindow {
         anchors.fill: parent
         anchors.margins: 10
 
-        // 电池和滑动条布局
-        RowLayout {
+        // === 顶部：电池显示区域 ===
+        Item {
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.preferredHeight: 120
 
             Battery {
                 id: battery
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                value: 75
-                alarmValue: 20
-                animationDuration: 500
-                charging: false
-            }
-
-            Slider {
-                id: slider
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                orientation: Qt.Vertical
-                from: 0
-                to: 100
-                value: 75
-
-                onValueChanged: {
-                    if (pressed) {
-                        if (animationCheckbox.checked) {
-                            battery.setValueAnimated(value);
-                        } else {
-                            battery.value = value;
-                        }
-                    }
-                }
+                anchors.centerIn: parent
+                width: 200
+                height: 80
             }
         }
 
-        // 使用GridLayout来组织控件，与C++版本一致
+        // === 控制面板区域 ===
         GridLayout {
             Layout.fillWidth: true
-            columns: 2
-            rowSpacing: 10
+            Layout.fillHeight: true
+            columns: 3
+            rowSpacing: 8
             columnSpacing: 10
 
-            // 第一行：充电状态和动画控制
-            CheckBox {
-                id: chargingCheckbox
-                text: qsTr("Charging state")
-                checked: false
-                Layout.columnSpan: 1
-                onToggled: {
-                    battery.charging = checked;
+            // 第一行：数值控制
+            Label {
+                text: qsTr("Current value:")
+                Layout.alignment: Qt.AlignRight
+            }
+
+            Slider {
+                id: valueSlider
+                Layout.fillWidth: true
+                from: 0
+                to: 100
+                value: battery.value
+                onMoved: {
+                    if (pressed) {
+                        battery.setValue(value);
+                    }
                 }
             }
 
-            CheckBox {
-                id: animationCheckbox
-                text: qsTr("Enable animation")
-                checked: true
-                Layout.columnSpan: 1
+            SpinBox {
+                id: valueSpinBox
+                from: 0
+                to: 100
+                value: battery.value
+                editable: true
+                onValueModified: battery.setValue(value)
             }
 
-            // 第二行：电池颜色选择
+            // 第二行：报警阈值
             Label {
-                text: qsTr("Battery color:")
+                text: qsTr("Alarm threshold:")
+                Layout.alignment: Qt.AlignRight
+            }
+
+            Slider {
+                id: alarmSlider
+                Layout.fillWidth: true
+                from: 0
+                to: 50
+                value: 20
+                onMoved: {
+                    if (pressed) {
+                        battery.alarmValue = value;
+                    }
+                }
+            }
+
+            SpinBox {
+                id: alarmSpinBox
+                from: 0
+                to: 50
+                value: 20
+                editable: true
+                onValueModified: battery.alarmValue = value
+            }
+
+            // 第三行：电源颜色
+            Label {
+                text: qsTr("Power color:")
+                Layout.alignment: Qt.AlignRight
             }
 
             Button {
@@ -111,9 +128,14 @@ ApplicationWindow {
                 }
             }
 
-            // 第三行：报警颜色选择
+            Item {
+                Layout.fillWidth: true
+            }
+
+            // 第四行：报警颜色
             Label {
                 text: qsTr("Alarm color:")
+                Layout.alignment: Qt.AlignRight
             }
 
             Button {
@@ -139,9 +161,14 @@ ApplicationWindow {
                 }
             }
 
-            // 第四行：边框颜色选择
+            Item {
+                Layout.fillWidth: true
+            }
+
+            // 第五行：边框颜色
             Label {
                 text: qsTr("Border color:")
+                Layout.alignment: Qt.AlignRight
             }
 
             Button {
@@ -167,28 +194,15 @@ ApplicationWindow {
                 }
             }
 
-            // 第五行：报警阈值
-            Label {
-                id: alarmLabel
-                text: qsTr("Alarm threshold: 20%")
-            }
-
-            Slider {
-                id: alarmSlider
+            Item {
                 Layout.fillWidth: true
-                from: 0
-                to: 50
-                value: 20
-                onValueChanged: {
-                    battery.alarmValue = value;
-                    alarmLabel.text = qsTr("Alarm threshold: %1%").arg(value);
-                }
             }
 
             // 第六行：动画时长
             Label {
                 id: durationLabel
                 text: qsTr("Animation duration: 500ms")
+                Layout.columnSpan: 1
             }
 
             Slider {
@@ -202,20 +216,34 @@ ApplicationWindow {
                     durationLabel.text = qsTr("Animation duration: %1ms").arg(value);
                 }
             }
-        }
 
-        // 快速操作布局
-        RowLayout {
-            Layout.fillWidth: true
+            Item {
+                Layout.fillWidth: true
+            }
+
+            // 第七行：操作按钮第一组
+            Label {
+                text: qsTr("Actions:")
+                Layout.alignment: Qt.AlignRight
+            }
 
             Button {
-                text: "+10%"
+                text: qsTr("+10")
                 Layout.fillWidth: true
                 onClicked: battery.increaseValue(10)
             }
 
             Button {
-                text: "-10%"
+                text: qsTr("Animate to 50")
+                Layout.fillWidth: true
+                onClicked: battery.setValueAnimated(50)
+            }
+
+            // 第八行：操作按钮第二组
+            Item {} // 占位
+
+            Button {
+                text: qsTr("-10")
                 Layout.fillWidth: true
                 onClicked: battery.decreaseValue(10)
             }
@@ -225,9 +253,22 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 onClicked: battery.reset()
             }
+
+            // 第九行：充电控制
+            Label {
+                text: qsTr("Charging:")
+                Layout.alignment: Qt.AlignRight
+            }
+
+            CheckBox {
+                id: chargingCheckbox
+                checked: battery.charging
+                onToggled: battery.charging = checked
+                Layout.columnSpan: 2
+            }
         }
 
-        // 状态显示
+        // === 状态显示 ===
         Label {
             id: statusLabel
             Layout.fillWidth: true
@@ -237,13 +278,12 @@ ApplicationWindow {
         }
     }
 
-    // 连接电池信号
+    // === 信号连接 ===
     Connections {
         target: battery
 
-        // 报警状态变化
         function onAlarmStateChanged(isAlarm) {
-            if (isAlarm === true) {
+            if (isAlarm) {
                 statusLabel.text = qsTr("Status: Low battery alarm!");
                 statusLabel.color = "red";
                 statusLabel.font.bold = true;
@@ -254,32 +294,44 @@ ApplicationWindow {
             }
         }
 
-        // 充电状态变化
         function onChargingChanged() {
-            if (battery.charging === true) {
+            chargingCheckbox.checked = battery.charging;
+
+            if (battery.charging) {
                 statusLabel.text = qsTr("Status: Charging...");
                 statusLabel.color = "blue";
-            } else {
-                // 当停止充电时，不改变状态文本，保持当前状态
             }
         }
 
-        // 动画开始
         function onAnimationStarted(oldValue, newValue) {
-            statusLabel.text = qsTr("Animation: %1% → %2%").arg(oldValue).arg(newValue);
+            statusLabel.text = qsTr("Animating: %1% → %2%").arg(oldValue).arg(newValue);
+            statusLabel.color = "orange";
+        }
+
+        function onAnimationFinished(value) {
+            statusLabel.text = qsTr("Animation finished: %1%").arg(value);
             statusLabel.color = "green";
         }
 
-        // 动画完成
-        function onAnimationFinished(value) {
-            statusLabel.text = qsTr("The animation is completed: %1%").arg(value);
-            statusLabel.color = "";
+        function onValueIncreased(newValue) {
+            console.log("Value increased to:", newValue);
+        }
+
+        function onValueDecreased(newValue) {
+            console.log("Value decreased to:", newValue);
+        }
+
+        function onValueReset() {
+            console.log("Value reset");
         }
     }
 
-    // 初始化
+    // === 初始化 ===
     Component.onCompleted: {
         battery.value = 75;
+        alarmSlider.value = 20;
+        alarmSpinBox.value = 20;
+        animationDurationSlider.value = 500;
         powerColorButton.palette.buttonText = getContrastTextColor(battery.powerColor);
         borderColorButton.palette.buttonText = getContrastTextColor(battery.borderColor);
         alarmColorButton.palette.buttonText = getContrastTextColor(battery.alarmColor);

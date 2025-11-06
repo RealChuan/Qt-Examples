@@ -76,9 +76,6 @@ MainWindow::MainWindow(QWidget *parent)
     auto *titleColorButton = new QPushButton(this);
 
     // 创建动画控制
-    auto *animationEnabledCheckbox = new QCheckBox(tr("Enable animation"), this);
-    animationEnabledCheckbox->setChecked(true);
-
     auto *animationDurationSlider = new QSlider(Qt::Horizontal, this);
     animationDurationSlider->setRange(0, 2000);
     animationDurationSlider->setValue(500);
@@ -165,7 +162,6 @@ MainWindow::MainWindow(QWidget *parent)
     // 动画控制布局
     auto *animationGroup = new QGroupBox(tr("Animation settings"), this);
     auto *animationLayout = new QVBoxLayout(animationGroup);
-    animationLayout->addWidget(animationEnabledCheckbox);
     animationLayout->addWidget(durationLabel);
     animationLayout->addWidget(animationDurationSlider);
 
@@ -240,22 +236,29 @@ MainWindow::MainWindow(QWidget *parent)
     updateColorButton(valueColorButton, dashboard->valueColor());
     updateColorButton(titleColorButton, dashboard->titleColor());
 
-    // 连接信号和槽
+    // ========== 信号连接 - 防止循环触发 ==========
 
-    // 数值控制
+    // 数值控制 - 防止循环
     connect(valueSlider, &QSlider::valueChanged, this, [dashboard, valueSpinBox](int value) {
+        // 阻塞spinbox信号避免循环
+        valueSpinBox->blockSignals(true);
         dashboard->setValue(value);
         valueSpinBox->setValue(value);
+        valueSpinBox->blockSignals(false);
     });
 
     connect(valueSpinBox,
             QOverload<double>::of(&QDoubleSpinBox::valueChanged),
             this,
             [dashboard, valueSlider](double value) {
+                // 阻塞slider信号避免循环
+                valueSlider->blockSignals(true);
                 dashboard->setValue(value);
                 valueSlider->setValue(static_cast<int>(value));
+                valueSlider->blockSignals(false);
             });
 
+    // 范围控制
     connect(minValueSpinBox,
             QOverload<double>::of(&QDoubleSpinBox::valueChanged),
             dashboard,
@@ -287,7 +290,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(titleEdit, &QLineEdit::textChanged, dashboard, &DashBoardWidget::setTitle);
     connect(unitEdit, &QLineEdit::textChanged, dashboard, &DashBoardWidget::setUnit);
 
-    // 颜色设置 - 改造为类似第一个代码的风格
+    // 颜色设置
     connect(arcColorButton,
             &QPushButton::clicked,
             this,
@@ -380,10 +383,6 @@ MainWindow::MainWindow(QWidget *parent)
             });
 
     // 动画设置
-    connect(animationEnabledCheckbox,
-            &QCheckBox::toggled,
-            dashboard,
-            &DashBoardWidget::setAnimationEnabled);
     connect(animationDurationSlider,
             &QSlider::valueChanged,
             this,
@@ -500,14 +499,21 @@ MainWindow::MainWindow(QWidget *parent)
                 updateColorButton(titleColorButton, dashboard->titleColor());
             });
 
-    // 仪表盘信号连接
+    // 仪表盘信号连接 - 防止循环
     connect(dashboard,
             &DashBoardWidget::valueChanged,
             this,
             [valueLabel, valueSlider, valueSpinBox](double value) {
                 valueLabel->setText(tr("Current value: %1").arg(value, 0, 'f', 2));
+
+                // 阻塞信号避免循环
+                valueSlider->blockSignals(true);
                 valueSlider->setValue(static_cast<int>(value));
+                valueSlider->blockSignals(false);
+
+                valueSpinBox->blockSignals(true);
                 valueSpinBox->setValue(value);
+                valueSpinBox->blockSignals(false);
             });
 
     connect(dashboard, &DashBoardWidget::valueIncreased, this, [](double newValue) {

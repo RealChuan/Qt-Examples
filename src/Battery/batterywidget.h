@@ -33,8 +33,8 @@ public:
     void setAlarmValue(int value);
     [[nodiscard]] auto alarmValue() const -> int;
 
-    void setValue(int value);
     void setValueAnimated(int value);
+    void setValue(int value);
     [[nodiscard]] auto value() const -> int;
 
     // 动画设置
