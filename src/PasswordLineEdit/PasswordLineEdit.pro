@@ -13,10 +13,6 @@ HEADERS += \
     mainwindow.hpp \
     passwordlineedit.hpp
 
-
-RESOURCES += \
-    resources.qrc
-
 win32: LIBS += -luser32
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY

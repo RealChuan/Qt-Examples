@@ -171,12 +171,13 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 - 自适应布局，响应窗口尺寸变化
 - <img src="src/NavigationProgressBar/images/navigation_progress.png" width="800" alt="导航进度条截图">
 
-### [PasswordLineEdit](src/PasswordLineEdit/) - 密码输入字段
+## [PasswordLineEdit](src/PasswordLineEdit/) - 密码输入框控件
 
-- 安全密码输入
-- 切换可见性
-- <img src="src/PasswordLineEdit/picture/HiddenPassword.png" width="200" alt="隐藏密码">
-  <img src="src/PasswordLineEdit/picture/ShowPassword.png" width="200" alt="显示密码">
+- 支持显示/隐藏密码切换功能
+- 自动检测CapsLock状态并显示警告提示
+- 可自定义图标、提示时长和警告功能
+- 提供密码验证和批量操作支持
+- <img src="src/PasswordLineEdit/images/password_line_edit.png" width="600" alt="密码输入框截图">
 
 ### [ProgressArc](src/ProgressArc/) - 圆形进度指示器
 

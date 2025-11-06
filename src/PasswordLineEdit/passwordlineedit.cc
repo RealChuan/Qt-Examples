@@ -1,12 +1,13 @@
 #include "passwordlineedit.hpp"
-
 #include <QtWidgets>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
 #endif
 
-bool isCapsLockOn()
+namespace {
+
+bool checkCapsLockState()
 {
 #ifdef Q_OS_WIN
     return (GetKeyState(VK_CAPITAL) & 0x0001) != 0;
@@ -16,6 +17,8 @@ bool isCapsLockOn()
 #endif
 }
 
+} // namespace
+
 class PasswordLineEdit::PasswordLineEditPrivate
 {
 public:
@@ -23,110 +26,181 @@ public:
         : q_ptr(q)
     {
         toolButton = new QToolButton(q_ptr);
-        toolButton->setIconSize({25, 25});
+        toolButton->setIconSize({20, 20});
         toolButton->setCursor(Qt::PointingHandCursor);
         toolButton->setCheckable(true);
+        toolButton->setToolTip(q_ptr->tr("Show/hide password"));
 
-        hiddenIcon.addFile("://resources/hidden_password.png");
-        viewIcon.addFile("://resources/view_password.png");
+        toolTipLabel = new QLabel(q_ptr->window());
+        toolTipLabel->setWindowFlags(Qt::ToolTip);
+        toolTipLabel->setStyleSheet("QLabel{"
+                                    "background: #FFF3CD;"
+                                    "border: 1px solid #FFEaa8;"
+                                    "padding: 8px;"
+                                    "color: #856404;"
+                                    "font-size: 12px;"
+                                    "border-radius: 4px;"
+                                    "}");
+        toolTipLabel->hide();
 
-        labelPtr.reset(new QLabel);
-        labelPtr->setWindowFlags(labelPtr->windowFlags() | Qt::ToolTip);
-        labelPtr->setStyleSheet("QLabel{background: #909090; padding:5px; color: #E60000;"
-                                "font-size:12px; font-weight:bold;}");
-        labelPtr->hide();
-        timer = new QTimer(q_ptr);
-        timer->setInterval(3000);
-    }
-
-    ~PasswordLineEditPrivate() {}
-
-    void showLabel(const QString &text)
-    {
-        labelPtr->setText(text);
-        labelPtr->show();
-        auto point = q_ptr->mapToGlobal(QPoint(10, -labelPtr->height() / 2));
-        labelPtr->move(point);
-        timer->start();
+        toolTipTimer = new QTimer(q_ptr);
+        toolTipTimer->setSingleShot(true);
     }
 
     PasswordLineEdit *q_ptr;
-
     QToolButton *toolButton;
+    QIcon visibleIcon;
     QIcon hiddenIcon;
-    QIcon viewIcon;
-
-    QScopedPointer<QLabel> labelPtr;
-    QTimer *timer;
+    QLabel *toolTipLabel;
+    QTimer *toolTipTimer;
+    bool capsLockWarning = true;
 };
 
 PasswordLineEdit::PasswordLineEdit(QWidget *parent)
     : QLineEdit(parent)
     , d_ptr(new PasswordLineEditPrivate(this))
 {
+    setupIcons();
     setupUI();
-    buildConnect();
-#ifdef Q_OS_WIN
+    setupConnections();
+
+    // 设置合理的密码验证
+    QRegularExpression regExp(R"([\x20-\x7E]+)"); // 所有可打印ASCII字符
+    setValidator(new QRegularExpressionValidator(regExp, this));
+
+    setAttribute(Qt::WA_InputMethodEnabled, false);
+    setEchoMode(QLineEdit::Password);
+
     installEventFilter(this);
-#endif
-    onShowPassword(false);
 }
 
-PasswordLineEdit::~PasswordLineEdit() {}
+PasswordLineEdit::~PasswordLineEdit() = default;
 
-void PasswordLineEdit::onShowPassword(bool state)
+bool PasswordLineEdit::capsLockWarningEnabled() const
 {
-    if (state) {
-        setEchoMode(Normal);
-        d_ptr->toolButton->setIcon(d_ptr->hiddenIcon);
-    } else {
-        setEchoMode(Password);
-        d_ptr->toolButton->setIcon(d_ptr->viewIcon);
-    }
+    return d_ptr->capsLockWarning;
+}
+
+void PasswordLineEdit::setCapsLockWarningEnabled(bool enabled)
+{
+    d_ptr->capsLockWarning = enabled;
+}
+
+void PasswordLineEdit::setToggleIcons(const QIcon &visibleIcon, const QIcon &hiddenIcon)
+{
+    d_ptr->visibleIcon = visibleIcon;
+    d_ptr->hiddenIcon = hiddenIcon;
+    d_ptr->toolButton->setIcon(hiddenIcon);
+}
+
+void PasswordLineEdit::setToolTipDuration(int milliseconds)
+{
+    d_ptr->toolTipTimer->setInterval(milliseconds);
+}
+
+void PasswordLineEdit::togglePasswordVisibility()
+{
+    d_ptr->toolButton->toggle();
 }
 
 bool PasswordLineEdit::eventFilter(QObject *watched, QEvent *event)
 {
-    if (watched == this) {
-        switch (event->type()) {
-        case QEvent::KeyRelease: {
-            auto *keyEvent = static_cast<QKeyEvent *>(event);
+    if (watched == this && d_ptr->capsLockWarning) {
+        if (event->type() == QEvent::KeyPress) {
+            QKeyEvent *keyEvent = static_cast<QKeyEvent *>(event);
             if (keyEvent->key() == Qt::Key_CapsLock) {
-                d_ptr->showLabel(isCapsLockOn() ? tr("Caps Lock On") : tr("Caps Lock Off"));
+                // 延迟检查，确保状态已更新
+                QTimer::singleShot(0, this, &PasswordLineEdit::showCapsLockWarning);
             }
-        } break;
-        case QEvent::FocusIn:
-            if (isCapsLockOn()) {
-                d_ptr->showLabel(tr("Caps Lock On"));
-            }
-            break;
-        default: break;
         }
     }
     return QLineEdit::eventFilter(watched, event);
 }
 
+void PasswordLineEdit::focusInEvent(QFocusEvent *event)
+{
+    QLineEdit::focusInEvent(event);
+    if (d_ptr->capsLockWarning) {
+        showCapsLockWarning();
+    }
+}
+
+void PasswordLineEdit::focusOutEvent(QFocusEvent *event)
+{
+    QLineEdit::focusOutEvent(event);
+    d_ptr->toolTipLabel->hide();
+}
+
+void PasswordLineEdit::onShowPassword(bool visible)
+{
+    setEchoMode(visible ? QLineEdit::Normal : QLineEdit::Password);
+
+    d_ptr->toolButton->setIcon(visible ? d_ptr->visibleIcon : d_ptr->hiddenIcon);
+    d_ptr->toolButton->setToolTip(visible ? tr("Hide password") : tr("Show password"));
+}
+
+void PasswordLineEdit::hideToolTip()
+{
+    d_ptr->toolTipLabel->hide();
+}
+
 void PasswordLineEdit::setupUI()
 {
-    setStyleSheet("QLineEdit{border:none; border-bottom: 1px solid #DDDDDD;"
-                  "color: #222222; padding-left:10px; font-size:14px; }"
-                  "QToolButton{border: none;}");
-    setPlaceholderText(tr("Please enter the password."));
-    setMinimumSize(200, 30);
+    setPlaceholderText(tr("Enter password"));
+    setMinimumSize(200, 35);
 
-    QRegularExpression regExp("[a-zA-Z0-9!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~]+");
-    setValidator(new QRegularExpressionValidator(regExp, this));
-    setAttribute(Qt::WA_InputMethodEnabled, false);
-
+    // 使用布局确保按钮正确对齐
     auto *layout = new QHBoxLayout(this);
-    layout->setContentsMargins(1, 1, 10, 1);
+    layout->setContentsMargins(1, 1, 1, 1);
     layout->setSpacing(0);
     layout->addStretch();
     layout->addWidget(d_ptr->toolButton);
 }
 
-void PasswordLineEdit::buildConnect()
+void PasswordLineEdit::setupIcons()
 {
-    connect(d_ptr->toolButton, &QToolButton::clicked, this, &PasswordLineEdit::onShowPassword);
-    connect(d_ptr->timer, &QTimer::timeout, d_ptr->labelPtr.data(), &QLabel::hide);
+    // 尝试加载自定义图标，失败则使用系统图标
+    if (!d_ptr->visibleIcon.isNull() && !d_ptr->hiddenIcon.isNull()) {
+        return; // 图标已设置
+    }
+
+    // 使用系统图标作为备选
+    d_ptr->visibleIcon = QApplication::style()->standardIcon(QStyle::SP_FileDialogDetailedView);
+    d_ptr->hiddenIcon = QApplication::style()->standardIcon(QStyle::SP_FileDialogContentsView);
+    d_ptr->toolButton->setIcon(d_ptr->hiddenIcon);
+}
+
+void PasswordLineEdit::setupConnections()
+{
+    connect(d_ptr->toolButton, &QToolButton::toggled, this, &PasswordLineEdit::onShowPassword);
+    connect(d_ptr->toolTipTimer, &QTimer::timeout, this, &PasswordLineEdit::hideToolTip);
+}
+
+void PasswordLineEdit::showCapsLockWarning()
+{
+    if (!checkCapsLockState()) {
+        return;
+    }
+
+    d_ptr->toolTipLabel->setText(tr("Caps Lock is ON"));
+    d_ptr->toolTipLabel->adjustSize();
+
+    // 计算提示位置
+    QPoint globalPos = mapToGlobal(QPoint(0, 0));
+    int x = globalPos.x();
+    int y = globalPos.y() - d_ptr->toolTipLabel->height() - 5;
+
+    // 边界检查
+    QScreen *screen = window()->windowHandle()->screen();
+    QRect screenGeometry = screen->availableGeometry();
+    if (y < screenGeometry.top()) {
+        y = globalPos.y() + height() + 5;
+    }
+    if (x + d_ptr->toolTipLabel->width() > screenGeometry.right()) {
+        x = screenGeometry.right() - d_ptr->toolTipLabel->width();
+    }
+
+    d_ptr->toolTipLabel->move(x, y);
+    d_ptr->toolTipLabel->show();
+    d_ptr->toolTipTimer->start(3000); // 3秒后自动隐藏
 }
