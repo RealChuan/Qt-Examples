@@ -102,7 +102,6 @@ MainWindow::MainWindow(QWidget *parent)
     auto *statusLabel = new QLabel(tr("Button states will be shown here"), this);
     statusLabel->setAlignment(Qt::AlignCenter);
     statusLabel->setFrameStyle(QFrame::Box);
-    statusLabel->setMinimumHeight(40);
 
     // 组装控制面板
     controlLayout->addWidget(disableCheckbox);

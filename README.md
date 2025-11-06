@@ -163,10 +163,13 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 
 **参考文档**：[QTcpServer Class - Qt 6 Documentation](https://doc.qt.io/qt-6/qtcpserver.html#incomingConnection)
 
-### [NavigationProgressBar](src/NavigationProgressBar/) - 导航进度条
+## [NavigationProgressBar](src/NavigationProgressBar/) - 导航进度条控件
 
-- 步骤导航组件
-- <img src="src/NavigationProgressBar/picture/NavigationProgressBar.png" width="90%" alt="导航进度">
+- 支持多步骤流程可视化显示
+- 可自定义颜色主题和字体样式
+- 提供步骤前进、后退和重置功能
+- 自适应布局，响应窗口尺寸变化
+- <img src="src/NavigationProgressBar/images/navigation_progress.png" width="800" alt="导航进度条截图">
 
 ### [PasswordLineEdit](src/PasswordLineEdit/) - 密码输入字段
 

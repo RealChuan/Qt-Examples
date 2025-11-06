@@ -46,6 +46,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 创建状态显示标签
     auto *statusLabel = new QLabel(tr("Status: Normal"), this);
     statusLabel->setAlignment(Qt::AlignCenter);
+    statusLabel->setFrameStyle(QFrame::Box);
 
     // 布局设置
     auto *mainWidget = new QWidget(this);

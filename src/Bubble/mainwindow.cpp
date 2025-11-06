@@ -72,6 +72,7 @@ MainWindow::MainWindow(QWidget *parent)
     // 状态显示
     auto *statusLabel = new QLabel(tr("Ready"), this);
     statusLabel->setAlignment(Qt::AlignCenter);
+    statusLabel->setFrameStyle(QFrame::Box);
 
     // ========== 创建标签用于显示数值 ==========
 

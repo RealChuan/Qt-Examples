@@ -26,6 +26,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Status display
     QLabel *statusLabel = new QLabel("Checking auto-start status...", this);
+    statusLabel->setAlignment(Qt::AlignCenter);
+    statusLabel->setFrameStyle(QFrame::Box);
     statusLabel->setStyleSheet("padding: 10px; background-color: #f0f0f0; border-radius: 5px;");
     mainLayout->addWidget(statusLabel);
 

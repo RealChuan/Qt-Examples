@@ -198,6 +198,8 @@ MainWindow::MainWindow(QWidget *parent)
     progressBar->setVisible(false);
 
     QLabel *statusLabel = new QLabel("Building file tree...", this);
+    statusLabel->setAlignment(Qt::AlignCenter);
+    statusLabel->setFrameStyle(QFrame::Box);
     statusLabel->setVisible(false);
 
     // 创建操作按钮组
