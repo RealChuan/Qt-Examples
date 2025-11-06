@@ -23,7 +23,14 @@ void buildFileSystemTreeImpl(QStandardItemModel *model,
     // 使用单次定时器延迟构建，确保UI先显示
     QMetaObject::invokeMethod(
         qApp,
-        [=]() {
+        [model,
+         treeView,
+         progressBar,
+         statusLabel,
+         countLabel,
+         loadingLabel,
+         countTreeItems,
+         countCheckedItems]() {
             loadingLabel->setText("Building root directory...");
 
             // 获取根目录路径（跨平台）
@@ -249,7 +256,15 @@ MainWindow::MainWindow(QWidget *parent)
     };
 
     // 构建文件系统树的函数
-    auto buildFileSystemTree = [=]() {
+    auto buildFileSystemTree = [model,
+                                treeView,
+                                progressBar,
+                                statusLabel,
+                                countLabel,
+                                mainLayout,
+                                centralWidget,
+                                countTreeItems,
+                                countCheckedItems]() {
         return buildFileSystemTreeImpl(model,
                                        treeView,
                                        progressBar,
@@ -288,20 +303,25 @@ MainWindow::MainWindow(QWidget *parent)
         countLabel->setText("Checked Items: 0");
     });
 
-    connect(expandAllBtn, &QPushButton::clicked, [treeView]() { treeView->expandAll(); });
+    connect(expandAllBtn, &QPushButton::clicked, this, [treeView]() { treeView->expandAll(); });
 
-    connect(collapseAllBtn, &QPushButton::clicked, [treeView]() { treeView->collapseAll(); });
+    connect(collapseAllBtn, &QPushButton::clicked, this, [treeView]() { treeView->collapseAll(); });
 
-    connect(refreshBtn, &QPushButton::clicked, [=]() { buildFileSystemTree(); });
+    connect(refreshBtn, &QPushButton::clicked, this, [buildFileSystemTree]() {
+        buildFileSystemTree();
+    });
 
     // 连接模型数据变化信号来更新计数
-    connect(model, &QStandardItemModel::itemChanged, [=](QStandardItem *item) {
-        Q_UNUSED(item)
-        if (model->rowCount() > 0) {
-            int checkedCount = countCheckedItems(model->item(0));
-            countLabel->setText(QString("Checked Items: %1").arg(checkedCount));
-        }
-    });
+    connect(model,
+            &QStandardItemModel::itemChanged,
+            this,
+            [model, countLabel, countCheckedItems](QStandardItem *item) {
+                Q_UNUSED(item)
+                if (model->rowCount() > 0) {
+                    int checkedCount = countCheckedItems(model->item(0));
+                    countLabel->setText(QString("Checked Items: %1").arg(checkedCount));
+                }
+            });
 }
 
 MainWindow::~MainWindow() {}

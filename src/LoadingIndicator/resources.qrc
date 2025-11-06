@@ -1,5 +1,5 @@
 <RCC>
     <qresource prefix="/gif">
-        <file>resource/loading.gif</file>
+        <file>resources/loading.gif</file>
     </qresource>
 </RCC>

@@ -104,40 +104,43 @@
 - 类型安全，提供便捷创建函数
 - 适用于异步操作和事件处理场景
 
-### [LoadingIndicator](src/LoadingIndicator/) - 加载动画
+### [LoadingIndicator](src/LoadingIndicator/) - 加载指示器控件
 
-- 动画加载指示器
-- 支持 GIF 动画
-- <img src="src/LoadingIndicator/picture/LoadingIndicator.jpg" width="400" alt="加载指示器">
+- 支持多种动画样式：旋转圆点、脉冲圆圈、跳动条形、自定义GIF动画
+- 可自定义文本、颜色、背景和动画速度
+- 提供覆盖模式，轻松实现遮罩加载效果
+- 灵活的参数设置，适应不同场景需求
+- 自动响应窗口尺寸变化，保持居中显示
+- <img src="src/LoadingIndicator/images/loading.png" width="450" alt="加载指示器截图">
 
-### [LogAsynchronous](src/LogAsynchronous/) - 异步日志系统
+### [LoadingIndicatorQuick](src/LoadingIndicatorQuick/) - 加载指示器控件 (QtQuick版本)
 
-一个高性能的异步日志库，采用生产者-消费者模型，专门解决多线程环境下同步写日志的性能瓶颈问题。
+- 基于QtQuick 2的现代化加载指示器组件
+- 支持四种动画样式：旋转圆点、脉冲圆圈、跳动条形、GIF动画
+- 完全声明式API，易于在QML中使用
+- 内置覆盖层功能，可轻松实现全屏加载效果
+- 响应式设计，自动适应容器尺寸
+- 支持实时属性绑定和动画控制
+- <img src="src/LoadingIndicatorQuick/images/loading.png" width="450" alt="QML加载指示器截图">
 
-#### 核心特性
+### [LoadingOverlayQuick](src/LoadingOverlayQuick/) - 加载覆盖层控件 (QtQuick版本)
 
-- **前后端分离**：应用程序线程只将日志添加到内存缓冲区，专用日志线程负责写入磁盘
-- **无阻塞设计**：写日志操作不会阻塞应用程序主线程
-- **双滚动策略**：支持按文件大小（接近1GB）和按时间（每日零点）自动滚动日志文件
+- 基于QtQuick Popup的轻量级加载覆盖层组件
+- 使用系统原生BusyIndicator，确保平台一致性
+- 模态对话框设计，阻止用户交互
+- 支持动态文本设置和颜色自定义
+- 简洁API，提供show/hide方法控制显示
+- 自动居中显示，适配不同屏幕尺寸
+- <img src="src/LoadingOverlayQuick/images/loading.png" width="350" alt="加载覆盖层截图">
 
-#### 文件命名规范
+### [LogAsync](https://github.com/RealChuan/Qt-App/blob/main/src/utils/logasync.h) - 异步日志记录系统
 
-- 格式：`应用名.时间.主机名.进程ID.log[.序号]`
-- 示例：
-  - `MyApp.2023-10-15-14-30-25.HOSTNAME.12345.log` (基础文件)
-  - `MyApp.2023-10-15-14-30-25.HOSTNAME.12345.log.1` (滚动文件)
-
-#### 日志格式
-
-结构化日志格式，包含丰富上下文信息：
-
-```
-2023-10-15 14:30:25.918 28456 [Info] 用户登录成功 File:(main.cpp) Line:(42)
-```
-
-包含时间戳(毫秒)、线程ID、日志级别、消息内容和源代码位置。
-
-此模块与[Qt-App项目中的日志实现](https://github.com/RealChuan/Qt-App/blob/main/src/utils/logasync.h)共享相同设计理念，建议集成时参考两个实现选择最适合的版本。
+- 独立线程处理日志写入，避免阻塞主线程
+- 支持控制台输出、文件记录或两者同时输出
+- 按大小和时间自动滚动日志文件，支持自动清理旧文件
+- 可设置不同日志级别（Debug、Info、Warning、Error、Fatal）
+- 控制台输出长度限制，避免过长日志刷屏
+- 内置信号槽机制，确保多线程环境下的数据安全
 
 ### [MulClient](src/MulClient/) - 多线程 TCP 客户端
 

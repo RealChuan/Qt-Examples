@@ -137,58 +137,64 @@ MainWindow::MainWindow(QWidget *parent)
     // 连接信号和槽
 
     // 禁用状态控制
-    connect(disableCheckbox, &QCheckBox::toggled, this, [=](bool checked) {
-        button1->setDisabled(checked);
-        button2->setDisabled(checked);
-        button3->setDisabled(checked);
-        button4->setDisabled(checked);
-        button5->setDisabled(checked);
+    connect(disableCheckbox,
+            &QCheckBox::toggled,
+            this,
+            [button1, button2, button3, button4, button5, statusLabel](bool checked) {
+                button1->setDisabled(checked);
+                button2->setDisabled(checked);
+                button3->setDisabled(checked);
+                button4->setDisabled(checked);
+                button5->setDisabled(checked);
 
-        if (checked) {
-            statusLabel->setText(tr("All buttons are disabled"));
-        } else {
-            statusLabel->setText(tr("All buttons are enabled"));
-        }
-    });
+                if (checked) {
+                    statusLabel->setText(tr("All buttons are disabled"));
+                } else {
+                    statusLabel->setText(tr("All buttons are enabled"));
+                }
+            });
 
     // 重置按钮状态
-    connect(resetButton, &QPushButton::clicked, this, [=]() {
-        button1->setChecked(false);
-        button2->setChecked(false);
-        button3->setChecked(false);
-        button4->setChecked(false);
-        button5->setChecked(false);
-        statusLabel->setText(tr("All buttons reset to normal state"));
-    });
+    connect(resetButton,
+            &QPushButton::clicked,
+            this,
+            [button1, button2, button3, button4, button5, statusLabel]() {
+                button1->setChecked(false);
+                button2->setChecked(false);
+                button3->setChecked(false);
+                button4->setChecked(false);
+                button5->setChecked(false);
+                statusLabel->setText(tr("All buttons reset to normal state"));
+            });
 
     // 按钮状态变化信号
-    auto updateStatus = [=](const QString &name, bool checked) {
+    auto updateStatus = [statusLabel](const QString &name, bool checked) {
         QString state = checked ? tr("checked") : tr("unchecked");
         statusLabel->setText(tr("%1 is %2").arg(name).arg(state));
     };
 
-    connect(button1, &QPushButton::toggled, this, [=](bool checked) {
+    connect(button1, &QPushButton::toggled, this, [updateStatus](bool checked) {
         updateStatus(tr("Normal PushButton"), checked);
     });
 
-    connect(button2, &QToolButton::toggled, this, [=](bool checked) {
+    connect(button2, &QToolButton::toggled, this, [updateStatus](bool checked) {
         updateStatus(tr("Tool Button"), checked);
     });
 
-    connect(button3, &QPushButton::toggled, this, [=](bool checked) {
+    connect(button3, &QPushButton::toggled, this, [updateStatus](bool checked) {
         updateStatus(tr("Icon Button"), checked);
     });
 
-    connect(button4, &QPushButton::toggled, this, [=](bool checked) {
+    connect(button4, &QPushButton::toggled, this, [updateStatus](bool checked) {
         updateStatus(tr("Radio Style Button 1"), checked);
     });
 
-    connect(button5, &QPushButton::toggled, this, [=](bool checked) {
+    connect(button5, &QPushButton::toggled, this, [updateStatus](bool checked) {
         updateStatus(tr("Radio Style Button 2"), checked);
     });
 
     // 鼠标进入/离开事件的状态显示
-    auto installHoverHandler = [=](QWidget *widget, const QString &name) {
+    auto installHoverHandler = [statusLabel](QWidget *widget, const QString &name) {
         widget->installEventFilter(new HoverEventFilter(widget, name, statusLabel));
     };
 

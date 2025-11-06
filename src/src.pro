@@ -15,7 +15,6 @@ SUBDIRS += \
     HttpClient \
     LifecycleCallback \
     LoadingIndicator \
-    LogAsynchronous \
     MulClient \
     MulServer \
     NavigationProgressBar \

@@ -50,24 +50,10 @@ MainWindow::MainWindow(QWidget *parent)
     textMarginSlider->setRange(0, 30);
     textMarginSlider->setValue(8);
 
-    // 颜色选择
-    auto *penColorButton = new QPushButton(tr("Border Color"), this);
-    auto *penColorLabel = new QLabel(this);
-    penColorLabel->setFixedSize(30, 25);
-    penColorLabel->setStyleSheet(
-        QString("background-color: %1; border: 1px solid gray;").arg(bubble->pen().color().name()));
-
-    auto *brushColorButton = new QPushButton(tr("Background Color"), this);
-    auto *brushColorLabel = new QLabel(this);
-    brushColorLabel->setFixedSize(30, 25);
-    brushColorLabel->setStyleSheet(QString("background-color: %1; border: 1px solid gray;")
-                                       .arg(bubble->brush().color().name()));
-
-    auto *textColorButton = new QPushButton(tr("Text Color"), this);
-    auto *textColorLabel = new QLabel(this);
-    textColorLabel->setFixedSize(30, 25);
-    textColorLabel->setStyleSheet(
-        QString("background-color: %1; border: 1px solid gray;").arg(bubble->textColor().name()));
+    // 颜色选择 - 使用颜色预览按钮（类似第一个代码的风格）
+    auto *penColorButton = new QPushButton(this);
+    auto *brushColorButton = new QPushButton(this);
+    auto *textColorButton = new QPushButton(this);
 
     // 动画控制
     auto *animationCheckbox = new QCheckBox(tr("Enable Animation"), this);
@@ -131,14 +117,14 @@ MainWindow::MainWindow(QWidget *parent)
     styleLayout->addWidget(textMarginSlider, 1, 1);
     styleLayout->addWidget(textMarginLabel, 1, 2);
 
-    styleLayout->addWidget(penColorButton, 0, 3);
-    styleLayout->addWidget(penColorLabel, 0, 4);
+    styleLayout->addWidget(new QLabel(tr("Border Color:"), this), 2, 0);
+    styleLayout->addWidget(penColorButton, 2, 1, 1, 2);
 
-    styleLayout->addWidget(brushColorButton, 1, 3);
-    styleLayout->addWidget(brushColorLabel, 1, 4);
+    styleLayout->addWidget(new QLabel(tr("Background Color:"), this), 3, 0);
+    styleLayout->addWidget(brushColorButton, 3, 1, 1, 2);
 
-    styleLayout->addWidget(textColorButton, 2, 3);
-    styleLayout->addWidget(textColorLabel, 2, 4);
+    styleLayout->addWidget(new QLabel(tr("Text Color:"), this), 4, 0);
+    styleLayout->addWidget(textColorButton, 4, 1, 1, 2);
 
     // 动画设置
     auto *animationLayout = new QHBoxLayout();
@@ -164,8 +150,8 @@ MainWindow::MainWindow(QWidget *parent)
     mainLayout->addStretch();
 
     setCentralWidget(mainWidget);
-    resize(450, 280);
-    setWindowTitle(tr("Bubble Widget Demo"));
+    resize(700, 430);
+    setWindowTitle(tr("Bubble Widget Example"));
 
     // ========== 信号连接 ==========
 
@@ -205,46 +191,79 @@ MainWindow::MainWindow(QWidget *parent)
         bubble->setTextMargin(value);
     });
 
-    // 颜色控制连接
-    auto createColorDialog = [this](const QString &title,
-                                    const QColor &currentColor,
-                                    auto setterFunc,
-                                    QLabel *colorLabel) {
-        QColor color = QColorDialog::getColor(currentColor, this, title);
-        if (color.isValid()) {
-            setterFunc(color);
-            colorLabel->setStyleSheet(
-                QString("background-color: %1; border: 1px solid gray;").arg(color.name()));
-        }
+    // 颜色控制连接 - 改造为类似第一个代码的风格
+    auto updateColorButton = [](QPushButton *button, const QColor &color) {
+        auto colorName = color.name(QColor::HexArgb).toUpper();
+
+        // 计算相对亮度（sRGB颜色空间）
+        auto getRelativeLuminance = [](int r, int g, int b) {
+            auto normalize = [](double x) {
+                return x <= 0.03928 ? x / 12.92 : std::pow((x + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * normalize(r / 255.0) + 0.7152 * normalize(g / 255.0)
+                   + 0.0722 * normalize(b / 255.0);
+        };
+
+        double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
+
+        // 根据WCAG标准选择对比度足够的文字颜色
+        QString textColor = luminance > 0.179 ? "black" : "white";
+
+        button->setStyleSheet(
+            QString("background-color: %1; color: %2; border: 1px solid gray; padding: 5px;")
+                .arg(colorName)
+                .arg(textColor));
+        button->setText(colorName);
     };
 
-    connect(penColorButton, &QPushButton::clicked, [bubble, penColorLabel, createColorDialog]() {
-        createColorDialog(
-            tr("Select Border Color"),
-            bubble->pen().color(),
-            [bubble](const QColor &color) {
-                QPen pen = bubble->pen();
-                pen.setColor(color);
-                bubble->setPen(pen);
-            },
-            penColorLabel);
-    });
+    // 初始化颜色按钮
+    updateColorButton(penColorButton, bubble->pen().color());
+    updateColorButton(brushColorButton, bubble->brush().color());
+    updateColorButton(textColorButton, bubble->textColor());
 
-    connect(brushColorButton, &QPushButton::clicked, [bubble, brushColorLabel, createColorDialog]() {
-        createColorDialog(
-            tr("Select Background Color"),
-            bubble->brush().color(),
-            [bubble](const QColor &color) { bubble->setBrush(QBrush(color)); },
-            brushColorLabel);
-    });
+    // 边框颜色选择
+    connect(penColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, bubble, penColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(bubble->pen().color(),
+                                                      this,
+                                                      tr("Select Border Color"));
+                if (color.isValid()) {
+                    QPen pen = bubble->pen();
+                    pen.setColor(color);
+                    bubble->setPen(pen);
+                    updateColorButton(penColorButton, color);
+                }
+            });
 
-    connect(textColorButton, &QPushButton::clicked, [bubble, textColorLabel, createColorDialog]() {
-        createColorDialog(
-            tr("Select Text Color"),
-            bubble->textColor(),
-            [bubble](const QColor &color) { bubble->setTextColor(color); },
-            textColorLabel);
-    });
+    // 背景颜色选择
+    connect(brushColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, bubble, brushColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(bubble->brush().color(),
+                                                      this,
+                                                      tr("Select Background Color"));
+                if (color.isValid()) {
+                    bubble->setBrush(QBrush(color));
+                    updateColorButton(brushColorButton, color);
+                }
+            });
+
+    // 文本颜色选择
+    connect(textColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, bubble, textColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(bubble->textColor(),
+                                                      this,
+                                                      tr("Select Text Color"));
+                if (color.isValid()) {
+                    bubble->setTextColor(color);
+                    updateColorButton(textColorButton, color);
+                }
+            });
 
     // 动画控制连接
     connect(animationDurationSlider,

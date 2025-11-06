@@ -9,23 +9,12 @@ MainWindow::MainWindow(QWidget *parent)
     // 创建时钟控件
     auto *clock = new ClockWidget(this);
 
-    // 创建颜色选择控件 - 使用颜色预览按钮
-    auto *borderColorLabel = new QLabel(tr("Border color:"), this);
+    // 创建颜色选择控件 - 使用颜色预览按钮（类似第一个代码的风格）
     auto *borderColorButton = new QPushButton(this);
-
-    auto *backgroundColorLabel = new QLabel(tr("Background color:"), this);
     auto *backgroundColorButton = new QPushButton(this);
-
-    auto *hourColorLabel = new QLabel(tr("Hour hand color:"), this);
     auto *hourColorButton = new QPushButton(this);
-
-    auto *minuteColorLabel = new QLabel(tr("Minute hand color:"), this);
     auto *minuteColorButton = new QPushButton(this);
-
-    auto *secondColorLabel = new QLabel(tr("Second hand color:"), this);
     auto *secondColorButton = new QPushButton(this);
-
-    auto *textColorLabel = new QLabel(tr("Text color:"), this);
     auto *textColorButton = new QPushButton(this);
 
     // 创建动画控制
@@ -72,20 +61,19 @@ MainWindow::MainWindow(QWidget *parent)
     auto *colorGroup = new QGroupBox(tr("Color settings"), this);
     auto *colorLayout = new QGridLayout(colorGroup);
 
-    // 第一列颜色设置
-    colorLayout->addWidget(borderColorLabel, 0, 0);
+    // 颜色设置网格布局
+    colorLayout->addWidget(new QLabel(tr("Border color:"), this), 0, 0);
     colorLayout->addWidget(borderColorButton, 0, 1);
-    colorLayout->addWidget(backgroundColorLabel, 1, 0);
+    colorLayout->addWidget(new QLabel(tr("Background color:"), this), 1, 0);
     colorLayout->addWidget(backgroundColorButton, 1, 1);
-    colorLayout->addWidget(hourColorLabel, 2, 0);
+    colorLayout->addWidget(new QLabel(tr("Hour hand color:"), this), 2, 0);
     colorLayout->addWidget(hourColorButton, 2, 1);
 
-    // 第二列颜色设置
-    colorLayout->addWidget(minuteColorLabel, 0, 2);
+    colorLayout->addWidget(new QLabel(tr("Minute hand color:"), this), 0, 2);
     colorLayout->addWidget(minuteColorButton, 0, 3);
-    colorLayout->addWidget(secondColorLabel, 1, 2);
+    colorLayout->addWidget(new QLabel(tr("Second hand color:"), this), 1, 2);
     colorLayout->addWidget(secondColorButton, 1, 3);
-    colorLayout->addWidget(textColorLabel, 2, 2);
+    colorLayout->addWidget(new QLabel(tr("Text color:"), this), 2, 2);
     colorLayout->addWidget(textColorButton, 2, 3);
 
     // 快速主题布局
@@ -127,10 +115,29 @@ MainWindow::MainWindow(QWidget *parent)
     resize(800, 500);
     setWindowTitle(tr("Clock Widget Example"));
 
-    // 初始化颜色按钮
+    // 初始化颜色按钮 - 类似第一个代码的风格
     auto updateColorButton = [](QPushButton *button, const QColor &color) {
+        auto colorName = color.name(QColor::HexArgb).toUpper();
+
+        // 计算相对亮度（sRGB颜色空间）
+        auto getRelativeLuminance = [](int r, int g, int b) {
+            auto normalize = [](double x) {
+                return x <= 0.03928 ? x / 12.92 : std::pow((x + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * normalize(r / 255.0) + 0.7152 * normalize(g / 255.0)
+                   + 0.0722 * normalize(b / 255.0);
+        };
+
+        double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
+
+        // 根据WCAG标准选择对比度足够的文字颜色
+        QString textColor = luminance > 0.179 ? "black" : "white";
+
         button->setStyleSheet(
-            QString("background-color: %1; border: 1px solid gray;").arg(color.name()));
+            QString("background-color: %1; color: %2; border: 1px solid gray; padding: 5px;")
+                .arg(colorName)
+                .arg(textColor));
+        button->setText(colorName);
     };
 
     // 设置初始颜色
@@ -143,51 +150,84 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 连接信号和槽
 
-    // 颜色设置 - 使用统一的颜色选择处理
-    auto setupColorConnection = [this, updateColorButton](QPushButton *button,
-                                                          std::function<void(const QColor &)> setter,
-                                                          std::function<QColor()> getter) {
-        connect(button,
-                &QPushButton::clicked,
-                this,
-                [this, button, setter, getter, updateColorButton]() {
-                    QColor color = QColorDialog::getColor(getter(), this, tr("Select color"));
-                    if (color.isValid()) {
-                        setter(color);
-                        updateColorButton(button, color);
-                    }
-                });
-    };
+    // 颜色设置 - 改造为类似第一个代码的简洁风格
+    connect(borderColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, clock, borderColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(clock->borderColor(),
+                                                      this,
+                                                      tr("Select border color"));
+                if (color.isValid()) {
+                    clock->setBorderColor(color);
+                    updateColorButton(borderColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        borderColorButton,
-        [clock](const QColor &color) { clock->setBorderColor(color); },
-        [clock]() { return clock->borderColor(); });
+    connect(backgroundColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, clock, backgroundColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(clock->backgroundColor(),
+                                                      this,
+                                                      tr("Select background color"));
+                if (color.isValid()) {
+                    clock->setBackgroundColor(color);
+                    updateColorButton(backgroundColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        backgroundColorButton,
-        [clock](const QColor &color) { clock->setBackgroundColor(color); },
-        [clock]() { return clock->backgroundColor(); });
+    connect(hourColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, clock, hourColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(clock->hourColor(),
+                                                      this,
+                                                      tr("Select hour hand color"));
+                if (color.isValid()) {
+                    clock->setHourColor(color);
+                    updateColorButton(hourColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        hourColorButton,
-        [clock](const QColor &color) { clock->setHourColor(color); },
-        [clock]() { return clock->hourColor(); });
+    connect(minuteColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, clock, minuteColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(clock->minuteColor(),
+                                                      this,
+                                                      tr("Select minute hand color"));
+                if (color.isValid()) {
+                    clock->setMinuteColor(color);
+                    updateColorButton(minuteColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        minuteColorButton,
-        [clock](const QColor &color) { clock->setMinuteColor(color); },
-        [clock]() { return clock->minuteColor(); });
+    connect(secondColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, clock, secondColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(clock->secondColor(),
+                                                      this,
+                                                      tr("Select second hand color"));
+                if (color.isValid()) {
+                    clock->setSecondColor(color);
+                    updateColorButton(secondColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        secondColorButton,
-        [clock](const QColor &color) { clock->setSecondColor(color); },
-        [clock]() { return clock->secondColor(); });
-
-    setupColorConnection(
-        textColorButton,
-        [clock](const QColor &color) { clock->setTextColor(color); },
-        [clock]() { return clock->textColor(); });
+    connect(textColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, clock, textColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(clock->textColor(),
+                                                      this,
+                                                      tr("Select text color"));
+                if (color.isValid()) {
+                    clock->setTextColor(color);
+                    updateColorButton(textColorButton, color);
+                }
+            });
 
     // 动画设置
     connect(smoothAnimationCheckbox, &QCheckBox::toggled, clock, &ClockWidget::setSmoothAnimation);

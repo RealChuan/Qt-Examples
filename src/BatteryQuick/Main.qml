@@ -5,7 +5,7 @@ import QtQuick.Dialogs
 import QtQuick.Controls.Fusion
 
 ApplicationWindow {
-    id: root
+    id: mainWindow
 
     width: 320
     height: 370
@@ -91,12 +91,13 @@ ApplicationWindow {
             Button {
                 id: powerColorButton
                 Layout.fillWidth: true
+                text: battery.powerColor.toString().toUpperCase()
                 onClicked: {
                     colorDialog.selectedColor = battery.powerColor;
                     colorDialog.accepted.connect(function () {
                         if (colorDialog.selectedColor) {
                             battery.powerColor = colorDialog.selectedColor;
-                            updateColorButton(powerColorButton, colorDialog.selectedColor);
+                            powerColorButton.palette.buttonText = getContrastTextColor(battery.powerColor);
                         }
                         colorDialog.accepted.disconnect(arguments.callee);
                     });
@@ -108,8 +109,6 @@ ApplicationWindow {
                     border.color: "gray"
                     border.width: 1
                 }
-
-                contentItem: Item {} // 隐藏默认文本
             }
 
             // 第三行：报警颜色选择
@@ -120,12 +119,13 @@ ApplicationWindow {
             Button {
                 id: alarmColorButton
                 Layout.fillWidth: true
+                text: battery.alarmColor.toString().toUpperCase()
                 onClicked: {
                     colorDialog.selectedColor = battery.alarmColor;
                     colorDialog.accepted.connect(function () {
                         if (colorDialog.selectedColor) {
                             battery.alarmColor = colorDialog.selectedColor;
-                            updateColorButton(alarmColorButton, colorDialog.selectedColor);
+                            alarmColorButton.palette.buttonText = getContrastTextColor(battery.alarmColor);
                         }
                         colorDialog.accepted.disconnect(arguments.callee);
                     });
@@ -137,8 +137,6 @@ ApplicationWindow {
                     border.color: "gray"
                     border.width: 1
                 }
-
-                contentItem: Item {} // 隐藏默认文本
             }
 
             // 第四行：边框颜色选择
@@ -149,12 +147,13 @@ ApplicationWindow {
             Button {
                 id: borderColorButton
                 Layout.fillWidth: true
+                text: battery.borderColor.toString().toUpperCase()
                 onClicked: {
                     colorDialog.selectedColor = battery.borderColor;
                     colorDialog.accepted.connect(function () {
                         if (colorDialog.selectedColor) {
                             battery.borderColor = colorDialog.selectedColor;
-                            updateColorButton(borderColorButton, colorDialog.selectedColor);
+                            borderColorButton.palette.buttonText = getContrastTextColor(battery.borderColor);
                         }
                         colorDialog.accepted.disconnect(arguments.callee);
                     });
@@ -166,8 +165,6 @@ ApplicationWindow {
                     border.color: "gray"
                     border.width: 1
                 }
-
-                contentItem: Item {} // 隐藏默认文本
             }
 
             // 第五行：报警阈值
@@ -240,11 +237,6 @@ ApplicationWindow {
         }
     }
 
-    // 更新颜色按钮预览的函数
-    function updateColorButton(button, color) {
-        // 颜色已经在background中自动更新，因为绑定了电池的颜色属性
-    }
-
     // 连接电池信号
     Connections {
         target: battery
@@ -287,8 +279,23 @@ ApplicationWindow {
 
     // 初始化
     Component.onCompleted: {
-        // 设置初始值
         battery.value = 75;
-        // 初始化颜色按钮预览（通过绑定自动处理）
+        powerColorButton.palette.buttonText = getContrastTextColor(battery.powerColor);
+        borderColorButton.palette.buttonText = getContrastTextColor(battery.borderColor);
+        alarmColorButton.palette.buttonText = getContrastTextColor(battery.alarmColor);
+    }
+
+    // 计算字体颜色的函数（WCAG标准）
+    function getContrastTextColor(bgColor) {
+        function normalize(x) {
+            return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+        }
+
+        function getRelativeLuminance(r, g, b) {
+            return 0.2126 * normalize(r / 255.0) + 0.7152 * normalize(g / 255.0) + 0.0722 * normalize(b / 255.0);
+        }
+
+        var luminance = getRelativeLuminance(bgColor.r * 255, bgColor.g * 255, bgColor.b * 255);
+        return luminance > 0.179 ? "black" : "white";
     }
 }

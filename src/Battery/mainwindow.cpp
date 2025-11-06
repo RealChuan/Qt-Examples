@@ -26,13 +26,8 @@ MainWindow::MainWindow(QWidget *parent)
     auto *alarmLabel = new QLabel(tr("Alarm threshold: 20%"), this);
 
     // 创建颜色选择控件 - 使用颜色预览按钮
-    auto *powerColorLabel = new QLabel(tr("Battery color:"), this);
     auto *powerColorButton = new QPushButton(this);
-
-    auto *alarmColorLabel = new QLabel(tr("Alarm color:"), this);
     auto *alarmColorButton = new QPushButton(this);
-
-    auto *borderColorLabel = new QLabel(tr("Border color:"), this);
     auto *borderColorButton = new QPushButton(this);
 
     // 创建动画控制
@@ -65,11 +60,11 @@ MainWindow::MainWindow(QWidget *parent)
     auto *gridLayout = new QGridLayout;
     gridLayout->addWidget(chargingCheckbox, 0, 0);
     gridLayout->addWidget(animationCheckbox, 0, 1);
-    gridLayout->addWidget(powerColorLabel, 1, 0);
+    gridLayout->addWidget(new QLabel(tr("Battery color:"), this), 1, 0);
     gridLayout->addWidget(powerColorButton, 1, 1);
-    gridLayout->addWidget(alarmColorLabel, 2, 0);
+    gridLayout->addWidget(new QLabel(tr("Alarm color:"), this), 2, 0);
     gridLayout->addWidget(alarmColorButton, 2, 1);
-    gridLayout->addWidget(borderColorLabel, 3, 0);
+    gridLayout->addWidget(new QLabel(tr("Border color:"), this), 3, 0);
     gridLayout->addWidget(borderColorButton, 3, 1);
     gridLayout->addWidget(alarmLabel, 4, 0);
     gridLayout->addWidget(alarmSlider, 4, 1);
@@ -123,8 +118,27 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 颜色选择 - 更新按钮颜色预览
     auto updateColorButton = [](QPushButton *button, const QColor &color) {
+        auto colorName = color.name(QColor::HexArgb).toUpper();
+
+        // 计算相对亮度（sRGB颜色空间）
+        auto getRelativeLuminance = [](int r, int g, int b) {
+            auto normalize = [](double x) {
+                return x <= 0.03928 ? x / 12.92 : std::pow((x + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * normalize(r / 255.0) + 0.7152 * normalize(g / 255.0)
+                   + 0.0722 * normalize(b / 255.0);
+        };
+
+        double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
+
+        // 根据WCAG标准选择对比度足够的文字颜色
+        QString textColor = luminance > 0.179 ? "black" : "white";
+
         button->setStyleSheet(
-            QString("background-color: %1; border: 1px solid gray;").arg(color.name()));
+            QString("background-color: %1; color: %2; border: 1px solid gray; padding: 5px;")
+                .arg(colorName)
+                .arg(textColor));
+        button->setText(colorName);
     };
 
     updateColorButton(powerColorButton, battery->powerColor());

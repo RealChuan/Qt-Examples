@@ -66,26 +66,13 @@ MainWindow::MainWindow(QWidget *parent)
     auto *unitLabel = new QLabel(tr("Unit:"), this);
     auto *unitEdit = new QLineEdit("unit", this);
 
-    // 创建颜色选择控件
-    auto *arcColorLabel = new QLabel(tr("Arc color:"), this);
+    // 创建颜色选择控件 - 使用颜色预览按钮
     auto *arcColorButton = new QPushButton(this);
-
-    auto *scaleColorLabel = new QLabel(tr("Scale color:"), this);
     auto *scaleColorButton = new QPushButton(this);
-
-    auto *pointerColorLabel = new QLabel(tr("Pointer color:"), this);
     auto *pointerColorButton = new QPushButton(this);
-
-    auto *textColorLabel = new QLabel(tr("Text color:"), this);
     auto *textColorButton = new QPushButton(this);
-
-    auto *backgroundColorLabel = new QLabel(tr("Background color:"), this);
     auto *backgroundColorButton = new QPushButton(this);
-
-    auto *valueColorLabel = new QLabel(tr("Value color:"), this);
     auto *valueColorButton = new QPushButton(this);
-
-    auto *titleColorLabel = new QLabel(tr("Title color:"), this);
     auto *titleColorButton = new QPushButton(this);
 
     // 创建动画控制
@@ -159,20 +146,20 @@ MainWindow::MainWindow(QWidget *parent)
     auto *colorGroup = new QGroupBox(tr("Color settings"), this);
     auto *colorLayout = new QGridLayout(colorGroup);
 
-    colorLayout->addWidget(arcColorLabel, 0, 0);
+    colorLayout->addWidget(new QLabel(tr("Arc color:"), this), 0, 0);
     colorLayout->addWidget(arcColorButton, 0, 1);
-    colorLayout->addWidget(scaleColorLabel, 1, 0);
+    colorLayout->addWidget(new QLabel(tr("Scale color:"), this), 1, 0);
     colorLayout->addWidget(scaleColorButton, 1, 1);
-    colorLayout->addWidget(pointerColorLabel, 2, 0);
+    colorLayout->addWidget(new QLabel(tr("Pointer color:"), this), 2, 0);
     colorLayout->addWidget(pointerColorButton, 2, 1);
 
-    colorLayout->addWidget(textColorLabel, 0, 2);
+    colorLayout->addWidget(new QLabel(tr("Text color:"), this), 0, 2);
     colorLayout->addWidget(textColorButton, 0, 3);
-    colorLayout->addWidget(backgroundColorLabel, 1, 2);
+    colorLayout->addWidget(new QLabel(tr("Background color:"), this), 1, 2);
     colorLayout->addWidget(backgroundColorButton, 1, 3);
-    colorLayout->addWidget(valueColorLabel, 2, 2);
+    colorLayout->addWidget(new QLabel(tr("Value color:"), this), 2, 2);
     colorLayout->addWidget(valueColorButton, 2, 3);
-    colorLayout->addWidget(titleColorLabel, 3, 2);
+    colorLayout->addWidget(new QLabel(tr("Title color:"), this), 3, 2);
     colorLayout->addWidget(titleColorButton, 3, 3);
 
     // 动画控制布局
@@ -197,9 +184,7 @@ MainWindow::MainWindow(QWidget *parent)
     themeLayout->addWidget(modernThemeButton);
 
     // 组装控制面板
-    // controlLayout->addWidget(valueGroup);
     controlLayout->addWidget(geometryGroup);
-    // controlLayout->addWidget(textGroup);
     controlLayout->addWidget(colorGroup);
     controlLayout->addWidget(animationGroup);
     controlLayout->addWidget(actionsGroup);
@@ -219,13 +204,34 @@ MainWindow::MainWindow(QWidget *parent)
     resize(800, 500);
     setWindowTitle(tr("DashBoard Widget Example"));
 
-    // 初始化颜色按钮
+    // ========== 颜色设置部分改造 ==========
+
+    // 统一的颜色按钮更新函数
     auto updateColorButton = [](QPushButton *button, const QColor &color) {
+        auto colorName = color.name(QColor::HexArgb).toUpper();
+
+        // 计算相对亮度（sRGB颜色空间）
+        auto getRelativeLuminance = [](int r, int g, int b) {
+            auto normalize = [](double x) {
+                return x <= 0.03928 ? x / 12.92 : std::pow((x + 0.055) / 1.055, 2.4);
+            };
+            return 0.2126 * normalize(r / 255.0) + 0.7152 * normalize(g / 255.0)
+                   + 0.0722 * normalize(b / 255.0);
+        };
+
+        double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
+
+        // 根据WCAG标准选择对比度足够的文字颜色
+        QString textColor = luminance > 0.179 ? "black" : "white";
+
         button->setStyleSheet(
-            QString("background-color: %1; border: 1px solid gray;").arg(color.name()));
+            QString("background-color: %1; color: %2; border: 1px solid gray; padding: 5px;")
+                .arg(colorName)
+                .arg(textColor));
+        button->setText(colorName);
     };
 
-    // 设置初始颜色
+    // 初始化颜色按钮
     updateColorButton(arcColorButton, dashboard->arcColor());
     updateColorButton(scaleColorButton, dashboard->scaleColor());
     updateColorButton(pointerColorButton, dashboard->pointerColor());
@@ -281,56 +287,97 @@ MainWindow::MainWindow(QWidget *parent)
     connect(titleEdit, &QLineEdit::textChanged, dashboard, &DashBoardWidget::setTitle);
     connect(unitEdit, &QLineEdit::textChanged, dashboard, &DashBoardWidget::setUnit);
 
-    // 颜色设置
-    auto setupColorConnection = [this, updateColorButton](QPushButton *button,
-                                                          std::function<void(const QColor &)> setter,
-                                                          std::function<QColor()> getter) {
-        connect(button,
-                &QPushButton::clicked,
-                this,
-                [this, button, setter, getter, updateColorButton]() {
-                    QColor color = QColorDialog::getColor(getter(), this, tr("Select color"));
-                    if (color.isValid()) {
-                        setter(color);
-                        updateColorButton(button, color);
-                    }
-                });
-    };
+    // 颜色设置 - 改造为类似第一个代码的风格
+    connect(arcColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, dashboard, arcColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(dashboard->arcColor(),
+                                                      this,
+                                                      tr("Select Arc Color"));
+                if (color.isValid()) {
+                    dashboard->setArcColor(color);
+                    updateColorButton(arcColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        arcColorButton,
-        [dashboard](const QColor &color) { dashboard->setArcColor(color); },
-        [dashboard]() { return dashboard->arcColor(); });
+    connect(scaleColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, dashboard, scaleColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(dashboard->scaleColor(),
+                                                      this,
+                                                      tr("Select Scale Color"));
+                if (color.isValid()) {
+                    dashboard->setScaleColor(color);
+                    updateColorButton(scaleColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        scaleColorButton,
-        [dashboard](const QColor &color) { dashboard->setScaleColor(color); },
-        [dashboard]() { return dashboard->scaleColor(); });
+    connect(pointerColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, dashboard, pointerColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(dashboard->pointerColor(),
+                                                      this,
+                                                      tr("Select Pointer Color"));
+                if (color.isValid()) {
+                    dashboard->setPointerColor(color);
+                    updateColorButton(pointerColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        pointerColorButton,
-        [dashboard](const QColor &color) { dashboard->setPointerColor(color); },
-        [dashboard]() { return dashboard->pointerColor(); });
+    connect(textColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, dashboard, textColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(dashboard->textColor(),
+                                                      this,
+                                                      tr("Select Text Color"));
+                if (color.isValid()) {
+                    dashboard->setTextColor(color);
+                    updateColorButton(textColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        textColorButton,
-        [dashboard](const QColor &color) { dashboard->setTextColor(color); },
-        [dashboard]() { return dashboard->textColor(); });
+    connect(backgroundColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, dashboard, backgroundColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(dashboard->backgroundColor(),
+                                                      this,
+                                                      tr("Select Background Color"));
+                if (color.isValid()) {
+                    dashboard->setBackgroundColor(color);
+                    updateColorButton(backgroundColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        backgroundColorButton,
-        [dashboard](const QColor &color) { dashboard->setBackgroundColor(color); },
-        [dashboard]() { return dashboard->backgroundColor(); });
+    connect(valueColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, dashboard, valueColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(dashboard->valueColor(),
+                                                      this,
+                                                      tr("Select Value Color"));
+                if (color.isValid()) {
+                    dashboard->setValueColor(color);
+                    updateColorButton(valueColorButton, color);
+                }
+            });
 
-    setupColorConnection(
-        valueColorButton,
-        [dashboard](const QColor &color) { dashboard->setValueColor(color); },
-        [dashboard]() { return dashboard->valueColor(); });
-
-    setupColorConnection(
-        titleColorButton,
-        [dashboard](const QColor &color) { dashboard->setTitleColor(color); },
-        [dashboard]() { return dashboard->titleColor(); });
+    connect(titleColorButton,
+            &QPushButton::clicked,
+            this,
+            [this, dashboard, titleColorButton, updateColorButton]() {
+                QColor color = QColorDialog::getColor(dashboard->titleColor(),
+                                                      this,
+                                                      tr("Select Title Color"));
+                if (color.isValid()) {
+                    dashboard->setTitleColor(color);
+                    updateColorButton(titleColorButton, color);
+                }
+            });
 
     // 动画设置
     connect(animationEnabledCheckbox,

@@ -14,7 +14,7 @@ HEADERS += \
     mainwindow.hpp
 
 RESOURCES += \
-    resource.qrc
+    resources.qrc
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 
