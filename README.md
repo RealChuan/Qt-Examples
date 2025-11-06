@@ -169,6 +169,10 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 
 - <img src="src/NavigationProgressBarQuick/images/navigation_progress.png" width="800" alt="导航进度条截图">
 
+### [PasswordInputQuick](src/PasswordInputQuick/) - 密码输入框控件(QtQuick版本)
+
+- <img src="src/PasswordInputQuick/images/password_input.png" width="600" alt="密码输入框截图">
+
 ### [PasswordLineEdit](src/PasswordLineEdit/) - 密码输入框控件
 
 - 支持显示/隐藏密码切换功能
