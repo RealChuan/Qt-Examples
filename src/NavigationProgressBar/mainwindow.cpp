@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     progressBar->setStep(2); // 设置当前步骤为第3步
 
     // 创建步骤控制滑动条
-    auto *stepSlider = new QSlider(Qt::Horizontal, this);
+    auto *stepSlider = new QSlider(Qt::Vertical, this);
     stepSlider->setRange(0, progressBar->maxStep());
     stepSlider->setValue(progressBar->step());
     auto *stepLabel = new QLabel(tr("Current Step: %1").arg(progressBar->step()), this);
@@ -54,10 +54,10 @@ MainWindow::MainWindow(QWidget *parent)
     // 进度条和步骤控制布局
     auto *progressLayout = new QHBoxLayout();
     progressLayout->addWidget(progressBar, 1);
+    progressLayout->addWidget(stepSlider);
 
     auto *stepControlsLayout = new QVBoxLayout();
     stepControlsLayout->addWidget(stepLabel);
-    stepControlsLayout->addWidget(stepSlider);
     stepControlsLayout->addWidget(prevButton);
     stepControlsLayout->addWidget(nextButton);
     stepControlsLayout->addWidget(resetButton);

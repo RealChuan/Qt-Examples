@@ -115,12 +115,6 @@
 
 ### [LoadingIndicatorQuick](src/LoadingIndicatorQuick/) - 加载指示器控件 (QtQuick版本)
 
-- 基于QtQuick 2的现代化加载指示器组件
-- 支持四种动画样式：旋转圆点、脉冲圆圈、跳动条形、GIF动画
-- 完全声明式API，易于在QML中使用
-- 内置覆盖层功能，可轻松实现全屏加载效果
-- 响应式设计，自动适应容器尺寸
-- 支持实时属性绑定和动画控制
 - <img src="src/LoadingIndicatorQuick/images/loading.png" width="450" alt="QML加载指示器截图">
 
 ### [LoadingOverlayQuick](src/LoadingOverlayQuick/) - 加载覆盖层控件 (QtQuick版本)
@@ -163,7 +157,7 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 
 **参考文档**：[QTcpServer Class - Qt 6 Documentation](https://doc.qt.io/qt-6/qtcpserver.html#incomingConnection)
 
-## [NavigationProgressBar](src/NavigationProgressBar/) - 导航进度条控件
+### [NavigationProgressBar](src/NavigationProgressBar/) - 导航进度条控件
 
 - 支持多步骤流程可视化显示
 - 可自定义颜色主题和字体样式
@@ -171,7 +165,11 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 - 自适应布局，响应窗口尺寸变化
 - <img src="src/NavigationProgressBar/images/navigation_progress.png" width="800" alt="导航进度条截图">
 
-## [PasswordLineEdit](src/PasswordLineEdit/) - 密码输入框控件
+### [NavigationProgressBarQuick](src/NavigationProgressBarQuick/) - 导航进度条控件(QtQuick版本)
+
+- <img src="src/NavigationProgressBarQuick/images/navigation_progress.png" width="800" alt="导航进度条截图">
+
+### [PasswordLineEdit](src/PasswordLineEdit/) - 密码输入框控件
 
 - 支持显示/隐藏密码切换功能
 - 自动检测CapsLock状态并显示警告提示
