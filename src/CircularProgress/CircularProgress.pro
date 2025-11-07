@@ -5,13 +5,13 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
+    circularprogress.cc \
     main.cpp \
-    mainwindow.cpp \
-    progressarc.cpp
+    mainwindow.cpp
 
 HEADERS += \
-    mainwindow.h \
-    progressarc.h
+    circularprogress.hpp \
+    mainwindow.h 
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

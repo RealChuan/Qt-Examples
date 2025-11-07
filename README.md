@@ -66,6 +66,15 @@
 - 包含文件系统树结构演示
 - <img src="src/CheckableTreeItem/images/checkable_tree.png" width="800" alt="层次化复选框树">
 
+### [CircularProgress](src/CircularProgress/) - 圆形进度条控件
+
+- 支持圆弧进度显示和百分比/数值显示
+- 可自定义起始角度和结束角度
+- 支持动画过渡效果和多种颜色定制
+- 提供丰富的信号和槽函数用于状态监控
+- 包含快速主题切换功能（经典、暗色、现代）
+- <img src="src/CircularProgress/images/circular_progress.png" width="800" alt="圆形进度条控件截图">
+
 ### [Clock](src/Clock/) - 模拟时钟控件
 
 - 支持秒针平滑动画效果
@@ -180,11 +189,6 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 - 可自定义图标、提示时长和警告功能
 - 提供密码验证和批量操作支持
 - <img src="src/PasswordLineEdit/images/password_line_edit.png" width="600" alt="密码输入框截图">
-
-### [ProgressArc](src/ProgressArc/) - 圆形进度指示器
-
-- 弧线式进度可视化
-- <img src="src/ProgressArc/picture/ProgressArc.png" width="90%" alt="弧形进度">
 
 ### [ProgressBar](src/ProgressBar/) - 圆角进度条
 

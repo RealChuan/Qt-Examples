@@ -9,6 +9,7 @@ SUBDIRS += \
     Carousel3DView \
 #    Chart \
     CheckableTreeItem \
+    CircularProgress \
     Clock \
     DashBoard \
     GridViewModel \
@@ -17,7 +18,6 @@ SUBDIRS += \
     LoadingIndicator \
     NavigationProgressBar \
     PasswordLineEdit \
-    ProgressArc \
     ProgressBar \
     ReactorServer \
     SimpleUdp \
