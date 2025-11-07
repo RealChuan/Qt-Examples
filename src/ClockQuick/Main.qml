@@ -9,7 +9,7 @@ ApplicationWindow {
     width: 800
     height: 600
     visible: true
-    title: qsTr("Clock Widget Example")
+    title: qsTr("Clock Quick Example")
 
     // 颜色对话框
     ColorDialog {

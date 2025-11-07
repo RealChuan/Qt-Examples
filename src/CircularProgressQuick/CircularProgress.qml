@@ -31,7 +31,6 @@ Item {
     readonly property real progress: (value - minValue) / (maxValue - minValue)
     readonly property real totalAngle: endAngle - startAngle
     readonly property real progressAngle: totalAngle * progress
-    readonly property real currentStartAngle: endAngle - progressAngle
 
     // === 信号定义 === (只定义QML不会自动生成的信号)
     signal valueIncreased(real newValue)

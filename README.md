@@ -97,6 +97,10 @@
 - 高度可定制的颜色和文本样式
 - <img src="src/DashBoard/images/dashboard.png" width="800" alt="仪表盘控件截图">
 
+### [DashBoardQuick](src/DashBoardQuick/) - 仪表盘控件（QtQuick版本）
+
+- <img src="src/DashBoardQuick/images/dashboard.png" width="800" alt="仪表盘控件截图">
+
 ### [FlowLayout](https://doc.qt.io/qt-6/qtwidgets-layouts-flowlayout-example.html) - Qt 官方Flow Layout Example
 
 ### [GridViewModel](src/GridViewModel/) - 自适应网格布局
