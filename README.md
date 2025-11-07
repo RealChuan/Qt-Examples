@@ -86,6 +86,10 @@
 - 提供多种预设颜色主题
 - <img src="src/Clock/images/clock.png" width="800" alt="时钟控件截图">
 
+### [ClockQuick](src/ClockQuick/) - 模拟时钟控件（QtQuick版本）
+
+- <img src="src/ClockQuick/images/clock.png" width="800" alt="时钟控件截图">
+
 ### [DashBoard](src/DashBoard/) - 仪表盘控件
 
 - 可调节刻度范围和角度区间
