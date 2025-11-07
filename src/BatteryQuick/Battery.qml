@@ -141,9 +141,8 @@ Item {
         id: rootHead
         width: Math.max(5, parent.width * 0.07)
         height: Math.max(8, rootBody.height * 0.35)
-        x: rootBody.width
+        x: rootBody.width - 1
         y: (parent.height - height) / 2
-        radius: height * 0.15
         color: root.borderColor
     }
 
@@ -164,7 +163,9 @@ Item {
         if (clampedValue !== value) {
             privateData.previousValue = value;
             privateData.animationRunning = true;
+            privateData.updatingFromExternal = true;
             value = clampedValue;
+            privateData.updatingFromExternal = false;
         }
     }
 

@@ -23,16 +23,12 @@ ApplicationWindow {
         anchors.margins: 10
 
         // === 顶部：电池显示区域 ===
-        Item {
+        Battery {
+            id: battery
             Layout.fillWidth: true
-            Layout.preferredHeight: 120
-
-            Battery {
-                id: battery
-                anchors.centerIn: parent
-                width: 200
-                height: 80
-            }
+            Layout.fillHeight: true
+            Layout.leftMargin: 100
+            Layout.rightMargin: 100
         }
 
         // === 控制面板区域 ===

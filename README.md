@@ -75,6 +75,10 @@
 - 包含快速主题切换功能（经典、暗色、现代）
 - <img src="src/CircularProgress/images/circular_progress.png" width="800" alt="圆形进度条控件截图">
 
+### [CircularProgressQuick](src/CircularProgressQuick/) - 圆形进度条控件（QtQuick版本）
+
+- <img src="src/CircularProgressQuick/images/circular_progress.png" width="800" alt="圆形进度条控件截图">
+
 ### [Clock](src/Clock/) - 模拟时钟控件
 
 - 支持秒针平滑动画效果
