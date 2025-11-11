@@ -211,10 +211,22 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 - 包含完整的信号系统和便捷操作方法
 - <img src="src/ProgressBar/images/progress_bar.png" width="500" alt="线性进度条控件截图">
 
-### [ReactorServer](src/ReactorServer/) - Reactor 模式服务器
+### [ReactorServer](src/ReactorServer/) - 多线程Reactor模式TCP服务器
 
-- Reactor 设计模式实现
-- 多线程回声服务器
+- 基于Reactor设计模式的高性能TCP服务器框架
+- 主从Reactor架构：主线程接受连接，工作线程处理I/O
+- 内置线程池和负载均衡，自动分配连接到空闲线程
+- 支持自定义连接回调，轻松扩展为Echo服务器或自定义协议服务器
+- 使用生命周期安全的回调机制，确保线程安全和内存管理
+- 提供完整的连接管理、状态监控和错误处理
+
+**核心特性**：
+
+- 主从Reactor设计，分离连接接受与数据处理
+- 可配置线程池，支持轮询负载均衡
+- 集成智能指针和原子操作，确保线程安全
+- 灵活回调系统，支持Lambda和成员函数
+- 包含Echo服务器示例和Python测试脚本
 
 ### [ShowInMyComputer](src/ShowInMyComputer/) - 系统集成
 
