@@ -1,25 +1,27 @@
 include(../../qmake/ProjectSettings.pri)
 
-QT       += core gui network
-
-greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
+QT       += core network
 
 SOURCES += \
-    accepter.cpp \
+    accepterthread.cc \
+    connectioncallbacks.cc \
     main.cpp \
-    mainwindow.cpp \
-    subreactor.cpp \
-    tcpclient.cpp \
-    tcpserver.cpp \
-    thread.cpp
+    reactorserver.cc \
+    subreactor.cc \
+    tcpconnection.cc \
+    tcpserver.cc \
+    threadpool.cc \
+    workerthread.cc
 
 HEADERS += \
-    accepter.h \
-    mainwindow.h \
-    subreactor.h \
-    tcpclient.h \
-    tcpserver.h \
-    thread.h
+    accepterthread.hpp \
+    connectioncallbacks.hpp \
+    reactorserver.hpp \
+    subreactor.hpp \
+    tcpconnection.hpp \
+    tcpserver.hpp \
+    threadpool.hpp \
+    workerthread.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 
