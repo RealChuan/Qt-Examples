@@ -4,7 +4,7 @@
 #include <QDir>
 #include <QSettings>
 
-namespace AutoStartManager {
+namespace Utils {
 
 // 注册表路径定义
 static const QString REG_RUN_PATH
@@ -36,4 +36,4 @@ void setAutoRunStart(bool run)
     }
 }
 
-} // namespace AutoStartManager
+} // namespace Utils
