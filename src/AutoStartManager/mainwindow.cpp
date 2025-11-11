@@ -89,7 +89,7 @@ MainWindow::MainWindow(QWidget *parent)
     };
 
     // Initialize checkbox state
-    bool isAutoRun = AutoStartManager::isAutoRunStart();
+    bool isAutoRun = Utils::isAutoRunStart();
     autoRunCheckBox->setChecked(isAutoRun);
     updateStatusLabel(statusLabel, isAutoRun);
 
@@ -111,7 +111,7 @@ MainWindow::MainWindow(QWidget *parent)
 
                 if (reply == QMessageBox::Yes) {
                     // Set auto-start state
-                    AutoStartManager::setAutoRunStart(checked);
+                    Utils::setAutoRunStart(checked);
 
                     // Update status display
                     updateStatusLabel(statusLabel, checked);
@@ -137,7 +137,7 @@ MainWindow::MainWindow(QWidget *parent)
             &QPushButton::clicked,
             this,
             [this, statusLabel, autoRunCheckBox, updateStatusLabel]() {
-                bool isAutoRun = AutoStartManager::isAutoRunStart();
+                bool isAutoRun = Utils::isAutoRunStart();
                 autoRunCheckBox->blockSignals(true);
                 autoRunCheckBox->setChecked(isAutoRun);
                 autoRunCheckBox->blockSignals(false);

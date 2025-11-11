@@ -8,5 +8,5 @@ else()
   list(APPEND PROJECT_SOURCES autostartmanager_linux.cc)
 endif()
 
-qt_add_executable(AutoStartManager ${PROJECT_SOURCES})
-target_link_libraries(AutoStartManager PRIVATE Qt::Widgets)
+qt_add_executable(auto_start_manager ${PROJECT_SOURCES})
+target_link_libraries(auto_start_manager PRIVATE Qt::Widgets)

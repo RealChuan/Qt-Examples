@@ -228,11 +228,6 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 - 灵活回调系统，支持Lambda和成员函数
 - 包含Echo服务器示例和Python测试脚本
 
-### [ShowInMyComputer](src/ShowInMyComputer/) - 系统集成
-
-- 在系统位置中显示应用程序
-- 防火墙白名单
-
 ### [SimpleUdp](src/SimpleUdp/) - UDP 通信
 
 - UDP 广播和接收
@@ -275,6 +270,13 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 
 - 改进的 IntValidator 和 DoubleValidator
 - 自定义验证规则
+
+### [WindowsIntegration](src/WindowsIntegration/) - Windows"此电脑"集成
+
+- **Windows**：注册表 `HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{GUID}` 和 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{GUID}`
+- **功能**：将应用程序图标添加到Windows"此电脑"中，与磁盘驱动器并列显示
+- **特点**：双击直接启动应用，使用应用自身图标，无需管理员权限
+- <img src="src/WindowsIntegration/images/windows_integration.png" width="1125" alt="此电脑集成">
 
 ### [packaging](src/packaging/) - 跨平台打包解决方案
 

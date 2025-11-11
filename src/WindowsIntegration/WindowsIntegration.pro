@@ -7,11 +7,11 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 SOURCES += \
     main.cc \
     mainwindow.cc \
-    showinmycomputer.cc
+    windowsintegration.cc
 
 HEADERS += \
     mainwindow.hpp \
-    showinmycomputer.hpp
+    windowsintegration.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

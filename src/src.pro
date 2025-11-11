@@ -29,5 +29,5 @@ SUBDIRS += \
     Validator
 
 win32 {
-    SUBDIRS += ShowInMyComputer
+    SUBDIRS += WindowsIntegration
 }

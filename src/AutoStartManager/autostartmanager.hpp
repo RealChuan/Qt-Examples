@@ -1,9 +1,9 @@
 #pragma once
 
-namespace AutoStartManager {
+namespace Utils {
 
 bool isAutoRunStart();
 
 void setAutoRunStart(bool run);
 
-} // namespace AutoStartManager
+} // namespace Utils

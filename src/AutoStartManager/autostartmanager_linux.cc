@@ -5,7 +5,7 @@
 #include <QDir>
 #include <QFile>
 
-namespace AutoStartManager {
+namespace Utils {
 
 bool isAutoRunStart()
 {
@@ -67,4 +67,4 @@ X-GNOME-Autostart-enabled=true
     }
 }
 
-} // namespace AutoStartManager
+} // namespace Utils
