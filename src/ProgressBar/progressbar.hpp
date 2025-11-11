@@ -1,51 +1,51 @@
-#ifndef PROGRESSBAR_HPP
-#define PROGRESSBAR_HPP
+#pragma once
 
-#include <QtCore/qglobal.h>
-#if QT_VERSION >= 0x050000
-#include <QtWidgets/QWidget>
-#else
-#include <QtGui/QWidget>
-#endif
+#include <QWidget>
 
 class ProgressBar : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(double value READ value WRITE setValue)
-    Q_PROPERTY(bool percent READ percent WRITE setPercent)
-    Q_PROPERTY(double min READ min WRITE setMin)
-    Q_PROPERTY(double max READ max WRITE setmax)
+    Q_PROPERTY(double value READ value WRITE setValue NOTIFY valueChanged)
+    Q_PROPERTY(double minValue READ minValue WRITE setMinValue)
+    Q_PROPERTY(double maxValue READ maxValue WRITE setMaxValue)
     Q_PROPERTY(double radius READ radius WRITE setRadius)
-    Q_PROPERTY(double autoRadius READ autoRadius WRITE setAutoRadius)
+    Q_PROPERTY(bool autoRadius READ autoRadius WRITE setAutoRadius)
+    Q_PROPERTY(bool showPercent READ showPercent WRITE setShowPercent)
     Q_PROPERTY(QColor chunkColor READ chunkColor WRITE setChunkColor)
     Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
     Q_PROPERTY(QColor baseColor READ baseColor WRITE setBaseColor)
     Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
+    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration)
+
 public:
     explicit ProgressBar(QWidget *parent = nullptr);
     ~ProgressBar() override;
 
-    [[nodiscard]] auto sizeHint() const -> QSize override;
     [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
-    void setValue(const double value);
+    // 数值设置
+    void setValueAnimated(double value);
+    void setValue(double value);
     [[nodiscard]] auto value() const -> double;
 
-    void setPercent(const bool percent);
-    [[nodiscard]] auto percent() const -> bool;
+    void setMinValue(double min);
+    [[nodiscard]] auto minValue() const -> double;
 
-    void setMin(const double min);
-    [[nodiscard]] auto min() const -> double;
+    void setMaxValue(double max);
+    [[nodiscard]] auto maxValue() const -> double;
 
-    void setmax(const double max);
-    [[nodiscard]] auto max() const -> double;
-
-    void setRadius(const double radius);
+    // 圆角设置
+    void setRadius(double radius);
     [[nodiscard]] auto radius() const -> double;
 
     void setAutoRadius(bool autoRadius);
-    [[nodiscard]] auto autoRadius() const -> double;
+    [[nodiscard]] auto autoRadius() const -> bool;
 
+    // 显示设置
+    void setShowPercent(bool percent);
+    [[nodiscard]] auto showPercent() const -> bool;
+
+    // 颜色设置
     void setChunkColor(const QColor &color);
     [[nodiscard]] auto chunkColor() const -> QColor;
 
@@ -58,21 +58,41 @@ public:
     void setBackgroundColor(const QColor &color);
     [[nodiscard]] auto backgroundColor() const -> QColor;
 
-signals:
-    void valueChanged(const double value);
+    // 动画设置
+    void setAnimationDuration(int duration);
+    [[nodiscard]] auto animationDuration() const -> int;
 
-private slots:
-    void onStartAnimation(const double value);
+    [[nodiscard]] bool isAnimating() const;
+
+public slots:
+    void increaseValue(double increment = 1.0);
+    void decreaseValue(double decrement = 1.0);
+    void reset();
+
+signals:
+    void valueChanged(double value);
+    void valueIncreased(double newValue);
+    void valueDecreased(double newValue);
+    void valueReset();
+    void animationStarted(double oldValue, double newValue);
+    void animationFinished(double value);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
 
+private slots:
+    void onAnimationFinished();
+
 private:
     void drawProgressBar(QPainter *painter);
+    void drawProgressChunk(QPainter *painter,
+                           const QRectF &baseRect,
+                           double progressWidth,
+                           double baseRadius);
     void drawText(QPainter *painter);
+    void startAnimation(double targetValue);
+    void setupFont(QPainter *painter);
 
-    struct ProgressBarPrivate;
+    class ProgressBarPrivate;
     QScopedPointer<ProgressBarPrivate> d_ptr;
 };
-
-#endif // PROGRESSBAR_HPP

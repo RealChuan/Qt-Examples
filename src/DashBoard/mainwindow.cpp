@@ -10,9 +10,6 @@ MainWindow::MainWindow(QWidget *parent)
     auto *dashboard = new DashBoardWidget(this);
 
     // 创建数值控制
-    auto *valueLabel = new QLabel(tr("Current value:"), this);
-    valueLabel->setAlignment(Qt::AlignCenter);
-
     auto *valueSlider = new QSlider(Qt::Horizontal, this);
     valueSlider->setRange(0, 100);
     valueSlider->setValue(0);
@@ -106,7 +103,7 @@ MainWindow::MainWindow(QWidget *parent)
     auto *valueGroup = new QGroupBox(tr("Value settings"), this);
     auto *valueControlLayout = new QGridLayout(valueGroup);
 
-    valueControlLayout->addWidget(valueLabel, 0, 0);
+    valueControlLayout->addWidget(new QLabel(tr("Current value:"), this), 0, 0);
     valueControlLayout->addWidget(valueSlider, 0, 1);
     valueControlLayout->addWidget(valueSpinBox, 0, 2);
 
@@ -503,10 +500,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(dashboard,
             &DashBoardWidget::valueChanged,
             this,
-            [valueLabel, valueSlider, valueSpinBox](double value) {
-                valueLabel->setText(tr("Current value: %1").arg(value, 0, 'f', 2));
-
-                // 阻塞信号避免循环
+            [valueSlider, valueSpinBox](double value) {
                 valueSlider->blockSignals(true);
                 valueSlider->setValue(static_cast<int>(value));
                 valueSlider->blockSignals(false);
@@ -539,7 +533,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 初始化状态
     dashboard->setValue(0);
-    valueLabel->setText(tr("Current value: 0.00"));
 }
 
 MainWindow::~MainWindow() {}

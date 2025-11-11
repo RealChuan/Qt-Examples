@@ -10,8 +10,6 @@ MainWindow::MainWindow(QWidget *parent)
     auto *battery = new BatteryWidget(this);
 
     // 创建数值控制
-    auto *valueLabel = new QLabel(tr("Current value:"), this);
-
     auto *valueSlider = new QSlider(Qt::Horizontal, this);
     valueSlider->setRange(0, 100);
     valueSlider->setValue(75);
@@ -75,7 +73,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 第一行：数值控制
     int row = 0;
-    controlLayout->addWidget(valueLabel, row, 0);
+    controlLayout->addWidget(new QLabel(tr("Current value:"), this), row, 0);
     controlLayout->addWidget(valueSlider, row, 1);
     controlLayout->addWidget(valueSpinBox, row, 2);
 
@@ -267,21 +265,15 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     // 电池信号连接 - 更新UI状态
-    connect(battery,
-            &BatteryWidget::valueChanged,
-            this,
-            [valueLabel, valueSlider, valueSpinBox](int value) {
-                valueLabel->setText(tr("Current value: %1%").arg(value));
+    connect(battery, &BatteryWidget::valueChanged, this, [valueSlider, valueSpinBox](int value) {
+        valueSlider->blockSignals(true);
+        valueSlider->setValue(value);
+        valueSlider->blockSignals(false);
 
-                // 阻塞信号避免循环
-                valueSlider->blockSignals(true);
-                valueSlider->setValue(value);
-                valueSlider->blockSignals(false);
-
-                valueSpinBox->blockSignals(true);
-                valueSpinBox->setValue(value);
-                valueSpinBox->blockSignals(false);
-            });
+        valueSpinBox->blockSignals(true);
+        valueSpinBox->setValue(value);
+        valueSpinBox->blockSignals(false);
+    });
 
     connect(battery, &BatteryWidget::valueIncreased, this, [](int newValue) {
         qDebug() << "Value increased to:" << newValue;
@@ -332,7 +324,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 初始化状态
     battery->setValue(75);
-    valueLabel->setText(tr("Current value: 75%"));
 }
 
 MainWindow::~MainWindow() {}

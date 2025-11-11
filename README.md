@@ -202,11 +202,14 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 - 提供密码验证和批量操作支持
 - <img src="src/PasswordLineEdit/images/password_line_edit.png" width="600" alt="密码输入框截图">
 
-### [ProgressBar](src/ProgressBar/) - 圆角进度条
+### [ProgressBar](src/ProgressBar/) - 线性进度条控件
 
-- 自定义样式进度条
-- QProgressBar 替代方案
-- <img src="src/ProgressBar/picture/ProgressBar.png" width="90%" alt="圆角进度条">
+- 支持动画过渡效果，可自定义动画时长
+- 可自定义圆角半径，支持自动圆角计算
+- 支持百分比和数值两种显示模式
+- 提供丰富的颜色定制选项
+- 包含完整的信号系统和便捷操作方法
+- <img src="src/ProgressBar/images/progress_bar.png" width="500" alt="线性进度条控件截图">
 
 ### [ReactorServer](src/ReactorServer/) - Reactor 模式服务器
 
