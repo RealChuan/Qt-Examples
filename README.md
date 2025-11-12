@@ -9,7 +9,7 @@
 
 ## 示例
 
-# [AutoStartManager](src/AutoStartManager/) - 开机自启动
+### [AutoStartManager](src/AutoStartManager/) - 开机自启动
 
 - **Windows**：用户注册表 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`，系统注册表 `HKEY_LOCAL_MACHINE\...\Run`
 - **macOS**：`~/Library/LaunchAgents/com.{appname}.plist`
@@ -157,27 +157,6 @@
 - 控制台输出长度限制，避免过长日志刷屏
 - 内置信号槽机制，确保多线程环境下的数据安全
 
-### [MultithreadedTcpServer](https://doc.qt.io/qt-6/qtcpserver.html#incomingConnection) - 多线程TCP服务器实现机制说明
-
-**核心机制**：重写 `QTcpServer::incomingConnection(qintptr socketDescriptor)` 方法
-
-- **线程间传递**：将原生套接字描述符传递给工作线程
-- **线程内创建**：在工作线程中创建 `QTcpSocket` 并调用 `setSocketDescriptor()`
-- **连接管理**：自定义socket需调用 `addPendingConnection()` 加入连接机制
-
-```cpp
-// 核心实现模式
-void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
-{
-    // 创建工作线程并传递socketDescriptor
-    ClientThread *thread = new ClientThread(socketDescriptor, this);
-    connect(thread, &ClientThread::finished, thread, &QObject::deleteLater);
-    thread->start();
-}
-```
-
-**参考文档**：[QTcpServer Class - Qt 6 Documentation](https://doc.qt.io/qt-6/qtcpserver.html#incomingConnection)
-
 ### [NavigationProgressBar](src/NavigationProgressBar/) - 导航进度条控件
 
 - 支持多步骤流程可视化显示
@@ -220,30 +199,23 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 - 使用生命周期安全的回调机制，确保线程安全和内存管理
 - 提供完整的连接管理、状态监控和错误处理
 
-**核心特性**：
-
-- 主从Reactor设计，分离连接接受与数据处理
-- 可配置线程池，支持轮询负载均衡
-- 集成智能指针和原子操作，确保线程安全
-- 灵活回调系统，支持Lambda和成员函数
-- 包含Echo服务器示例和Python测试脚本
-
-### [SimpleUdp](src/SimpleUdp/) - UDP 通信
-
-- UDP 广播和接收
-- 简单网络通信示例
-
-### [SlipButton](src/SlipButton/) - 滑动切换按钮
-
-- 动画切换开关
-- <img src="src/SlipButton/picture/SlipButton_check.png" width="200" alt="未选中">
-  <img src="src/SlipButton/picture/SlipButton_checked.png" width="200" alt="已选中">
-
 ### [SqliteWAL](src/SqliteWAL/) - SQLite 预写式日志
 
 - 多线程 SQLite 数据库操作
 - WAL 模式实现
 - 线程安全写入操作
+
+### [SwitchButton](src/SwitchButton/) - 开关按钮控件
+
+- 支持平滑的开关动画过渡效果
+- 可自定义选中和未选中状态的颜色
+- 可自定义滑块颜色和边框颜色
+- 支持鼠标悬停状态反馈
+- 提供动画开始和完成的信号通知
+- 响应式设计，适应不同尺寸
+- <img src="src/SwitchButton/images/switch_button.png" width="300" alt="开关按钮控件截图">
+
+### [SwitchDelegate](https://doc.qt.io/qt-6/zh/qtquickcontrols-customize.html#customizing-switchdelegate) - Qt官方的开关按钮委托（QtQuick版本）
 
 ### [TableViewModel](src/TableViewModel/) - 高级表格视图
 
@@ -253,11 +225,6 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 - 高性能数据渲染（10万+行）
 - <img src="src/TableViewModel/picture/TabViewModelDelegate.jpg" width="90%" alt="表格视图委托">
 
-### [Thread](src/Thread/) - 多线程示例
-
-- 6 种不同的线程处理方法
-- QThread 使用模式
-
 ### [TreeViewModel](src/TreeViewModel/) - 树形和列表视图
 
 - MVC 模式实现
@@ -265,11 +232,6 @@ void ThreadedTcpServer::incomingConnection(qintptr socketDescriptor)
 - 类文件系统的树形结构
 - <img src="src/TreeViewModel/picture/TreeView.png" width="90%" alt="树形视图">
   <img src="src/TreeViewModel/picture/ListView.png" width="90%" alt="列表视图">
-
-### [Validator](src/Validator/) - 增强型输入验证器
-
-- 改进的 IntValidator 和 DoubleValidator
-- 自定义验证规则
 
 ### [WindowsIntegration](src/WindowsIntegration/) - Windows"此电脑"集成
 
