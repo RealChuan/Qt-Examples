@@ -65,11 +65,15 @@ void executeOptions(QSqlQuery &query, const QStringList &options)
     }
 }
 
-static QMap<QString, int> connectionCount;
-
 QString canonicalPath(const QString &path)
 {
     return QFileInfo(path).canonicalFilePath();
+}
+
+namespace {
+
+static QMap<QString, int> connectionCount;
+
 }
 
 void incConnectionCount(const QString &dataBasePath)

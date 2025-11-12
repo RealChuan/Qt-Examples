@@ -217,22 +217,6 @@
 
 ### [SwitchDelegate](https://doc.qt.io/qt-6/zh/qtquickcontrols-customize.html#customizing-switchdelegate) - Qt官方的开关按钮委托（QtQuick版本）
 
-### [TableViewModel](src/TableViewModel/) - 高级表格视图
-
-- 自定义委托：按钮、组合框、进度条
-- 富文本渲染
-- 星级评分委托
-- 高性能数据渲染（10万+行）
-- <img src="src/TableViewModel/picture/TabViewModelDelegate.jpg" width="90%" alt="表格视图委托">
-
-### [TreeViewModel](src/TreeViewModel/) - 树形和列表视图
-
-- MVC 模式实现
-- 复选框标题视图
-- 类文件系统的树形结构
-- <img src="src/TreeViewModel/picture/TreeView.png" width="90%" alt="树形视图">
-  <img src="src/TreeViewModel/picture/ListView.png" width="90%" alt="列表视图">
-
 ### [WindowsIntegration](src/WindowsIntegration/) - Windows"此电脑"集成
 
 - **Windows**：注册表 `HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{GUID}` 和 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{GUID}`
@@ -242,7 +226,7 @@
 
 ### [packaging](src/packaging/) - 跨平台打包解决方案
 
-##### macOS 打包
+#### macOS 打包
 
 - **参考实现**: [Qt-App macOS 打包](https://github.com/RealChuan/Qt-App/tree/main/packaging/macos)
 - **核心文件**:
@@ -255,7 +239,7 @@
   - [package.sh](src/packaging/macos/package.sh) - 主要打包脚本，这里包含签名过程，[Qt-App macOS 打包](https://github.com/RealChuan/Qt-App/tree/main/packaging/macos)这里没有签名过程
   - [utils.sh](src/packaging/macos/utils.sh) - 打包辅助函数
 
-##### Windows 打包
+#### Windows 打包
 
 - **参考实现**: [Qt-App Windows 打包](https://github.com/RealChuan/Qt-App/tree/main/packaging/windows)
 - **核心文件**:
@@ -265,7 +249,7 @@
   2. 添加签名工具并粘贴 sign.bat 中的脚本内容
   3. 在打包脚本中为需要签名的文件添加对应的 sign flags 参数
 
-##### Ubuntu 打包
+#### Ubuntu 打包
 
 - **参考实现**: [Qt-App Ubuntu 打包](https://github.com/RealChuan/Qt-App/tree/main/packaging/ubuntu)
 
