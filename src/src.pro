@@ -20,13 +20,10 @@ SUBDIRS += \
     PasswordLineEdit \
     ProgressBar \
     ReactorServer \
-    SimpleUdp \
-    SlipButton \
     SqliteWAL \
+    SwitchButton \
     TableViewModel \
-    Thread \
-    TreeViewModel \
-    Validator
+    TreeViewModel
 
 win32 {
     SUBDIRS += WindowsIntegration

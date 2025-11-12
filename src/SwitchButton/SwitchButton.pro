@@ -7,11 +7,11 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
-    slipbutton.cpp
+    switchbutton.cpp
 
 HEADERS += \
     mainwindow.h \
-    slipbutton.h
+    switchbutton.h
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 
