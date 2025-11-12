@@ -21,9 +21,7 @@ SUBDIRS += \
     ProgressBar \
     ReactorServer \
     SqliteWAL \
-    SwitchButton \
-    TableViewModel \
-    TreeViewModel
+    SwitchButton
 
 win32 {
     SUBDIRS += WindowsIntegration
