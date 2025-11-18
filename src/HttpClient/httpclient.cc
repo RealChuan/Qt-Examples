@@ -149,6 +149,7 @@ QJsonObject HttpClient::sync(QNetworkReply *reply)
 
 void HttpClient::cancel(QNetworkReply *reply)
 {
+    disconnect(reply, nullptr, this, nullptr);
     d_ptr->clearTask(reply);
     reply->abort();
     reply->deleteLater();
@@ -442,6 +443,4 @@ void HttpClient::queryResult(QNetworkReply *reply, const QJsonObject &object)
         callback(json);
     }
     emit ready(reply, json);
-
-    reply->deleteLater();
 }
