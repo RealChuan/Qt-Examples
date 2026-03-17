@@ -1,19 +1,19 @@
-name: 'Install Dependencies'
-description: 'Install qt environment and compile dependencies'
+name: "Install Dependencies"
+description: "Install qt environment and compile dependencies"
 inputs:
   qt_modules:
-    description: 'qt modules'
+    description: "qt modules"
     required: false
-    default: 'qt5compat qtnetworkauth qtimageformats'
+    default: "qt5compat qtnetworkauth qtimageformats"
     type: string
   qt_ver:
-    description: 'qt version'
+    description: "qt version"
     required: false
-    default: '6.10.0'
+    default: "6.10.2"
     type: string
 
 runs:
-  using: 'composite'
+  using: "composite"
 
   steps:
     - name: Install dependencies on windows
@@ -47,4 +47,4 @@ runs:
       with:
         version: ${{ inputs.qt_ver }}
         modules: ${{ inputs.qt_modules }}
-        cache: 'true'
+        cache: "true"

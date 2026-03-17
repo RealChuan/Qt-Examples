@@ -1,38 +1,38 @@
 name: QMake Build
 
-on: 
+on:
   push:
     paths-ignore:
-        - 'cmake/**' 
-        - 'docs/**'
-        - 'packaging/**'
-        - 'translations/**'
-        - '**/CMakeLists.txt'
-        - '**/*.md'
-        - '**/*.txt'
-        - '**/.clang-*'
-        - '**/.gitignore'
-        - '**/LICENSE*'
-        - '**/README*'
-        - 'vcpkg.json'    
+      - "cmake/**"
+      - "docs/**"
+      - "packaging/**"
+      - "translations/**"
+      - "**/CMakeLists.txt"
+      - "**/*.md"
+      - "**/*.txt"
+      - "**/.clang-*"
+      - "**/.gitignore"
+      - "**/LICENSE*"
+      - "**/README*"
+      - "vcpkg.json"
   pull_request:
     paths-ignore:
-        - 'cmake/**' 
-        - 'docs/**'
-        - 'packaging/**'
-        - 'translations/**'
-        - '**/CMakeLists.txt'
-        - '**/*.md'
-        - '**/*.txt'
-        - '**/.clang-*'
-        - '**/.gitignore'
-        - '**/LICENSE*'
-        - '**/README*'
-        - 'vcpkg.json'  
+      - "cmake/**"
+      - "docs/**"
+      - "packaging/**"
+      - "translations/**"
+      - "**/CMakeLists.txt"
+      - "**/*.md"
+      - "**/*.txt"
+      - "**/.clang-*"
+      - "**/.gitignore"
+      - "**/LICENSE*"
+      - "**/README*"
+      - "vcpkg.json"
 
 env:
   MACOSX_DEPLOYMENT_TARGET: 13.0
-  MACOSX_BUILD_ARCHS: 'x86_64 arm64'
+  MACOSX_BUILD_ARCHS: "x86_64 arm64"
   BUILD_DIR: build
 
 jobs:
@@ -48,10 +48,10 @@ jobs:
           - ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v5
-        with: 
+      - uses: actions/checkout@v6
+        with:
           fetch-depth: 1
-          
+
       - uses: ./.github/actions/install-dependencies
 
       - uses: RealChuan/install-jom@main
@@ -68,7 +68,7 @@ jobs:
           ..\packaging\windows\Enter-VsDevShell.ps1
           & qmake ..\.
           & jom
-        
+
       - name: Build linux
         if: runner.os == 'Linux'
         working-directory: ${{ env.BUILD_DIR }}

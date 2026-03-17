@@ -3,34 +3,34 @@ name: CMake Build
 on:
   push:
     paths-ignore:
-      - 'docs/**'
-      - 'packaging/**'
-      - 'qmake/**'
-      - 'translations/**'
-      - '**/*.md'
-      - '**/.clang-*'
-      - '**/.gitignore'
-      - '**/*.pri'
-      - '**/LICENSE*'
-      - '**/*.pro'
-      - '**/README*'
+      - "docs/**"
+      - "packaging/**"
+      - "qmake/**"
+      - "translations/**"
+      - "**/*.md"
+      - "**/.clang-*"
+      - "**/.gitignore"
+      - "**/*.pri"
+      - "**/LICENSE*"
+      - "**/*.pro"
+      - "**/README*"
   pull_request:
     paths-ignore:
-      - 'docs/**'
-      - 'packaging/**'
-      - 'qmake/**'
-      - 'translations/**'
-      - '**/*.md'
-      - '**/.clang-*'
-      - '**/.gitignore'
-      - '**/*.pri'
-      - '**/LICENSE*'
-      - '**/*.pro'
-      - '**/README*'
+      - "docs/**"
+      - "packaging/**"
+      - "qmake/**"
+      - "translations/**"
+      - "**/*.md"
+      - "**/.clang-*"
+      - "**/.gitignore"
+      - "**/*.pri"
+      - "**/LICENSE*"
+      - "**/*.pro"
+      - "**/README*"
 
 env:
-  MACOSX_DEPLOYMENT_TARGET: '13.0'
-  MACOSX_BUILD_ARCHS: 'x86_64;arm64'
+  MACOSX_DEPLOYMENT_TARGET: "13.0"
+  MACOSX_BUILD_ARCHS: "x86_64;arm64"
   BUILD_DIR: build
   BUILD_TYPE: RelWithDebInfo
 
@@ -49,7 +49,7 @@ jobs:
           - "Ninja"
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 1
 

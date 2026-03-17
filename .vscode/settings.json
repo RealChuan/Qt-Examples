@@ -1,9 +1,9 @@
 {
-    "cmake.configureEnvironment": {
-        "CMAKE_MAKE_PROGRAM": "C:\\Qt\\Tools\\Ninja\\ninja.exe;"
-    },
-    "cmake.generator": "Ninja",
-    "cmake.environment": {
-        "PATH": "C:\\Qt\\6.10.0\\msvc2022_64\\bin;${env:PATH};"
-    }
+  "cmake.configureEnvironment": {
+    "CMAKE_MAKE_PROGRAM": "C:\\Qt\\Tools\\Ninja\\ninja.exe;"
+  },
+  "cmake.generator": "Ninja",
+  "cmake.environment": {
+    "PATH": "C:\\Qt\\6.10.2\\msvc2022_64\\bin;${env:PATH};"
+  }
 }
