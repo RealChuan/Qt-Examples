@@ -1,0 +1,12 @@
+- 异常仅用于不可恢复情况，不用于控制流
+- 可恢复错误使用 `std::expected<T, E>`
+- 跨边界错误报告使用 `std::error_code`
+- OS 级错误使用 `std::system_error`
+- 按常量引用捕获：`catch (const std::exception& e)`
+- 移动构造函数和析构函数标记 `noexcept`
+- 调试断言使用 `Q_ASSERT`
+- 不可达代码使用 `Q_UNREACHABLE()`
+- 日志使用 `qWarning()`/`qCritical()`
+- 文档中注明异常保证：基本、强、不抛出
+- 永不返回的函数标记 `[[noreturn]]`
+- 跨线程错误传播使用 `QException`

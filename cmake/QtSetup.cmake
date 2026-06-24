@@ -13,13 +13,5 @@ elseif(CMAKE_HOST_LINUX)
   message(STATUS "Setting Linux Qt path: /opt/Qt/6.10.2/gcc_64")
 endif()
 
-function(setup_qt_definitions)
-  add_definitions(-DQT_DEPRECATED_WARNINGS
-                  -DQT_DISABLE_DEPRECATED_BEFORE=0x060000)
-  message(
-    STATUS
-      "Qt definitions set: QT_DEPRECATED_WARNINGS, QT_DISABLE_DEPRECATED_BEFORE=0x060000"
-  )
-endfunction()
-
-setup_qt_definitions()
+add_compile_definitions(QT_DISABLE_DEPRECATED_UP_TO=0x060000
+                        QT_WARN_DEPRECATED_UP_TO=0x060B00)

@@ -1,0 +1,14 @@
+- 使用 Qt 6 QML 无版本导入：`import QtQuick`
+- 根元素优先用 `Item`；避免用 `Rectangle` 作容器
+- 使用 `required property` 定义显式接口
+- 慎用 `Component.onCompleted`；优先使用属性绑定
+- 用 `QML_ELEMENT` 注册 C++ 类型，替代 `qmlRegisterType`
+- 列表使用 `ListView` 配合 `model` 和 `delegate`
+- 使用 `Loader` 延迟加载重型组件
+- 仅在需要动态重绑定时使用 `Qt.binding()`
+- 分离模型（C++）与视图（QML）；遵循 MVC 模式
+- 避免命令式 JS；使用属性绑定
+- CI 中运行 `qmllint` 和 `qmlformat`
+- 使用 `property alias` 暴露内部组件
+- 全局对象优先用 `QML_SINGLETON`
+- 结构化数据使用 `QML_STRUCTURED_VALUE`

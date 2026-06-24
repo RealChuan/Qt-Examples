@@ -1,0 +1,14 @@
+- 要求 CMake 3.25+；使用 `cmake_minimum_required(VERSION 3.25)`
+- 优先使用 `target_*` 命令；仅当设置需应用于所有目标时才用全局 `add_compile_definitions`/`add_compile_options`
+- 禁止全局 `include_directories`/`add_definitions`（路径/定义应按目标控制）
+- 用 `target_compile_features(target PRIVATE cxx_std_20)` 设置语言标准
+- 用 `GNUInstallDirs` 实现可移植安装路径
+- 用 `FetchContent` 或带版本约束的 `find_package`
+- 禁止 `file(GLOB)` 收集源文件；显式列出
+- 使用 `BUILD_INTERFACE`/`INSTALL_INTERFACE` 生成器表达式
+- 使用 `CMakePresets.json` 管理构建配置
+- 通过 `target_compile_options` 启用警告，而非原始标志
+- 使用 `cmake_policy(SET CMP0167 NEW)` 发现 Qt6 模块
+- 使用 `qt_standard_project_setup()` 初始化 Qt6 项目
+- 导出目标时设置 `NAMESPACE` 和配置文件
+- CI 中将警告视为错误：`-Werror`

@@ -1,0 +1,13 @@
+- 独占所有权使用 `std::unique_ptr`
+- 仅在需要共享所有权时使用 `std::shared_ptr`
+- 使用 `std::weak_ptr` 打破循环引用
+- 使用 `std::make_unique`/`std::make_shared` 替代 `new`
+- Qt 风格 RAII 可使用 `QScopedPointer`
+- 使用 `std::vector` 替代 `new[]`
+- 非拥有视图使用 `std::span`
+- 只读字符串参数使用 `std::string_view`
+- C++ 中禁止使用 `malloc`/`free`
+- QObject 弱引用使用 `QPointer`
+- 延迟删除使用 `QObject::deleteLater()`
+- 裸指针仅作非拥有视图；禁止作为所有者
+- 互斥锁 RAII 使用 `std::lock_guard`/`std::unique_lock`

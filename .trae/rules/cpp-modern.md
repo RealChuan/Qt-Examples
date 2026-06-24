@@ -1,0 +1,14 @@
+- 最低目标 C++20，工具链支持时优先 C++23
+- 用 `std::span` 替代指针+长度参数对
+- 可恢复错误优先用 `std::expected`，而非异常
+- 用 `constexpr`/`consteval` 进行编译期计算
+- 用 `concepts` 约束模板，替代 SFINAE
+- 用 `std::format` 替代 printf/iostream 格式化
+- 优先用 `std::ranges` 算法替代手写循环
+- 用 `std::jthread` 替代 `std::thread`（自动 join）
+- 禁止裸 `new`/`delete`；用 `std::make_unique`/`std::make_shared`
+- 适当标记 `[[nodiscard]]`、`[[deprecated]]`
+- 用结构化绑定处理多返回值
+- 统一用 `=` 或 `{}` 初始化；避免 `()`
+- 用 `if constexpr` 替代标签分派
+- 优先用 `enum class`，避免裸 `enum`

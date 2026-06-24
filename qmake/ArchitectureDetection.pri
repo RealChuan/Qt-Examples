@@ -34,7 +34,7 @@ defineReplace(normalize_arch_name) {
 defineTest(contains_architecture) {
     arch_list = $$1
     target_arch = $$2
-    
+
     for(arch, arch_list) {
         equals(arch, $$target_arch) {
             return(true)
@@ -46,10 +46,10 @@ defineTest(contains_architecture) {
 # 函数：检查列表是否同时包含 x86_64 和 arm64
 defineTest(contains_both_x64_and_arm64) {
     arch_list = $$1
-    
+
     has_x64 = false
     has_arm64 = false
-    
+
     for(arch, arch_list) {
         equals(arch, "x86_64") {
             has_x64 = true
@@ -58,7 +58,7 @@ defineTest(contains_both_x64_and_arm64) {
             has_arm64 = true
         }
     }
-    
+
     equals(has_x64, "true"):equals(has_arm64, "true") {
         return(true)
     }
@@ -79,7 +79,7 @@ defineReplace(detect_architecture) {
                     valid_arch_count = $$eval(valid_arch_count) + 1
                     supported_archs = $$supported_archs $$normalized_arch
                 } else {
-                    message("Warning: Unsupported architecture '$$arch' in QMAKE_APPLE_DEVICE_ARCHS")
+                    warning("Unsupported architecture '$$arch' in QMAKE_APPLE_DEVICE_ARCHS")
                 }
             }
 
@@ -126,7 +126,7 @@ defineReplace(detect_architecture) {
     }
 
     # 默认情况
-    message("Warning: Unable to detect architecture, using 'unknown'")
+    warning("Unable to detect architecture, using 'unknown'")
     return(unknown)
 }
 

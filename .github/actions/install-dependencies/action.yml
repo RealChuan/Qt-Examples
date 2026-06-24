@@ -9,7 +9,7 @@ inputs:
   qt_ver:
     description: "qt version"
     required: false
-    default: "6.10.2"
+    default: "6.11.1"
     type: string
 
 runs:

@@ -1,0 +1,13 @@
+- 平台特定代码使用 `Q_OS_WIN`/`Q_OS_MACOS`/`Q_OS_LINUX`
+- 使用 `QDir::separator()` 或 `/`（Qt 会自动规范化路径）
+- 使用 `QStandardPaths` 获取系统路径
+- 使用 `QSysInfo` 进行运行时平台检测
+- 避免平台特定 API；必要时用 `#ifdef` 包裹
+- 使用 `#pragma once` 替代头文件保护宏
+- 使用 `Q_DECL_DEPRECATED` 标记弃用
+- 使用 `Q_REQUIRED_RESULT` 替代 `[[nodiscard]]`
+- 使用 `Q_LIKELY`/`Q_UNLIKELY` 进行分支提示
+- 使用 `qint64`/`qint32` 等可移植整数类型
+- 避免编译器特定 `#pragma`；使用 `Q_*` 宏
+- CI 中在所有目标平台上测试
+- 使用 `QFile`/`QSaveFile` 替代原始文件 API

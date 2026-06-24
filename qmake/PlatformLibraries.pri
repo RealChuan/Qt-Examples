@@ -1,7 +1,7 @@
 # PlatformLibraries.pri - 库项目配置
 
 # 包含编译器设置
-include(ProjectSettings.pri)
+include($$PWD/ProjectSettings.pri)
 
 # 设置项目模板为库
 TEMPLATE = lib
@@ -32,14 +32,14 @@ defineReplace(replaceLibName) {
 # 函数：配置平台库（静态库）
 defineReplace(add_platform_library) {
     LIBRARY_NAME = $$1
-    
+
     win32 {
         DESTDIR = $$LIBRARY_OUTPUT_DIRECTORY
         DLLDESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
         export(DESTDIR)
         export(DLLDESTDIR)
     }
-    
+
     unix {
         # Unix 平台默认使用静态库
         CONFIG += staticlib
@@ -50,7 +50,6 @@ defineReplace(add_platform_library) {
     
     # 设置目标名称（带调试后缀）
     RET = $$replaceLibName($$LIBRARY_NAME)
-    
     message("Platform library configured: $$RET")
     return($$RET)
 }
@@ -58,19 +57,19 @@ defineReplace(add_platform_library) {
 # 函数：配置插件库
 defineReplace(add_plugin_library) {
     LIBRARY_NAME = $$1
-    
+
     win32 {
         DESTDIR = $$LIBRARY_OUTPUT_DIRECTORY
         DLLDESTDIR = $$RUNTIME_OUTPUT_DIRECTORY/plugins/$$getProjectNameLower()
         export(DESTDIR)
         export(DLLDESTDIR)
     }
-    
+
     macx {
         DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY/$$member(PROJECT_NAME, 0).app/Contents/PlugIns/$$getProjectNameLower()
         export(DESTDIR)
     }
-    
+
     unix:!macx {
         DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY/plugins/$$getProjectNameLower()
         export(DESTDIR)
@@ -78,7 +77,6 @@ defineReplace(add_plugin_library) {
     
     # 设置目标名称（带调试后缀）
     RET = $$replaceLibName($$LIBRARY_NAME)
-    
     message("Plugin library configured: $$RET")
     return($$RET)
 }
@@ -86,14 +84,14 @@ defineReplace(add_plugin_library) {
 # 函数：配置共享库
 defineReplace(add_shared_library) {
     LIBRARY_NAME = $$1
-    
+
     win32 {
         DESTDIR = $$LIBRARY_OUTPUT_DIRECTORY
         DLLDESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
         export(DESTDIR)
         export(DLLDESTDIR)
     }
-    
+
     unix {
         DESTDIR = $$LIBRARY_OUTPUT_DIRECTORY
         export(DESTDIR)
@@ -101,7 +99,6 @@ defineReplace(add_shared_library) {
     
     # 设置目标名称（带调试后缀）
     RET = $$replaceLibName($$LIBRARY_NAME)
-    
     message("Shared library configured: $$RET")
     return($$RET)
 }

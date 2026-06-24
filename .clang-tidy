@@ -7,7 +7,12 @@ Checks: >
   modernize-*,
   cppcoreguidelines-*,
   concurrency-*,
+  portability-*,
+  readability-duplicate-include,
+  readability-redundant-string-cstr,
+  readability-simplify-boolean-expr,
   -modernize-use-trailing-return-type,
+  -modernize-use-std-print,
   -cppcoreguidelines-avoid-magic-numbers,
   -llvm-header-guard,
   -readability-identifier-length,
@@ -32,7 +37,6 @@ WarningsAsErrors: >
   performance-trivially-destructible,
   bugprone-exception-escape
 
-HeaderFilterRegex: '.'
+HeaderFilterRegex: "."
 AnalyzeTemporaryDtors: true
 FormatStyle: file
-User: user

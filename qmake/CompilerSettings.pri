@@ -2,12 +2,22 @@ macx {
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 13.0
 }
 
-CONFIG += c++20
+CONFIG += c++20 strict_c++
 
+# Qt 弃用控制（Qt 6.9+ 推荐使用 _UP_TO 后缀）
 DEFINES += \
-    QT_DEPRECATED_WARNINGS \
-    QT_DISABLE_DEPRECATED_BEFORE=0x060000
+    QT_DISABLE_DEPRECATED_UP_TO=0x060000 \
+    QT_WARN_DEPRECATED_UP_TO=0x060B00
 
-# add debug info
+# Release 模式携带调试信息
 QMAKE_CXXFLAGS_RELEASE += $$QMAKE_CFLAGS_RELEASE_WITH_DEBUGINFO
 QMAKE_LFLAGS_RELEASE += $$QMAKE_LFLAGS_RELEASE_WITH_DEBUGINFO
+
+# 编译器警告
+gcc|clang {
+    QMAKE_CXXFLAGS += -Wall -Wextra -Wpedantic
+}
+
+msvc {
+    QMAKE_CXXFLAGS += /W3 /permissive-
+}

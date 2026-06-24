@@ -70,19 +70,19 @@ function(setup_output_directories)
   file(MAKE_DIRECTORY "${BASE_OUTPUT_DIR}/lib")
 endfunction()
 
-function(setup_link_directories)
-  # 添加库搜索路径
+# 便捷函数：为 target 设置库搜索路径（target 级替代 link_directories）
+function(target_add_output_link_dirs target_name)
   if(CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-    link_directories("${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
+    target_link_directories(${target_name} PRIVATE
+      "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}"
+    )
   endif()
 
   if(CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-    link_directories("${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
+    target_link_directories(${target_name} PRIVATE
+      "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}"
+    )
   endif()
-
-  message(STATUS "Static library directory: ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}")
-  message(STATUS "Shared library directory: ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}")
 endfunction()
 
 setup_output_directories()
-setup_link_directories()

@@ -1,19 +1,25 @@
 # VcpkgToolchain.pri - vcpkg 依赖配置
 
-# 包含架构检测
-include(ArchitectureDetection.pri)
+include($$PWD/ArchitectureDetection.pri)
 
-# 设置平台特定的 vcpkg 路径
+# vcpkg 路径：优先使用环境变量，回退到默认路径
+isEmpty(VCPKG_ROOT) {
+    win32: VCPKG_ROOT = C:/vcpkg
+    macx: VCPKG_ROOT = /usr/local/share/vcpkg
+    unix:!macx: VCPKG_ROOT = /usr/local/share/vcpkg
+}
+
+# 设置平台特定的 vcpkg triplet 路径
 win32 {
-    vcpkg_path = C:/vcpkg/installed/$$TARGET_ARCH-windows-static-md
+    vcpkg_path = $$VCPKG_ROOT/installed/$$TARGET_ARCH-windows-static-md
 }
 
 macx {
-    vcpkg_path = /usr/local/share/vcpkg/installed/$$TARGET_ARCH-osx
+    vcpkg_path = $$VCPKG_ROOT/installed/$$TARGET_ARCH-osx
 }
 
 unix:!macx {
-    vcpkg_path = /usr/local/share/vcpkg/installed/$$TARGET_ARCH-linux
+    vcpkg_path = $$VCPKG_ROOT/installed/$$TARGET_ARCH-linux
 }
 
 # 输出 vcpkg 路径信息

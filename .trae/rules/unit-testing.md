@@ -1,0 +1,12 @@
+- 测试框架：Qt Test
+- 测试文件命名 `*_unittest.cpp` 或 `*_test.cpp`
+- 非 GUI 测试使用 `QTEST_APPLESS_MAIN`
+- 断言使用 `QCOMPARE`、`QVERIFY`、`QEXPECT_FAIL`
+- 已知平台问题使用 `QSKIP`
+- 数据驱动测试使用 `QFETCH`/`QTEST`
+- 使用 `QSignalSpy` 验证信号发射
+- 每个测试类只测一个单元
+- Mock 外部依赖；慎用 `QTest::qWait`
+- CI 中使用 `ctest --output-on-failure` 运行测试
+- 关键路径覆盖率目标 >80%
+- 性能回归测试使用 `QBenchmark`
