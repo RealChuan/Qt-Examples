@@ -87,14 +87,12 @@ Item {
     // === 值变化处理 ===
     onValueChanged: {
         if (!privateData.isAnimating) {
-            privateData.previousValue = value;
-
-            // 直接设置值，检查增减
             if (value > privateData.previousValue) {
                 root.valueIncreased(value);
             } else if (value < privateData.previousValue) {
                 root.valueDecreased(value);
             }
+            privateData.previousValue = value;
         }
     }
 

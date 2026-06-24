@@ -6,16 +6,18 @@ class ProgressBar : public QWidget
 {
     Q_OBJECT
     Q_PROPERTY(double value READ value WRITE setValue NOTIFY valueChanged)
-    Q_PROPERTY(double minValue READ minValue WRITE setMinValue)
-    Q_PROPERTY(double maxValue READ maxValue WRITE setMaxValue)
-    Q_PROPERTY(double radius READ radius WRITE setRadius)
-    Q_PROPERTY(bool autoRadius READ autoRadius WRITE setAutoRadius)
-    Q_PROPERTY(bool showPercent READ showPercent WRITE setShowPercent)
-    Q_PROPERTY(QColor chunkColor READ chunkColor WRITE setChunkColor)
-    Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
-    Q_PROPERTY(QColor baseColor READ baseColor WRITE setBaseColor)
-    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
-    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration)
+    Q_PROPERTY(double minValue READ minValue WRITE setMinValue NOTIFY minValueChanged)
+    Q_PROPERTY(double maxValue READ maxValue WRITE setMaxValue NOTIFY maxValueChanged)
+    Q_PROPERTY(double radius READ radius WRITE setRadius NOTIFY radiusChanged)
+    Q_PROPERTY(bool autoRadius READ autoRadius WRITE setAutoRadius NOTIFY autoRadiusChanged)
+    Q_PROPERTY(bool showPercent READ showPercent WRITE setShowPercent NOTIFY showPercentChanged)
+    Q_PROPERTY(QColor chunkColor READ chunkColor WRITE setChunkColor NOTIFY chunkColorChanged)
+    Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor NOTIFY textColorChanged)
+    Q_PROPERTY(QColor baseColor READ baseColor WRITE setBaseColor NOTIFY baseColorChanged)
+    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY
+                   backgroundColorChanged)
+    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration NOTIFY
+                   animationDurationChanged)
 
 public:
     explicit ProgressBar(QWidget *parent = nullptr);
@@ -77,6 +79,17 @@ signals:
     void animationStarted(double oldValue, double newValue);
     void animationFinished(double value);
 
+    void minValueChanged(double value);
+    void maxValueChanged(double value);
+    void radiusChanged(double value);
+    void autoRadiusChanged(bool autoRadius);
+    void showPercentChanged(bool percent);
+    void chunkColorChanged(const QColor &color);
+    void textColorChanged(const QColor &color);
+    void baseColorChanged(const QColor &color);
+    void backgroundColorChanged(const QColor &color);
+    void animationDurationChanged(int duration);
+
 protected:
     void paintEvent(QPaintEvent *event) override;
 
@@ -84,14 +97,15 @@ private slots:
     void onAnimationFinished();
 
 private:
-    void drawProgressBar(QPainter *painter);
-    void drawProgressChunk(QPainter *painter,
+    void drawProgressBar(QPainter &painter);
+    void drawProgressChunk(QPainter &painter,
                            const QRectF &baseRect,
                            double progressWidth,
                            double baseRadius);
-    void drawText(QPainter *painter);
+    void drawText(QPainter &painter);
     void startAnimation(double targetValue);
-    void setupFont(QPainter *painter);
+    void initAnimations();
+    void setupFont(QPainter &painter);
 
     class ProgressBarPrivate;
     QScopedPointer<ProgressBarPrivate> d_ptr;

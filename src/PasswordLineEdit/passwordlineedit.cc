@@ -1,4 +1,5 @@
 #include "passwordlineedit.hpp"
+
 #include <QtWidgets>
 
 #ifdef Q_OS_WIN
@@ -12,7 +13,7 @@ bool checkCapsLockState()
 #ifdef Q_OS_WIN
     return (GetKeyState(VK_CAPITAL) & 0x0001) != 0;
 #else
-    qWarning() << "Unsupported platform";
+    qWarning() << "CapsLock detection is not supported on this platform";
     return false;
 #endif
 }
@@ -22,8 +23,7 @@ bool checkCapsLockState()
 class PasswordLineEdit::PasswordLineEditPrivate
 {
 public:
-    explicit PasswordLineEditPrivate(PasswordLineEdit *q)
-        : q_ptr(q)
+    explicit PasswordLineEditPrivate(PasswordLineEdit *q) : q_ptr(q)
     {
         toolButton = new QToolButton(q_ptr);
         toolButton->setIconSize({20, 20});
@@ -57,8 +57,7 @@ public:
 };
 
 PasswordLineEdit::PasswordLineEdit(QWidget *parent)
-    : QLineEdit(parent)
-    , d_ptr(new PasswordLineEditPrivate(this))
+    : QLineEdit(parent), d_ptr(new PasswordLineEditPrivate(this))
 {
     setupIcons();
     setupUI();
@@ -77,14 +76,10 @@ PasswordLineEdit::PasswordLineEdit(QWidget *parent)
 PasswordLineEdit::~PasswordLineEdit() = default;
 
 bool PasswordLineEdit::capsLockWarningEnabled() const
-{
-    return d_ptr->capsLockWarning;
-}
+{ return d_ptr->capsLockWarning; }
 
 void PasswordLineEdit::setCapsLockWarningEnabled(bool enabled)
-{
-    d_ptr->capsLockWarning = enabled;
-}
+{ d_ptr->capsLockWarning = enabled; }
 
 void PasswordLineEdit::setToggleIcons(const QIcon &visibleIcon, const QIcon &hiddenIcon)
 {
@@ -94,14 +89,10 @@ void PasswordLineEdit::setToggleIcons(const QIcon &visibleIcon, const QIcon &hid
 }
 
 void PasswordLineEdit::setToolTipDuration(int milliseconds)
-{
-    d_ptr->toolTipTimer->setInterval(milliseconds);
-}
+{ d_ptr->toolTipTimer->setInterval(milliseconds); }
 
 void PasswordLineEdit::togglePasswordVisibility()
-{
-    d_ptr->toolButton->toggle();
-}
+{ d_ptr->toolButton->toggle(); }
 
 bool PasswordLineEdit::eventFilter(QObject *watched, QEvent *event)
 {
@@ -140,9 +131,7 @@ void PasswordLineEdit::onShowPassword(bool visible)
 }
 
 void PasswordLineEdit::hideToolTip()
-{
-    d_ptr->toolTipLabel->hide();
-}
+{ d_ptr->toolTipLabel->hide(); }
 
 void PasswordLineEdit::setupUI()
 {
@@ -191,7 +180,12 @@ void PasswordLineEdit::showCapsLockWarning()
     int y = globalPos.y() - d_ptr->toolTipLabel->height() - 5;
 
     // 边界检查
-    QScreen *screen = window()->windowHandle()->screen();
+    auto *handle = window()->windowHandle();
+    if (!handle)
+        return;
+    QScreen *screen = handle->screen();
+    if (!screen)
+        return;
     QRect screenGeometry = screen->availableGeometry();
     if (y < screenGeometry.top()) {
         y = globalPos.y() + height() + 5;

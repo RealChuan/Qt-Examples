@@ -7,7 +7,7 @@ Item {
     id: root
 
     // Properties
-    property list<string> messageList: ["Step 1", "Step 2", "Step 3", "Step 4", "Step 5"]
+    property var messageList: ["Step 1", "Step 2", "Step 3", "Step 4", "Step 5"]
     property int step: 0
     readonly property int maxStep: messageList.length
     property color backgroundColor: "#505050"
@@ -23,7 +23,7 @@ Item {
     property int circleRadius: Math.min(width / (maxStep * 5), height / 5)
 
     // Internal properties
-    property list<string> dateList: []
+    property var dateList: []
 
     signal progressCompleted
 

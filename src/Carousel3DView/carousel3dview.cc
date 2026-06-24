@@ -295,6 +295,7 @@ void Carousel3DView::setAnimationDuration(int duration)
     if (duration > 0 && duration != d_ptr->animationDuration) {
         d_ptr->animationDuration = duration;
         d_ptr->updateAnimationDurations();
+        emit animationDurationChanged(duration);
     }
 }
 
@@ -329,6 +330,7 @@ void Carousel3DView::setAutoRotationEnabled(bool enabled)
         } else {
             d_ptr->stopAutoRotation();
         }
+        emit autoRotationEnabledChanged(enabled);
     }
 }
 

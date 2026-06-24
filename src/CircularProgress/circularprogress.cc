@@ -7,9 +7,7 @@
 class CircularProgress::CircularProgressPrivate
 {
 public:
-    explicit CircularProgressPrivate(CircularProgress *q)
-        : q_ptr(q)
-    {}
+    explicit CircularProgressPrivate(CircularProgress *q) : q_ptr(q) {}
 
     CircularProgress *q_ptr;
 
@@ -44,10 +42,21 @@ public:
 };
 
 CircularProgress::CircularProgress(const QString &title, QWidget *parent)
-    : QWidget(parent)
-    , d_ptr(new CircularProgressPrivate(this))
+    : QWidget(parent), d_ptr(new CircularProgressPrivate(this))
 {
     d_ptr->title = title;
+    initAnimations();
+
+    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+}
+
+CircularProgress::~CircularProgress() = default;
+
+auto CircularProgress::minimumSizeHint() const -> QSize
+{ return {80, 80}; }
+
+void CircularProgress::initAnimations()
+{
     d_ptr->animation = new QPropertyAnimation(this, "value", this);
     d_ptr->animation->setDuration(d_ptr->animationDuration);
     d_ptr->animation->setEasingCurve(QEasingCurve::OutCubic);
@@ -56,22 +65,11 @@ CircularProgress::CircularProgress(const QString &title, QWidget *parent)
             &QPropertyAnimation::finished,
             this,
             &CircularProgress::onAnimationFinished);
-
-    setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-}
-
-CircularProgress::~CircularProgress() = default;
-
-auto CircularProgress::minimumSizeHint() const -> QSize
-{
-    return {80, 80};
 }
 
 // Value
 auto CircularProgress::value() const -> double
-{
-    return d_ptr->value;
-}
+{ return d_ptr->value; }
 
 void CircularProgress::setValue(double value)
 {
@@ -118,12 +116,11 @@ void CircularProgress::setMinValue(double min)
         setValue(min);
     }
     update();
+    emit minValueChanged(min);
 }
 
 auto CircularProgress::minValue() const -> double
-{
-    return d_ptr->minValue;
-}
+{ return d_ptr->minValue; }
 
 // Max value
 void CircularProgress::setMaxValue(double max)
@@ -136,12 +133,11 @@ void CircularProgress::setMaxValue(double max)
         setValue(max);
     }
     update();
+    emit maxValueChanged(max);
 }
 
 auto CircularProgress::maxValue() const -> double
-{
-    return d_ptr->maxValue;
-}
+{ return d_ptr->maxValue; }
 
 // Start angle
 void CircularProgress::setStartAngle(double startAngle)
@@ -154,9 +150,7 @@ void CircularProgress::setStartAngle(double startAngle)
 }
 
 auto CircularProgress::startAngle() const -> double
-{
-    return d_ptr->startAngle;
-}
+{ return d_ptr->startAngle; }
 
 // End angle
 void CircularProgress::setEndAngle(double endAngle)
@@ -169,9 +163,7 @@ void CircularProgress::setEndAngle(double endAngle)
 }
 
 auto CircularProgress::endAngle() const -> double
-{
-    return d_ptr->endAngle;
-}
+{ return d_ptr->endAngle; }
 
 // Show percent
 void CircularProgress::setShowPercent(bool percent)
@@ -181,12 +173,11 @@ void CircularProgress::setShowPercent(bool percent)
 
     d_ptr->showPercent = percent;
     update();
+    emit showPercentChanged(percent);
 }
 
 auto CircularProgress::showPercent() const -> bool
-{
-    return d_ptr->showPercent;
-}
+{ return d_ptr->showPercent; }
 
 // Title
 void CircularProgress::setTitle(const QString &title)
@@ -199,9 +190,7 @@ void CircularProgress::setTitle(const QString &title)
 }
 
 auto CircularProgress::title() const -> QString
-{
-    return d_ptr->title;
-}
+{ return d_ptr->title; }
 
 // Arc color
 void CircularProgress::setArcColor(const QColor &color)
@@ -214,9 +203,7 @@ void CircularProgress::setArcColor(const QColor &color)
 }
 
 auto CircularProgress::arcColor() const -> QColor
-{
-    return d_ptr->arcColor;
-}
+{ return d_ptr->arcColor; }
 
 // Text color
 void CircularProgress::setTextColor(const QColor &color)
@@ -229,9 +216,7 @@ void CircularProgress::setTextColor(const QColor &color)
 }
 
 auto CircularProgress::textColor() const -> QColor
-{
-    return d_ptr->textColor;
-}
+{ return d_ptr->textColor; }
 
 // Title color
 void CircularProgress::setTitleColor(const QColor &color)
@@ -244,9 +229,7 @@ void CircularProgress::setTitleColor(const QColor &color)
 }
 
 auto CircularProgress::titleColor() const -> QColor
-{
-    return d_ptr->titleColor;
-}
+{ return d_ptr->titleColor; }
 
 // Base color
 void CircularProgress::setBaseColor(const QColor &color)
@@ -259,9 +242,7 @@ void CircularProgress::setBaseColor(const QColor &color)
 }
 
 auto CircularProgress::baseColor() const -> QColor
-{
-    return d_ptr->baseColor;
-}
+{ return d_ptr->baseColor; }
 
 // Background color
 void CircularProgress::setBackgroundColor(const QColor &color)
@@ -271,12 +252,11 @@ void CircularProgress::setBackgroundColor(const QColor &color)
 
     d_ptr->backgroundColor = color;
     update();
+    emit backgroundColorChanged(color);
 }
 
 auto CircularProgress::backgroundColor() const -> QColor
-{
-    return d_ptr->backgroundColor;
-}
+{ return d_ptr->backgroundColor; }
 
 // Animation duration
 void CircularProgress::setAnimationDuration(int duration)
@@ -289,15 +269,11 @@ void CircularProgress::setAnimationDuration(int duration)
 }
 
 auto CircularProgress::animationDuration() const -> int
-{
-    return d_ptr->animationDuration;
-}
+{ return d_ptr->animationDuration; }
 
 // Animation state
 bool CircularProgress::isAnimating() const
-{
-    return d_ptr->animation && d_ptr->animation->state() == QPropertyAnimation::Running;
-}
+{ return d_ptr->animation && d_ptr->animation->state() == QPropertyAnimation::Running; }
 
 // Public slots implementation
 void CircularProgress::increaseValue(double increment)
@@ -349,8 +325,8 @@ void CircularProgress::paintEvent(QPaintEvent *event)
 
     const double minSize = qMin(width(), height());
 
-    drawArc(&painter, minSize);
-    drawText(&painter, minSize);
+    drawArc(painter, minSize);
+    drawText(painter, minSize);
 }
 
 void CircularProgress::startAnimation(double targetValue)
@@ -376,28 +352,28 @@ void CircularProgress::onAnimationFinished()
     }
 }
 
-void CircularProgress::setupFont(QPainter *painter, double minSize, double ratio)
+void CircularProgress::setupFont(QPainter &painter, double minSize, double ratio)
 {
-    auto font = painter->font();
+    auto font = painter.font();
     font.setPixelSize(static_cast<int>(minSize * ratio));
-    painter->setFont(font);
+    painter.setFont(font);
 }
 
 QRectF CircularProgress::getValueRect(double minSize) const
 {
-    const double radius = minSize / 2.0 - minSize * d_ptr->ARC_WIDTH_RATIO
-                          - minSize * d_ptr->ARC_MARGIN_RATIO;
+    const double radius
+        = minSize / 2.0 - minSize * d_ptr->ARC_WIDTH_RATIO - minSize * d_ptr->ARC_MARGIN_RATIO;
     return QRectF(-radius, 0, radius * 2, radius / 3);
 }
 
 QRectF CircularProgress::getTitleRect(double minSize) const
 {
-    const double radius = minSize / 2.0 - minSize * d_ptr->ARC_WIDTH_RATIO
-                          - minSize * d_ptr->ARC_MARGIN_RATIO;
+    const double radius
+        = minSize / 2.0 - minSize * d_ptr->ARC_WIDTH_RATIO - minSize * d_ptr->ARC_MARGIN_RATIO;
     return QRectF(-radius, -radius / 2.5, radius * 2, radius / 3);
 }
 
-void CircularProgress::drawArc(QPainter *painter, double minSize)
+void CircularProgress::drawArc(QPainter &painter, double minSize)
 {
     const double arcWidth = minSize * d_ptr->ARC_WIDTH_RATIO;
     const double margin = minSize * d_ptr->ARC_MARGIN_RATIO;
@@ -411,48 +387,47 @@ void CircularProgress::drawArc(QPainter *painter, double minSize)
     // 绘制背景圆弧
     const double totalAngle = d_ptr->endAngle - d_ptr->startAngle;
     pen.setColor(d_ptr->baseColor);
-    painter->setPen(pen);
-    painter->drawArc(rect, d_ptr->startAngle * 16, totalAngle * 16);
+    painter.setPen(pen);
+    painter.drawArc(rect, d_ptr->startAngle * 16, totalAngle * 16);
 
     // 绘制进度圆弧
     if (d_ptr->value > d_ptr->minValue) {
-        const double progressAngle = totalAngle
-                                     * ((d_ptr->value - d_ptr->minValue)
-                                        / (d_ptr->maxValue - d_ptr->minValue));
+        const double progressAngle
+            = totalAngle * ((d_ptr->value - d_ptr->minValue) / (d_ptr->maxValue - d_ptr->minValue));
         const double startAngle = d_ptr->endAngle - progressAngle;
 
         pen.setColor(d_ptr->arcColor);
-        painter->setPen(pen);
-        painter->drawArc(rect, startAngle * 16, progressAngle * 16);
+        painter.setPen(pen);
+        painter.drawArc(rect, startAngle * 16, progressAngle * 16);
     }
 }
 
-void CircularProgress::drawText(QPainter *painter, double minSize)
+void CircularProgress::drawText(QPainter &painter, double minSize)
 {
-    painter->save();
+    painter.save();
 
     // 绘制数值
     setupFont(painter, minSize, d_ptr->VALUE_FONT_RATIO);
-    painter->setPen(d_ptr->textColor);
+    painter.setPen(d_ptr->textColor);
 
     QString valueText;
     if (d_ptr->showPercent) {
-        const double percent = (d_ptr->value - d_ptr->minValue)
-                               / (d_ptr->maxValue - d_ptr->minValue) * 100.0;
+        const double percent
+            = (d_ptr->value - d_ptr->minValue) / (d_ptr->maxValue - d_ptr->minValue) * 100.0;
         valueText = QString("%1%").arg(percent, 0, 'f', 2);
     } else {
         valueText = QString("%1").arg(d_ptr->value, 0, 'f', 2);
     }
 
     const QRectF valueRect = getValueRect(minSize);
-    painter->drawText(valueRect, Qt::AlignCenter, valueText);
+    painter.drawText(valueRect, Qt::AlignCenter, valueText);
 
     // 绘制标题
     setupFont(painter, minSize, d_ptr->TITLE_FONT_RATIO);
-    painter->setPen(d_ptr->titleColor);
+    painter.setPen(d_ptr->titleColor);
 
     const QRectF titleRect = getTitleRect(minSize);
-    painter->drawText(titleRect, Qt::AlignCenter, d_ptr->title);
+    painter.drawText(titleRect, Qt::AlignCenter, d_ptr->title);
 
-    painter->restore();
+    painter.restore();
 }

@@ -33,6 +33,11 @@ public slots:
 private slots:
     void onItemClicked();
 
+signals:
+    void animationDurationChanged(int duration);
+    void autoRotationIntervalChanged(int interval);
+    void autoRotationEnabledChanged(bool enabled);
+
 protected:
     void resizeEvent(QResizeEvent *event) override;
     void showEvent(QShowEvent *event) override;

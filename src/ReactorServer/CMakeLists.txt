@@ -3,7 +3,7 @@ set(PROJECT_SOURCES
     accepterthread.hpp
     connectioncallbacks.cc
     connectioncallbacks.hpp
-    main.cpp
+    main.cc
     reactorserver.cc
     reactorserver.hpp
     subreactor.cc

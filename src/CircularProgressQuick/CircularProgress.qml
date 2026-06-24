@@ -73,15 +73,12 @@ Item {
     // === 值变化处理 ===
     onValueChanged: {
         if (!privateData.updatingFromExternal) {
-            // 直接设置值，无动画
-            privateData.previousValue = value;
-
-            // 检查数值增减
             if (value > privateData.previousValue) {
                 valueIncreased(value);
             } else if (value < privateData.previousValue) {
                 valueDecreased(value);
             }
+            privateData.previousValue = value;
         }
     }
 

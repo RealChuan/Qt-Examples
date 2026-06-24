@@ -1,11 +1,11 @@
 set(PROJECT_SOURCES
-    bubblewidget.h
-    bubblewidget.cpp
+    bubblewidget.hpp
+    bubblewidget.cc
     bubblewrapperwidget.cc
     bubblewrapperwidget.hpp
-    main.cpp
-    mainwindow.cpp
-    mainwindow.h)
+    main.cc
+    mainwindow.cc
+    mainwindow.hpp)
 
 qt_add_executable(Bubble ${PROJECT_SOURCES})
 target_link_libraries(Bubble PRIVATE Qt::Widgets)

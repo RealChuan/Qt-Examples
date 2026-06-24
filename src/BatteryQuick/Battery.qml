@@ -177,7 +177,7 @@ Item {
 
         if (newValue !== value) {
             privateData.previousValue = value;
-            setValue(newValue);
+            setValueAnimated(newValue);
             valueIncreased(newValue);
         }
     }
@@ -190,7 +190,7 @@ Item {
 
         if (newValue !== value) {
             privateData.previousValue = value;
-            setValue(newValue);
+            setValueAnimated(newValue);
             valueDecreased(newValue);
         }
     }

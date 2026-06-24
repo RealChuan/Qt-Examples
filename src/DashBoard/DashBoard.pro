@@ -5,13 +5,13 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    dashboardwidget.cpp \
-    main.cpp \
-    mainwindow.cpp
+    dashboardwidget.cc \
+    main.cc \
+    mainwindow.cc
 
 HEADERS += \
-    dashboardwidget.h \
-    mainwindow.h
+    dashboardwidget.hpp \
+    mainwindow.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

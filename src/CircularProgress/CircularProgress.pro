@@ -6,12 +6,12 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
     circularprogress.cc \
-    main.cpp \
-    mainwindow.cpp
+    main.cc \
+    mainwindow.cc
 
 HEADERS += \
     circularprogress.hpp \
-    mainwindow.h 
+    mainwindow.hpp 
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

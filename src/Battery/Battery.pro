@@ -5,13 +5,13 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    batterywidget.cpp \
-    main.cpp \
-    mainwindow.cpp
+    batterywidget.cc \
+    main.cc \
+    mainwindow.cc
 
 HEADERS += \
-    batterywidget.h \
-    mainwindow.h
+    batterywidget.hpp \
+    mainwindow.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

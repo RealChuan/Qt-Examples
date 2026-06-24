@@ -5,13 +5,13 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    main.cpp \
-    mainwindow.cpp \
-    navigationprogressbar.cpp
+    main.cc \
+    mainwindow.cc \
+    navigationprogressbar.cc
 
 HEADERS += \
-    mainwindow.h \
-    navigationprogressbar.h
+    mainwindow.hpp \
+    navigationprogressbar.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

@@ -33,9 +33,7 @@ public:
      * @return 当前的复选框状态
      */
     Qt::CheckState checkState() const
-    {
-        return static_cast<Qt::CheckState>(data(Qt::CheckStateRole).toInt());
-    }
+    { return static_cast<Qt::CheckState>(data(Qt::CheckStateRole).toInt()); }
 
 private:
     /**

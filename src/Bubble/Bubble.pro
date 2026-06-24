@@ -5,15 +5,15 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    bubblewidget.cpp \
+    bubblewidget.cc \
     bubblewrapperwidget.cc \
-    main.cpp \
-    mainwindow.cpp
+    main.cc \
+    mainwindow.cc
 
 HEADERS += \
-    bubblewidget.h \
+    bubblewidget.hpp \
     bubblewrapperwidget.hpp \
-    mainwindow.h
+    mainwindow.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

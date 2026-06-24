@@ -5,33 +5,33 @@ QT       += core gui charts
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    areachart.cpp \
-    callout.cpp \
-    chartview.cpp \
-    datetimechart.cpp \
-    dialogchart.cpp \
-    dynamicchart.cpp \
-    dynamicchartx.cpp \
-    linechart.cpp \
-    main.cpp \
-    mainwindow.cpp \
-    normalchartdata.cpp \
-    piechart.cpp \
-    stackedbarchart.cpp
+    areachart.cc \
+    callout.cc \
+    chartview.cc \
+    datetimechart.cc \
+    dialogchart.cc \
+    dynamicchart.cc \
+    dynamicchartx.cc \
+    linechart.cc \
+    main.cc \
+    mainwindow.cc \
+    normalchartdata.cc \
+    piechart.cc \
+    stackedbarchart.cc
 
 HEADERS += \
-    areachart.h \
-    callout.h \
-    chartview.h \
-    datetimechart.h \
-    dialogchart.h \
-    dynamicchart.h \
-    dynamicchartx.h \
-    linechart.h \
-    mainwindow.h \
-    normalchartdata.h \
-    piechart.h \
-    stackedbarchart.h
+    areachart.hpp \
+    callout.hpp \
+    chartview.hpp \
+    datetimechart.hpp \
+    dialogchart.hpp \
+    dynamicchart.hpp \
+    dynamicchartx.hpp \
+    linechart.hpp \
+    mainwindow.hpp \
+    normalchartdata.hpp \
+    piechart.hpp \
+    stackedbarchart.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

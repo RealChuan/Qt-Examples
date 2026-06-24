@@ -1,12 +1,10 @@
 import QtQuick
 import QtQuick.Controls
 
-Rectangle {
+Item {
     id: root
     width: 300
     height: 50
-    border.color: textInput.activeFocus ? "#0078d4" : "#cccccc"
-    border.width: textInput.activeFocus ? 2 : 1
 
     // 公共属性
     property alias text: textInput.text
@@ -21,6 +19,13 @@ Rectangle {
 
     // 信号
     signal editingFinished
+
+    Rectangle {
+        id: background
+        anchors.fill: parent
+        border.color: textInput.activeFocus ? "#0078d4" : "#cccccc"
+        border.width: textInput.activeFocus ? 2 : 1
+    }
 
     // 输入框容器
     Item {

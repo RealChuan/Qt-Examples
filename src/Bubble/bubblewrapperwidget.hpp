@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bubblewidget.h"
+#include "bubblewidget.hpp"
 
 #include <QPropertyAnimation>
 

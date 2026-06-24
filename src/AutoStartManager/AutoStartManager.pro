@@ -6,11 +6,11 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
     main.cc \
-    mainwindow.cpp
+    mainwindow.cc
 
 HEADERS += \
     autostartmanager.hpp \
-    mainwindow.h
+    mainwindow.hpp
 
 win32 {
     SOURCES += autostartmanager_windows.cc

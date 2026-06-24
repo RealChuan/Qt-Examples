@@ -1,4 +1,4 @@
-set(PROJECT_SOURCES autostartmanager.hpp main.cc mainwindow.cpp mainwindow.h)
+set(PROJECT_SOURCES autostartmanager.hpp main.cc mainwindow.cc mainwindow.hpp)
 
 if(CMAKE_HOST_WIN32)
   list(APPEND PROJECT_SOURCES autostartmanager_windows.cc)

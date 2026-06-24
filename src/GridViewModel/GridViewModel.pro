@@ -5,15 +5,15 @@ QT       += core gui
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 SOURCES += \
-    gridmodel.cpp \
-    gridview.cpp \
-    main.cpp \
-    mainwindow.cpp
+    gridmodel.cc \
+    gridview.cc \
+    main.cc \
+    mainwindow.cc
 
 HEADERS += \
-    gridmodel.h \
-    gridview.h \
-    mainwindow.h
+    gridmodel.hpp \
+    gridview.hpp \
+    mainwindow.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

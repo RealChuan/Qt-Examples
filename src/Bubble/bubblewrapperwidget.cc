@@ -76,11 +76,11 @@ auto BubbleWrapperWidget::minimumSizeHint() const -> QSize
 // 动画设置
 void BubbleWrapperWidget::setAnimationDuration(int duration)
 {
-    if (d_ptr->animationDuration != duration) {
-        d_ptr->animationDuration = qMax(0, duration);
-        d_ptr->showAnimation->setDuration(d_ptr->animationDuration);
-        d_ptr->hideAnimation->setDuration(d_ptr->animationDuration);
-    }
+    if (d_ptr->animationDuration == duration)
+        return;
+    d_ptr->animationDuration = qMax(0, duration);
+    d_ptr->showAnimation->setDuration(d_ptr->animationDuration);
+    d_ptr->hideAnimation->setDuration(d_ptr->animationDuration);
 }
 
 auto BubbleWrapperWidget::animationDuration() const -> int
@@ -98,6 +98,11 @@ void BubbleWrapperWidget::showAt(const QPoint &pos, BubbleWidget::Direction dire
 {
     if (!d_ptr->bubble) {
         return;
+    }
+
+    // 确保已初始化
+    if (size().isEmpty()) {
+        onEnsureInitialized();
     }
 
     d_ptr->bubble->setDirection(direction);

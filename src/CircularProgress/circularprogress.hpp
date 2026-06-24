@@ -85,6 +85,17 @@ signals:
     void animationStarted(double oldValue, double newValue);
     void animationFinished(double value);
 
+    void minValueChanged(double value);
+    void maxValueChanged(double value);
+    void startAngleChanged(double value);
+    void endAngleChanged(double value);
+    void showPercentChanged(bool percent);
+    void arcColorChanged(const QColor &color);
+    void textColorChanged(const QColor &color);
+    void titleColorChanged(const QColor &color);
+    void baseColorChanged(const QColor &color);
+    void backgroundColorChanged(const QColor &color);
+
 protected:
     void paintEvent(QPaintEvent *event) override;
 
@@ -92,11 +103,12 @@ private slots:
     void onAnimationFinished();
 
 private:
-    void setupFont(QPainter *painter, double minSize, double ratio);
+    void setupFont(QPainter &painter, double minSize, double ratio);
     QRectF getValueRect(double minSize) const;
     QRectF getTitleRect(double minSize) const;
-    void drawArc(QPainter *painter, double minSize);
-    void drawText(QPainter *painter, double minSize);
+    void drawArc(QPainter &painter, double minSize);
+    void drawText(QPainter &painter, double minSize);
+    void initAnimations();
     void startAnimation(double targetValue);
 
     class CircularProgressPrivate;

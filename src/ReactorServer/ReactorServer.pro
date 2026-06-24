@@ -5,7 +5,7 @@ QT       += core network
 SOURCES += \
     accepterthread.cc \
     connectioncallbacks.cc \
-    main.cpp \
+    main.cc \
     reactorserver.cc \
     subreactor.cc \
     tcpconnection.cc \

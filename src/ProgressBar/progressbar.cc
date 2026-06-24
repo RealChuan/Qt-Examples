@@ -7,9 +7,7 @@
 class ProgressBar::ProgressBarPrivate
 {
 public:
-    explicit ProgressBarPrivate(ProgressBar *q)
-        : q_ptr(q)
-    {}
+    explicit ProgressBarPrivate(ProgressBar *q) : q_ptr(q) {}
 
     ProgressBar *q_ptr;
 
@@ -38,18 +36,9 @@ public:
     static constexpr double FONT_SIZE_RATIO = 0.8;
 };
 
-ProgressBar::ProgressBar(QWidget *parent)
-    : QWidget(parent)
-    , d_ptr(new ProgressBarPrivate(this))
+ProgressBar::ProgressBar(QWidget *parent) : QWidget(parent), d_ptr(new ProgressBarPrivate(this))
 {
-    d_ptr->animation = new QPropertyAnimation(this, "value", this);
-    d_ptr->animation->setDuration(d_ptr->animationDuration);
-    d_ptr->animation->setEasingCurve(QEasingCurve::OutCubic);
-
-    connect(d_ptr->animation,
-            &QPropertyAnimation::finished,
-            this,
-            &ProgressBar::onAnimationFinished);
+    initAnimations();
 
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Minimum);
 }
@@ -57,15 +46,21 @@ ProgressBar::ProgressBar(QWidget *parent)
 ProgressBar::~ProgressBar() = default;
 
 auto ProgressBar::minimumSizeHint() const -> QSize
+{ return {100, 10}; }
+
+void ProgressBar::initAnimations()
 {
-    return {100, 10};
+    d_ptr->animation = new QPropertyAnimation(this, "value", this);
+    d_ptr->animation->setDuration(d_ptr->animationDuration);
+    d_ptr->animation->setEasingCurve(QEasingCurve::OutCubic);
+
+    connect(
+        d_ptr->animation, &QPropertyAnimation::finished, this, &ProgressBar::onAnimationFinished);
 }
 
 // Value
 auto ProgressBar::value() const -> double
-{
-    return d_ptr->value;
-}
+{ return d_ptr->value; }
 
 void ProgressBar::setValue(double value)
 {
@@ -112,12 +107,11 @@ void ProgressBar::setMinValue(double min)
         setValue(min);
     }
     update();
+    emit minValueChanged(min);
 }
 
 auto ProgressBar::minValue() const -> double
-{
-    return d_ptr->minValue;
-}
+{ return d_ptr->minValue; }
 
 // Max value
 void ProgressBar::setMaxValue(double max)
@@ -130,12 +124,11 @@ void ProgressBar::setMaxValue(double max)
         setValue(max);
     }
     update();
+    emit maxValueChanged(max);
 }
 
 auto ProgressBar::maxValue() const -> double
-{
-    return d_ptr->maxValue;
-}
+{ return d_ptr->maxValue; }
 
 // Radius
 void ProgressBar::setRadius(double radius)
@@ -148,9 +141,7 @@ void ProgressBar::setRadius(double radius)
 }
 
 auto ProgressBar::radius() const -> double
-{
-    return d_ptr->radius;
-}
+{ return d_ptr->radius; }
 
 // Auto radius
 void ProgressBar::setAutoRadius(bool autoRadius)
@@ -163,9 +154,7 @@ void ProgressBar::setAutoRadius(bool autoRadius)
 }
 
 auto ProgressBar::autoRadius() const -> bool
-{
-    return d_ptr->autoRadius;
-}
+{ return d_ptr->autoRadius; }
 
 // Show percent
 void ProgressBar::setShowPercent(bool percent)
@@ -175,12 +164,11 @@ void ProgressBar::setShowPercent(bool percent)
 
     d_ptr->showPercent = percent;
     update();
+    emit showPercentChanged(percent);
 }
 
 auto ProgressBar::showPercent() const -> bool
-{
-    return d_ptr->showPercent;
-}
+{ return d_ptr->showPercent; }
 
 // Chunk color
 void ProgressBar::setChunkColor(const QColor &color)
@@ -190,12 +178,11 @@ void ProgressBar::setChunkColor(const QColor &color)
 
     d_ptr->chunkColor = color;
     update();
+    emit chunkColorChanged(color);
 }
 
 auto ProgressBar::chunkColor() const -> QColor
-{
-    return d_ptr->chunkColor;
-}
+{ return d_ptr->chunkColor; }
 
 // Text color
 void ProgressBar::setTextColor(const QColor &color)
@@ -205,12 +192,11 @@ void ProgressBar::setTextColor(const QColor &color)
 
     d_ptr->textColor = color;
     update();
+    emit textColorChanged(color);
 }
 
 auto ProgressBar::textColor() const -> QColor
-{
-    return d_ptr->textColor;
-}
+{ return d_ptr->textColor; }
 
 // Base color
 void ProgressBar::setBaseColor(const QColor &color)
@@ -223,9 +209,7 @@ void ProgressBar::setBaseColor(const QColor &color)
 }
 
 auto ProgressBar::baseColor() const -> QColor
-{
-    return d_ptr->baseColor;
-}
+{ return d_ptr->baseColor; }
 
 // Background color
 void ProgressBar::setBackgroundColor(const QColor &color)
@@ -238,9 +222,7 @@ void ProgressBar::setBackgroundColor(const QColor &color)
 }
 
 auto ProgressBar::backgroundColor() const -> QColor
-{
-    return d_ptr->backgroundColor;
-}
+{ return d_ptr->backgroundColor; }
 
 // Animation duration
 void ProgressBar::setAnimationDuration(int duration)
@@ -250,18 +232,15 @@ void ProgressBar::setAnimationDuration(int duration)
 
     d_ptr->animationDuration = duration;
     d_ptr->animation->setDuration(duration);
+    emit animationDurationChanged(duration);
 }
 
 auto ProgressBar::animationDuration() const -> int
-{
-    return d_ptr->animationDuration;
-}
+{ return d_ptr->animationDuration; }
 
 // Animation state
 bool ProgressBar::isAnimating() const
-{
-    return d_ptr->animation && d_ptr->animation->state() == QPropertyAnimation::Running;
-}
+{ return d_ptr->animation && d_ptr->animation->state() == QPropertyAnimation::Running; }
 
 // Public slots implementation
 void ProgressBar::increaseValue(double increment)
@@ -309,8 +288,8 @@ void ProgressBar::paintEvent(QPaintEvent *event)
         painter.fillRect(rect(), d_ptr->backgroundColor);
     }
 
-    drawProgressBar(&painter);
-    drawText(&painter);
+    drawProgressBar(painter);
+    drawText(painter);
 }
 
 void ProgressBar::startAnimation(double targetValue)
@@ -336,15 +315,15 @@ void ProgressBar::onAnimationFinished()
     }
 }
 
-void ProgressBar::setupFont(QPainter *painter)
+void ProgressBar::setupFont(QPainter &painter)
 {
     const double fontSize = height() * d_ptr->FONT_SIZE_RATIO;
-    auto font = painter->font();
+    auto font = painter.font();
     font.setPixelSize(static_cast<int>(fontSize));
-    painter->setFont(font);
+    painter.setFont(font);
 }
 
-void ProgressBar::drawProgressBar(QPainter *painter)
+void ProgressBar::drawProgressBar(QPainter &painter)
 {
     const QRectF baseRect = rect();
     double currentRadius = d_ptr->radius;
@@ -354,23 +333,23 @@ void ProgressBar::drawProgressBar(QPainter *painter)
         currentRadius = qMin(baseRect.height(), baseRect.width()) / 2.0;
     }
 
-    painter->setPen(Qt::NoPen);
+    painter.setPen(Qt::NoPen);
 
     // 绘制背景
-    painter->setBrush(d_ptr->baseColor);
-    painter->drawRoundedRect(baseRect, currentRadius, currentRadius);
+    painter.setBrush(d_ptr->baseColor);
+    painter.drawRoundedRect(baseRect, currentRadius, currentRadius);
 
     // 绘制进度条
     if (d_ptr->value > d_ptr->minValue) {
-        const double progressWidth = baseRect.width()
-                                     * ((d_ptr->value - d_ptr->minValue)
-                                        / (d_ptr->maxValue - d_ptr->minValue));
+        const double progressWidth
+            = baseRect.width()
+              * ((d_ptr->value - d_ptr->minValue) / (d_ptr->maxValue - d_ptr->minValue));
 
         drawProgressChunk(painter, baseRect, progressWidth, currentRadius);
     }
 }
 
-void ProgressBar::drawProgressChunk(QPainter *painter,
+void ProgressBar::drawProgressChunk(QPainter &painter,
                                     const QRectF &baseRect,
                                     double progressWidth,
                                     double baseRadius)
@@ -380,14 +359,14 @@ void ProgressBar::drawProgressChunk(QPainter *painter,
 
     const double height = baseRect.height();
 
-    painter->setBrush(d_ptr->chunkColor);
+    painter.setBrush(d_ptr->chunkColor);
 
-    painter->save();
+    painter.save();
 
     // 设置裁剪区域，只显示进度部分
     QPainterPath clipPath;
     clipPath.addRect(0, 0, progressWidth, height);
-    painter->setClipPath(clipPath);
+    painter.setClipPath(clipPath);
 
     // 创建一个完整的圆角矩形（左右都有圆角）
     // 宽度设为足够大，确保圆角完整显示
@@ -396,27 +375,27 @@ void ProgressBar::drawProgressChunk(QPainter *painter,
     fullRoundedPath.addRoundedRect(0, 0, fullWidth, height, baseRadius, baseRadius);
 
     // 绘制完整的圆角矩形
-    painter->drawPath(fullRoundedPath);
+    painter.drawPath(fullRoundedPath);
 
-    painter->restore();
+    painter.restore();
 }
 
-void ProgressBar::drawText(QPainter *painter)
+void ProgressBar::drawText(QPainter &painter)
 {
-    painter->save();
+    painter.save();
 
     setupFont(painter);
-    painter->setPen(d_ptr->textColor);
+    painter.setPen(d_ptr->textColor);
 
     QString valueText;
     if (d_ptr->showPercent) {
-        const double percent = (d_ptr->value - d_ptr->minValue)
-                               / (d_ptr->maxValue - d_ptr->minValue) * 100.0;
+        const double percent
+            = (d_ptr->value - d_ptr->minValue) / (d_ptr->maxValue - d_ptr->minValue) * 100.0;
         valueText = QString("%1%").arg(percent, 0, 'f', 2);
     } else {
         valueText = QString("%1").arg(d_ptr->value, 0, 'f', 2);
     }
 
-    painter->drawText(rect(), Qt::AlignCenter, valueText);
-    painter->restore();
+    painter.drawText(rect(), Qt::AlignCenter, valueText);
+    painter.restore();
 }

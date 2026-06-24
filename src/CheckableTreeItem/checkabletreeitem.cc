@@ -46,14 +46,10 @@ void CheckableTreeItem::setData(const QVariant &value, int role)
 
         case Qt::PartiallyChecked:
             // 对于部分选中状态，基于子节点计算实际应该设置的状态
-            Qt::CheckState actualState = calculateStateFromChildren();
-            if (actualState != currentState) {
-                QStandardItem::setData(actualState, role);
+            auto actualState = calculateStateFromChildren();
+            QStandardItem::setData(actualState, role);
+            if (actualState != currentState)
                 updateParentState();
-            } else {
-                // 如果状态没有变化，仍然需要设置数据以确保一致性
-                QStandardItem::setData(actualState, role);
-            }
             break;
         }
 

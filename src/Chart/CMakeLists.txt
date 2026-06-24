@@ -1,29 +1,29 @@
 set(PROJECT_SOURCES
-    main.cpp
-    mainwindow.cpp
+    main.cc
+    mainwindow.cc
     mainwindow.h
     areachart.h
-    areachart.cpp
+    areachart.cc
     callout.h
-    callout.cpp
+    callout.cc
     chartview.h
-    chartview.cpp
+    chartview.cc
     datetimechart.h
-    datetimechart.cpp
+    datetimechart.cc
     dialogchart.h
-    dialogchart.cpp
+    dialogchart.cc
     dynamicchart.h
-    dynamicchart.cpp
+    dynamicchart.cc
     dynamicchartx.h
-    dynamicchartx.cpp
+    dynamicchartx.cc
     linechart.h
-    linechart.cpp
+    linechart.cc
     normalchartdata.h
-    normalchartdata.cpp
+    normalchartdata.cc
     piechart.h
-    piechart.cpp
+    piechart.cc
     stackedbarchart.h
-    stackedbarchart.cpp)
+    stackedbarchart.cc)
 
 qt_add_executable(Chart ${PROJECT_SOURCES})
 target_link_libraries(Chart PRIVATE Qt::Widgets Qt::Charts)
