@@ -3,8 +3,11 @@
 
 #include <QtWidgets>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+#include <cmath>
+
+using namespace Qt::StringLiterals;
+
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     // 创建时钟控件
     auto *clock = new ClockWidget(this);
@@ -102,7 +105,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 初始化颜色按钮
     auto updateColorButton = [](QPushButton *button, const QColor &color) {
-        QString colorName = color.name(QColor::HexArgb).toUpper();
+        const QString colorName = color.name(QColor::HexArgb).toUpper();
 
         // 计算相对亮度
         auto getRelativeLuminance = [](int r, int g, int b) {
@@ -113,11 +116,11 @@ MainWindow::MainWindow(QWidget *parent)
                    + 0.0722 * normalize(b / 255.0);
         };
 
-        double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
-        QString textColor = luminance > 0.179 ? "black" : "white";
+        const double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
+        const QString textColor = luminance > 0.179 ? u"black"_s : u"white"_s;
 
         button->setStyleSheet(
-            QString("background-color: %1; color: %2; border: 1px solid gray; padding: 5px;")
+            u"background-color: %1; color: %2; border: 1px solid gray; padding: 5px;"_s
                 .arg(colorName)
                 .arg(textColor));
         button->setText(colorName);
@@ -134,23 +137,23 @@ MainWindow::MainWindow(QWidget *parent)
     // 连接信号和槽
 
     // 颜色设置
-    auto createColorDialogConnector =
-        [this, updateColorButton](QPushButton *button,
-                                  std::function<QColor()> getColorFunc,
-                                  std::function<void(const QColor &)> setColorFunc,
-                                  const QString &title) {
-            connect(button,
-                    &QPushButton::clicked,
-                    this,
-                    [this, button, getColorFunc, setColorFunc, title, updateColorButton]() {
-                        QColor color = QColorDialog::getColor(getColorFunc(), this, title);
-                        if (!color.isValid())
-                            return;
+    auto createColorDialogConnector
+        = [this, updateColorButton](QPushButton *button,
+                                    std::function<QColor()> getColorFunc,
+                                    std::function<void(const QColor &)> setColorFunc,
+                                    const QString &title) {
+              connect(button,
+                      &QPushButton::clicked,
+                      this,
+                      [this, button, getColorFunc, setColorFunc, title, updateColorButton]() {
+                          QColor color = QColorDialog::getColor(getColorFunc(), this, title);
+                          if (!color.isValid())
+                              return;
 
-                        setColorFunc(color);
-                        updateColorButton(button, color);
-                    });
-        };
+                          setColorFunc(color);
+                          updateColorButton(button, color);
+                      });
+          };
 
     createColorDialogConnector(
         borderColorButton,
@@ -196,14 +199,14 @@ MainWindow::MainWindow(QWidget *parent)
     connect(updateTimeButton, &QPushButton::clicked, clock, &ClockWidget::updateClock);
 
     // 保存默认颜色用于重置
-    QColor defaultBorder = clock->borderColor();
-    QColor defaultBackground = clock->backgroundColor();
-    QColor defaultHour = clock->hourColor();
-    QColor defaultMinute = clock->minuteColor();
-    QColor defaultSecond = clock->secondColor();
-    QColor defaultText = clock->textColor();
+    const QColor defaultBorder = clock->borderColor();
+    const QColor defaultBackground = clock->backgroundColor();
+    const QColor defaultHour = clock->hourColor();
+    const QColor defaultMinute = clock->minuteColor();
+    const QColor defaultSecond = clock->secondColor();
+    const QColor defaultText = clock->textColor();
 
-    // 快速主题
+    // 快速主题: Classic (iOS 亮色)
     connect(classicThemeButton,
             &QPushButton::clicked,
             this,
@@ -215,12 +218,12 @@ MainWindow::MainWindow(QWidget *parent)
              minuteColorButton,
              secondColorButton,
              textColorButton]() {
-                clock->setBorderColor(QColor(80, 80, 80));
-                clock->setBackgroundColor(QColor(50, 50, 50));
-                clock->setHourColor(QColor(240, 240, 240));
-                clock->setMinuteColor(QColor(220, 220, 220));
-                clock->setSecondColor(QColor(255, 80, 80));
-                clock->setTextColor(QColor(240, 240, 240));
+                clock->setBorderColor(QColor(209, 209, 214));     // #d1d1d6
+                clock->setBackgroundColor(QColor(242, 242, 247)); // #f2f2f7
+                clock->setHourColor(QColor(28, 28, 30));          // #1c1c1e
+                clock->setMinuteColor(QColor(58, 58, 60));        // #3a3a3c
+                clock->setSecondColor(QColor(255, 59, 48));       // #ff3b30
+                clock->setTextColor(QColor(28, 28, 30));          // #1c1c1e
 
                 updateColorButton(borderColorButton, clock->borderColor());
                 updateColorButton(backgroundColorButton, clock->backgroundColor());
@@ -230,6 +233,7 @@ MainWindow::MainWindow(QWidget *parent)
                 updateColorButton(textColorButton, clock->textColor());
             });
 
+    // 快速主题: Dark (watchOS 暗色)
     connect(darkThemeButton,
             &QPushButton::clicked,
             this,
@@ -241,12 +245,12 @@ MainWindow::MainWindow(QWidget *parent)
              minuteColorButton,
              secondColorButton,
              textColorButton]() {
-                clock->setBorderColor(Qt::white);
-                clock->setBackgroundColor(Qt::darkGray);
-                clock->setHourColor(Qt::white);
-                clock->setMinuteColor(Qt::lightGray);
-                clock->setSecondColor(Qt::yellow);
-                clock->setTextColor(Qt::white);
+                clock->setBorderColor(QColor(58, 58, 60));     // #3a3a3c
+                clock->setBackgroundColor(QColor(28, 28, 30)); // #1c1c1e
+                clock->setHourColor(QColor(255, 255, 255));    // #ffffff
+                clock->setMinuteColor(QColor(174, 174, 178));  // #aeaeb2
+                clock->setSecondColor(QColor(255, 69, 58));    // #ff453a
+                clock->setTextColor(QColor(255, 255, 255));    // #ffffff
 
                 updateColorButton(borderColorButton, clock->borderColor());
                 updateColorButton(backgroundColorButton, clock->backgroundColor());
@@ -256,6 +260,7 @@ MainWindow::MainWindow(QWidget *parent)
                 updateColorButton(textColorButton, clock->textColor());
             });
 
+    // 快速主题: Modern (深蓝表盘 + 橙色秒针)
     connect(modernThemeButton,
             &QPushButton::clicked,
             this,
@@ -267,12 +272,12 @@ MainWindow::MainWindow(QWidget *parent)
              minuteColorButton,
              secondColorButton,
              textColorButton]() {
-                clock->setBorderColor(QColor(70, 130, 180));
-                clock->setBackgroundColor(QColor(240, 248, 255));
-                clock->setHourColor(QColor(25, 25, 112));
-                clock->setMinuteColor(QColor(65, 105, 225));
-                clock->setSecondColor(QColor(220, 20, 60));
-                clock->setTextColor(QColor(47, 79, 79));
+                clock->setBorderColor(QColor(0, 85, 165));     // #0055a5
+                clock->setBackgroundColor(QColor(0, 51, 102)); // #003366
+                clock->setHourColor(QColor(255, 255, 255));    // #ffffff
+                clock->setMinuteColor(QColor(204, 204, 204));  // #cccccc
+                clock->setSecondColor(QColor(255, 149, 0));    // #ff9500
+                clock->setTextColor(QColor(255, 255, 255));    // #ffffff
 
                 updateColorButton(borderColorButton, clock->borderColor());
                 updateColorButton(backgroundColorButton, clock->backgroundColor());
@@ -317,11 +322,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 时间更新信号
     connect(clock, &ClockWidget::timeUpdated, this, [timeLabel](const QTime &time) {
-        timeLabel->setText(tr("Current time: %1").arg(time.toString("hh:mm:ss")));
+        timeLabel->setText(tr("Current time: %1").arg(time.toString(u"hh:mm:ss"_s)));
     });
 
     // 初始化时间显示
     clock->updateClock();
 }
-
-MainWindow::~MainWindow() {}

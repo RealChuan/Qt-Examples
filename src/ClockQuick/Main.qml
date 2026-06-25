@@ -7,7 +7,7 @@ import QtQuick.Controls.Fusion
 ApplicationWindow {
     id: mainWindow
     width: 800
-    height: 600
+    height: 350
     visible: true
     title: qsTr("Clock Quick Example")
 
@@ -17,16 +17,53 @@ ApplicationWindow {
         title: qsTr("Choose color")
     }
 
-    // 保存默认颜色用于重置
-    property color defaultBorderColor: "#505050"
-    property color defaultBackgroundColor: "#323232"
-    property color defaultHourColor: "#f0f0f0"
-    property color defaultMinuteColor: "#dcdcdc"
-    property color defaultSecondColor: "#ff5050"
-    property color defaultTextColor: "#f0f0f0"
+    // 保存默认颜色用于重置 (iOS 调色板)
+    readonly property color defaultBorderColor: "#d1d1d6"
+    readonly property color defaultBackgroundColor: "#f2f2f7"
+    readonly property color defaultHourColor: "#1c1c1e"
+    readonly property color defaultMinuteColor: "#3a3a3c"
+    readonly property color defaultSecondColor: "#ff3b30"
+    readonly property color defaultTextColor: "#1c1c1e"
 
-    // 当前选择的颜色属性（用于颜色对话框）
-    property color selectedColorForDialog
+    // 当前编辑的颜色目标
+    property string currentColorTarget: ""
+
+    // 颜色对话框 Connections (替代 arguments.callee)
+    Connections {
+        target: colorDialog
+        function onAccepted() {
+            if (!colorDialog.selectedColor)
+                return;
+
+            switch (mainWindow.currentColorTarget) {
+            case "border":
+                clock.borderColor = colorDialog.selectedColor;
+                borderColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.borderColor);
+                break;
+            case "background":
+                clock.backgroundColor = colorDialog.selectedColor;
+                backgroundColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.backgroundColor);
+                break;
+            case "hour":
+                clock.hourColor = colorDialog.selectedColor;
+                hourColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.hourColor);
+                break;
+            case "minute":
+                clock.minuteColor = colorDialog.selectedColor;
+                minuteColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.minuteColor);
+                break;
+            case "second":
+                clock.secondColor = colorDialog.selectedColor;
+                secondColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.secondColor);
+                break;
+            case "text":
+                clock.textColor = colorDialog.selectedColor;
+                textColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.textColor);
+                break;
+            }
+            mainWindow.currentColorTarget = "";
+        }
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -45,7 +82,6 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
 
-                // 初始颜色设置
                 borderColor: mainWindow.defaultBorderColor
                 backgroundColor: mainWindow.defaultBackgroundColor
                 hourColor: mainWindow.defaultHourColor
@@ -78,31 +114,22 @@ ApplicationWindow {
                 Layout.fillWidth: true
 
                 GridLayout {
-                    columns: 2
+                    columns: 4
                     anchors.fill: parent
 
-                    // 第一列
                     Label {
                         text: qsTr("Border color:")
                         Layout.alignment: Qt.AlignRight
                     }
-
                     Button {
                         id: borderColorButton
                         Layout.fillWidth: true
                         text: clock.borderColor.toString().toUpperCase()
                         onClicked: {
                             colorDialog.selectedColor = clock.borderColor;
-                            colorDialog.accepted.connect(function () {
-                                if (colorDialog.selectedColor) {
-                                    clock.borderColor = colorDialog.selectedColor;
-                                    borderColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.borderColor);
-                                }
-                                colorDialog.accepted.disconnect(arguments.callee);
-                            });
+                            mainWindow.currentColorTarget = "border";
                             colorDialog.open();
                         }
-
                         background: Rectangle {
                             color: clock.borderColor
                             border.color: "gray"
@@ -111,83 +138,18 @@ ApplicationWindow {
                     }
 
                     Label {
-                        text: qsTr("Background color:")
+                        text: qsTr("Minute hand:")
                         Layout.alignment: Qt.AlignRight
                     }
-
-                    Button {
-                        id: backgroundColorButton
-                        Layout.fillWidth: true
-                        text: clock.backgroundColor.toString().toUpperCase()
-                        onClicked: {
-                            colorDialog.selectedColor = clock.backgroundColor;
-                            colorDialog.accepted.connect(function () {
-                                if (colorDialog.selectedColor) {
-                                    clock.backgroundColor = colorDialog.selectedColor;
-                                    backgroundColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.backgroundColor);
-                                }
-                                colorDialog.accepted.disconnect(arguments.callee);
-                            });
-                            colorDialog.open();
-                        }
-
-                        background: Rectangle {
-                            color: clock.backgroundColor
-                            border.color: "gray"
-                            border.width: 1
-                        }
-                    }
-
-                    Label {
-                        text: qsTr("Hour hand color:")
-                        Layout.alignment: Qt.AlignRight
-                    }
-
-                    Button {
-                        id: hourColorButton
-                        Layout.fillWidth: true
-                        text: clock.hourColor.toString().toUpperCase()
-                        onClicked: {
-                            colorDialog.selectedColor = clock.hourColor;
-                            colorDialog.accepted.connect(function () {
-                                if (colorDialog.selectedColor) {
-                                    clock.hourColor = colorDialog.selectedColor;
-                                    hourColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.hourColor);
-                                }
-                                colorDialog.accepted.disconnect(arguments.callee);
-                            });
-                            colorDialog.open();
-                        }
-
-                        background: Rectangle {
-                            color: clock.hourColor
-                            border.color: "gray"
-                            border.width: 1
-                        }
-                    }
-
-                    // 第二列
-                    Label {
-                        text: qsTr("Minute hand color:")
-                        Layout.alignment: Qt.AlignRight
-                    }
-
                     Button {
                         id: minuteColorButton
                         Layout.fillWidth: true
                         text: clock.minuteColor.toString().toUpperCase()
                         onClicked: {
                             colorDialog.selectedColor = clock.minuteColor;
-                            colorDialog.accepted.connect(function () {
-                                if (colorDialog.selectedColor) {
-                                    clock.minuteColor = colorDialog.selectedColor;
-                                    minuteColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.minuteColor);
-                                }
-                                colorDialog.accepted.disconnect(arguments.callee);
-                            });
+                            mainWindow.currentColorTarget = "minute";
                             colorDialog.open();
                         }
-
                         background: Rectangle {
                             color: clock.minuteColor
                             border.color: "gray"
@@ -196,28 +158,60 @@ ApplicationWindow {
                     }
 
                     Label {
-                        text: qsTr("Second hand color:")
+                        text: qsTr("Background:")
                         Layout.alignment: Qt.AlignRight
                     }
+                    Button {
+                        id: backgroundColorButton
+                        Layout.fillWidth: true
+                        text: clock.backgroundColor.toString().toUpperCase()
+                        onClicked: {
+                            colorDialog.selectedColor = clock.backgroundColor;
+                            mainWindow.currentColorTarget = "background";
+                            colorDialog.open();
+                        }
+                        background: Rectangle {
+                            color: clock.backgroundColor
+                            border.color: "gray"
+                            border.width: 1
+                        }
+                    }
 
+                    Label {
+                        text: qsTr("Second hand:")
+                        Layout.alignment: Qt.AlignRight
+                    }
                     Button {
                         id: secondColorButton
                         Layout.fillWidth: true
                         text: clock.secondColor.toString().toUpperCase()
                         onClicked: {
                             colorDialog.selectedColor = clock.secondColor;
-                            colorDialog.accepted.connect(function () {
-                                if (colorDialog.selectedColor) {
-                                    clock.secondColor = colorDialog.selectedColor;
-                                    secondColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.secondColor);
-                                }
-                                colorDialog.accepted.disconnect(arguments.callee);
-                            });
+                            mainWindow.currentColorTarget = "second";
                             colorDialog.open();
                         }
-
                         background: Rectangle {
                             color: clock.secondColor
+                            border.color: "gray"
+                            border.width: 1
+                        }
+                    }
+
+                    Label {
+                        text: qsTr("Hour hand:")
+                        Layout.alignment: Qt.AlignRight
+                    }
+                    Button {
+                        id: hourColorButton
+                        Layout.fillWidth: true
+                        text: clock.hourColor.toString().toUpperCase()
+                        onClicked: {
+                            colorDialog.selectedColor = clock.hourColor;
+                            mainWindow.currentColorTarget = "hour";
+                            colorDialog.open();
+                        }
+                        background: Rectangle {
+                            color: clock.hourColor
                             border.color: "gray"
                             border.width: 1
                         }
@@ -227,23 +221,15 @@ ApplicationWindow {
                         text: qsTr("Text color:")
                         Layout.alignment: Qt.AlignRight
                     }
-
                     Button {
                         id: textColorButton
                         Layout.fillWidth: true
                         text: clock.textColor.toString().toUpperCase()
                         onClicked: {
                             colorDialog.selectedColor = clock.textColor;
-                            colorDialog.accepted.connect(function () {
-                                if (colorDialog.selectedColor) {
-                                    clock.textColor = colorDialog.selectedColor;
-                                    textColorButton.palette.buttonText = mainWindow.getContrastTextColor(clock.textColor);
-                                }
-                                colorDialog.accepted.disconnect(arguments.callee);
-                            });
+                            mainWindow.currentColorTarget = "text";
                             colorDialog.open();
                         }
-
                         background: Rectangle {
                             color: clock.textColor
                             border.color: "gray"
@@ -253,12 +239,38 @@ ApplicationWindow {
                 }
             }
 
+            // 快速主题组
+            GroupBox {
+                title: qsTr("Quick Themes")
+                Layout.fillWidth: true
+
+                RowLayout {
+                    anchors.fill: parent
+
+                    Button {
+                        text: qsTr("Classic")
+                        Layout.fillWidth: true
+                        onClicked: mainWindow.applyClassicTheme()
+                    }
+                    Button {
+                        text: qsTr("Dark")
+                        Layout.fillWidth: true
+                        onClicked: mainWindow.applyDarkTheme()
+                    }
+                    Button {
+                        text: qsTr("Modern")
+                        Layout.fillWidth: true
+                        onClicked: mainWindow.applyModernTheme()
+                    }
+                }
+            }
+
             // 动画设置组
             GroupBox {
                 title: qsTr("Animation Settings")
                 Layout.fillWidth: true
 
-                ColumnLayout {
+                RowLayout {
                     anchors.fill: parent
 
                     CheckBox {
@@ -277,86 +289,20 @@ ApplicationWindow {
                 }
             }
 
-            // 快速主题组
-            GroupBox {
-                title: qsTr("Quick Themes")
-                Layout.fillWidth: true
-
-                GridLayout {
-                    columns: 2
-                    anchors.fill: parent
-
-                    Button {
-                        text: qsTr("Classic")
-                        Layout.fillWidth: true
-                        onClicked: mainWindow.applyClassicTheme()
-                    }
-
-                    Button {
-                        text: qsTr("Dark")
-                        Layout.fillWidth: true
-                        onClicked: mainWindow.applyDarkTheme()
-                    }
-
-                    Button {
-                        text: qsTr("Modern")
-                        Layout.fillWidth: true
-                        onClicked: mainWindow.applyModernTheme()
-                    }
-
-                    Button {
-                        text: qsTr("Reset Colors")
-                        Layout.fillWidth: true
-                        onClicked: mainWindow.resetColors()
-                    }
-                }
-            }
-
             // 操作按钮
-            GroupBox {
-                title: qsTr("Actions")
+            RowLayout {
                 Layout.fillWidth: true
 
-                RowLayout {
-                    anchors.fill: parent
-
-                    Button {
-                        text: qsTr("Update Time")
-                        Layout.fillWidth: true
-                        onClicked: mainWindow.updateTime()
-                    }
-
-                    Button {
-                        text: qsTr("Toggle Fullscreen")
-                        Layout.fillWidth: true
-                        onClicked: mainWindow.visibility === Window.Windowed ? mainWindow.showFullScreen() : mainWindow.showNormal()
-                    }
+                Button {
+                    text: qsTr("Update Time")
+                    Layout.fillWidth: true
+                    onClicked: mainWindow.updateTime()
                 }
-            }
 
-            // 状态信息
-            GroupBox {
-                title: qsTr("Status")
-                Layout.fillWidth: true
-
-                ColumnLayout {
-                    anchors.fill: parent
-
-                    Label {
-                        text: qsTr("Smooth mode: ") + (clock.smoothSeconds ? qsTr("Enabled") : qsTr("Disabled"))
-                        font.pixelSize: 12
-                    }
-
-                    Label {
-                        text: qsTr("Seconds shown: ") + (clock.showSeconds ? qsTr("Yes") : qsTr("No"))
-                        font.pixelSize: 12
-                    }
-
-                    Label {
-                        text: qsTr("Last update: ") + mainWindow.formatTime(clock.currentTime)
-                        font.pixelSize: 10
-                        font.italic: true
-                    }
+                Button {
+                    text: qsTr("Reset Colors")
+                    Layout.fillWidth: true
+                    onClicked: mainWindow.resetColors()
                 }
             }
         }
@@ -364,61 +310,58 @@ ApplicationWindow {
 
     // === 工具函数 ===
 
-    // 格式化时间显示
-    function formatTime(date) {
+    function formatTime(date: date): string {
         return date.toLocaleTimeString(Qt.locale(), "hh:mm:ss");
     }
 
-    // 计算对比度文本颜色
-    function getContrastTextColor(bgColor) {
-        function normalize(x) {
+    function getContrastTextColor(bgColor: color): color {
+        function normalize(x: real): real {
             return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
         }
 
-        function getRelativeLuminance(r, g, b) {
-            return 0.2126 * normalize(r / 255.0) + 0.7152 * normalize(g / 255.0) + 0.0722 * normalize(b / 255.0);
+        function getRelativeLuminance(r: real, g: real, b: real): real {
+            return 0.2126 * normalize(r) + 0.7152 * normalize(g) + 0.0722 * normalize(b);
         }
 
-        var luminance = getRelativeLuminance(bgColor.r * 255, bgColor.g * 255, bgColor.b * 255);
+        const luminance = getRelativeLuminance(bgColor.r, bgColor.g, bgColor.b);
         return luminance > 0.179 ? "black" : "white";
     }
 
-    // 更新时间显示
-    function updateTime() {
+    function updateTime(): void {
         clock.currentTime = new Date();
         timeLabel.text = qsTr("Current time: ") + formatTime(clock.currentTime);
     }
 
-    // === 主题函数 ===
+    // === 主题函数 (iOS 调色板, 与 QWidget 版本一致) ===
 
-    function applyClassicTheme() {
-        clock.borderColor = "#505050";
-        clock.backgroundColor = "#323232";
-        clock.hourColor = "#f0f0f0";
-        clock.minuteColor = "#dcdcdc";
-        clock.secondColor = "#ff5050";
-        clock.textColor = "#f0f0f0";
+    function applyClassicTheme(): void {
+        clock.borderColor = "#d1d1d6";
+        clock.backgroundColor = "#f2f2f7";
+        clock.hourColor = "#1c1c1e";
+        clock.minuteColor = "#3a3a3c";
+        clock.secondColor = "#ff3b30";
+        clock.textColor = "#1c1c1e";
     }
 
-    function applyDarkTheme() {
-        clock.borderColor = "white";
-        clock.backgroundColor = "darkgray";
-        clock.hourColor = "white";
-        clock.minuteColor = "lightgray";
-        clock.secondColor = "yellow";
-        clock.textColor = "white";
+    function applyDarkTheme(): void {
+        clock.borderColor = "#3a3a3c";
+        clock.backgroundColor = "#1c1c1e";
+        clock.hourColor = "#ffffff";
+        clock.minuteColor = "#aeaeb2";
+        clock.secondColor = "#ff453a";
+        clock.textColor = "#ffffff";
     }
 
-    function applyModernTheme() {
-        clock.borderColor = "#4682B4";
-        clock.backgroundColor = "#F0F8FF";
-        clock.hourColor = "#191970";
-        clock.minuteColor = "#4169E1";
-        clock.secondColor = "#DC143C";
-        clock.textColor = "#2F4F4F";
+    function applyModernTheme(): void {
+        clock.borderColor = "#0055a5";
+        clock.backgroundColor = "#003366";
+        clock.hourColor = "#ffffff";
+        clock.minuteColor = "#cccccc";
+        clock.secondColor = "#ff9500";
+        clock.textColor = "#ffffff";
     }
 
-    function resetColors() {
+    function resetColors(): void {
         clock.borderColor = defaultBorderColor;
         clock.backgroundColor = defaultBackgroundColor;
         clock.hourColor = defaultHourColor;
@@ -429,18 +372,6 @@ ApplicationWindow {
 
     // === 初始化 ===
     Component.onCompleted: {
-        // 初始更新时间显示
         updateTime();
-
-        // 设置定时更新状态
-        statusTimer.start();
-    }
-
-    // 状态更新定时器
-    Timer {
-        id: statusTimer
-        interval: 1000
-        running: true
-        repeat: true
     }
 }

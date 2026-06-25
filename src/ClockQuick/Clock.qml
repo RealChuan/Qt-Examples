@@ -6,56 +6,39 @@ import QtQuick.Shapes
 Item {
     id: root
 
-    // 属性定义
-    property color borderColor: "#505050"
-    property color backgroundColor: "#323232"
-    property color hourColor: "#f0f0f0"
-    property color minuteColor: "#dcdcdc"
-    property color secondColor: "#ff5050"
-    property color textColor: "#f0f0f0"
+    // 属性定义 (iOS 风格调色板)
+    property color borderColor: "#d1d1d6"
+    property color backgroundColor: "#f2f2f7"
+    property color hourColor: "#1c1c1e"
+    property color minuteColor: "#3a3a3c"
+    property color secondColor: "#ff3b30"
+    property color textColor: "#1c1c1e"
     property bool smoothSeconds: true
     property bool showSeconds: true
 
     // 内部计算属性
-    property real centerX: width / 2
-    property real centerY: height / 2
-    property real radius: Math.min(centerX, centerY) * 0.9
-    property real borderWidth: radius / 20
-    property real scaleLength: radius / 15
-    property real numberRadius: radius * 0.75
+    readonly property real centerX: width / 2
+    readonly property real centerY: height / 2
+    readonly property real radius: Math.min(centerX, centerY) * 0.9
+    readonly property real borderWidth: radius / 30
+    readonly property real scaleLength: radius / 15
+    readonly property real numberRadius: radius * 0.75
 
     // 当前时间
     property date currentTime: new Date()
 
     // 定时更新
     Timer {
-        interval: root.smoothSeconds ? 200 : 1000
+        interval: root.smoothSeconds ? 50 : 1000
         running: true
         repeat: true
         onTriggered: root.currentTime = new Date()
     }
 
-    // 背景圆
+    // 背景圆 (纯色, QML 不支持 ShapeRadialGradient)
     Shape {
         anchors.fill: parent
         preferredRendererType: Shape.CurveRenderer
-
-        ShapePath {
-            strokeWidth: root.borderWidth
-            strokeColor: root.borderColor
-            fillColor: "transparent"
-            capStyle: ShapePath.RoundCap
-            joinStyle: ShapePath.RoundJoin
-
-            PathAngleArc {
-                centerX: root.centerX
-                centerY: root.centerY
-                radiusX: root.radius - root.borderWidth / 2
-                radiusY: root.radius - root.borderWidth / 2
-                startAngle: 0
-                sweepAngle: 360
-            }
-        }
 
         ShapePath {
             strokeColor: "transparent"
@@ -72,9 +55,27 @@ Item {
                 sweepAngle: 360
             }
         }
+
+        // 边框环 (细薄, 半透明)
+        ShapePath {
+            strokeWidth: root.borderWidth
+            strokeColor: root.borderColor
+            fillColor: "transparent"
+            capStyle: ShapePath.RoundCap
+            joinStyle: ShapePath.RoundJoin
+
+            PathAngleArc {
+                centerX: root.centerX
+                centerY: root.centerY
+                radiusX: root.radius - root.borderWidth / 2
+                radiusY: root.radius - root.borderWidth / 2
+                startAngle: 0
+                sweepAngle: 360
+            }
+        }
     }
 
-    // 刻度
+    // 刻度 (小时刻度: 深色粗线, 分钟刻度: 浅色细线)
     Repeater {
         model: 60
 
@@ -86,9 +87,10 @@ Item {
             x: root.centerX + (root.radius - root.scaleLength) * Math.cos(angle) - width / 2
             y: root.centerY + (root.radius - root.scaleLength) * Math.sin(angle) - height / 2
 
-            width: isHour ? root.radius * 0.02 : root.radius * 0.01
+            width: isHour ? root.radius * 0.025 : root.radius * 0.008
             height: root.scaleLength * (isHour ? 1.0 : 0.7)
-            color: root.textColor
+            color: isHour ? root.textColor : "#c7c7cc"
+            radius: width / 2
 
             rotation: index * 6 + 90
             transformOrigin: Item.Bottom
@@ -121,8 +123,9 @@ Item {
         centerX: root.centerX
         centerY: root.centerY
         length: root.radius * 0.5
-        width: root.radius * 0.01
+        handWidth: root.radius * 0.01
         color: root.hourColor
+        tailRatio: 0.1
         angle: (root.currentTime.getHours() % 12 + root.currentTime.getMinutes() / 60) * 30
     }
 
@@ -131,25 +134,27 @@ Item {
         centerX: root.centerX
         centerY: root.centerY
         length: root.radius * 0.7
-        width: root.radius * 0.008
+        handWidth: root.radius * 0.008
         color: root.minuteColor
+        tailRatio: 0.1
         angle: (root.currentTime.getMinutes() + root.currentTime.getSeconds() / 60) * 6
     }
 
-    // 秒针
+    // 秒针 (较长尾端配重)
     Hand {
         centerX: root.centerX
         centerY: root.centerY
         length: root.radius * 0.8
-        width: root.radius * 0.004
+        handWidth: root.radius * 0.004
         color: root.secondColor
+        tailRatio: 0.2
         angle: root.currentTime.getSeconds() * 6 + (root.smoothSeconds ? root.currentTime.getMilliseconds() / 1000 * 6 : 0)
         visible: root.showSeconds
     }
 
-    // 中心点 - 修正版本
+    // 中心点
     Rectangle {
-        width: root.radius / 20 * 2
+        width: root.radius / 20
         height: width
         x: root.centerX - width / 2
         y: root.centerY - height / 2

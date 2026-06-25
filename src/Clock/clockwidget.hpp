@@ -2,6 +2,8 @@
 
 #include <QWidget>
 
+#include <memory>
+
 class ClockWidget : public QWidget
 {
     Q_OBJECT
@@ -81,5 +83,5 @@ private:
     void updateGeometry();
 
     class ClockWidgetPrivate;
-    QScopedPointer<ClockWidgetPrivate> d_ptr;
+    std::unique_ptr<ClockWidgetPrivate> d_ptr;
 };
