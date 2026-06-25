@@ -2,16 +2,21 @@
 
 #include <QGraphicsView>
 
+#include <memory>
+
 class Carousel3DView : public QGraphicsView
 {
     Q_OBJECT
-    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration)
-    Q_PROPERTY(int autoRotationInterval READ autoRotationInterval WRITE setAutoRotationInterval)
-    Q_PROPERTY(bool autoRotationEnabled READ isAutoRotationEnabled WRITE setAutoRotationEnabled)
+    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration NOTIFY
+                   animationDurationChanged)
+    Q_PROPERTY(int autoRotationInterval READ autoRotationInterval WRITE setAutoRotationInterval
+                   NOTIFY autoRotationIntervalChanged)
+    Q_PROPERTY(bool autoRotationEnabled READ isAutoRotationEnabled WRITE setAutoRotationEnabled
+                   NOTIFY autoRotationEnabledChanged)
 
 public:
     explicit Carousel3DView(QWidget *parent = nullptr);
-    ~Carousel3DView();
+    ~Carousel3DView() override;
 
     // 动画设置
     void setAnimationDuration(int duration);
@@ -44,5 +49,5 @@ protected:
 
 private:
     class Carousel3DViewPrivate;
-    QScopedPointer<Carousel3DViewPrivate> d_ptr;
+    std::unique_ptr<Carousel3DViewPrivate> d_ptr;
 };

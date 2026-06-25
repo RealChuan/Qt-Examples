@@ -6,9 +6,7 @@
 class InteractiveImageItem::InteractiveImageItemPrivate
 {
 public:
-    explicit InteractiveImageItemPrivate(InteractiveImageItem *q)
-        : q_ptr(q)
-    {}
+    explicit InteractiveImageItemPrivate(InteractiveImageItem *q) : q_ptr(q) {}
 
     InteractiveImageItem *q_ptr;
 
@@ -16,13 +14,10 @@ public:
 };
 
 InteractiveImageItem::InteractiveImageItem(QGraphicsItem *parent)
-    : QGraphicsPixmapItem(parent)
-    , d_ptr(new InteractiveImageItemPrivate(this))
-{
-    setAcceptHoverEvents(true);
-}
+    : QGraphicsPixmapItem(parent), d_ptr(std::make_unique<InteractiveImageItemPrivate>(this))
+{ setAcceptHoverEvents(true); }
 
-InteractiveImageItem::~InteractiveImageItem() {}
+InteractiveImageItem::~InteractiveImageItem() = default;
 
 void InteractiveImageItem::setSourcePixmap(const QPixmap &pixmap)
 {
@@ -31,9 +26,7 @@ void InteractiveImageItem::setSourcePixmap(const QPixmap &pixmap)
 }
 
 QPixmap InteractiveImageItem::sourcePixmap() const
-{
-    return d_ptr->sourcePixmap;
-}
+{ return d_ptr->sourcePixmap; }
 
 void InteractiveImageItem::setSize(const QSize &size)
 {
@@ -43,9 +36,7 @@ void InteractiveImageItem::setSize(const QSize &size)
 }
 
 QSize InteractiveImageItem::size() const
-{
-    return pixmap().size();
-}
+{ return pixmap().size(); }
 
 bool InteractiveImageItem::sceneEvent(QEvent *event)
 {

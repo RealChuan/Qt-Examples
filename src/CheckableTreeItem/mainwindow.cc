@@ -3,6 +3,8 @@
 
 #include <QtWidgets>
 
+using namespace Qt::StringLiterals;
+
 namespace {
 
 void buildFileSystemTreeImpl(QStandardItemModel *model,
@@ -16,7 +18,7 @@ void buildFileSystemTreeImpl(QStandardItemModel *model,
                              std::function<int(QStandardItem *)> countCheckedItems)
 {
     // 显示加载状态
-    QLabel *loadingLabel = new QLabel("Scanning file system, please wait...", centralWidget);
+    QLabel *loadingLabel = new QLabel(u"Scanning file system, please wait..."_s, centralWidget);
     loadingLabel->setAlignment(Qt::AlignCenter);
     mainLayout->insertWidget(2, loadingLabel); // 插入到树视图上方
 
@@ -31,7 +33,7 @@ void buildFileSystemTreeImpl(QStandardItemModel *model,
          loadingLabel,
          countTreeItems,
          countCheckedItems]() {
-            loadingLabel->setText("Building root directory...");
+            loadingLabel->setText(u"Building root directory..."_s);
 
             // 获取根目录路径（跨平台）
             QList<QPair<QString, QString>> rootPaths;
@@ -44,10 +46,10 @@ void buildFileSystemTreeImpl(QStandardItemModel *model,
             }
 #else
             // Unix/Linux/Mac系统：使用用户主目录和常见系统目录
-            rootPaths.append(qMakePair(QDir::homePath(), "Home Directory"));
-            rootPaths.append(qMakePair("/", "Root Directory"));
-            rootPaths.append(qMakePair("/etc", "System Configuration"));
-            rootPaths.append(qMakePair("/usr", "User Programs"));
+            rootPaths.append(qMakePair(QDir::homePath(), u"Home Directory"_s));
+            rootPaths.append(qMakePair(u"/"_s, u"Root Directory"_s));
+            rootPaths.append(qMakePair(u"/etc"_s, u"System Configuration"_s));
+            rootPaths.append(qMakePair(u"/usr"_s, u"User Programs"_s));
 #endif
 
             progressBar->setVisible(true);
@@ -60,7 +62,7 @@ void buildFileSystemTreeImpl(QStandardItemModel *model,
             model->clear();
 
             // 构建根节点
-            CheckableTreeItem *rootItem = new CheckableTreeItem("Local File System");
+            CheckableTreeItem *rootItem = new CheckableTreeItem(u"Local File System"_s);
             model->appendRow(rootItem);
 
             // 递归构建文件树函数
@@ -99,9 +101,9 @@ void buildFileSystemTreeImpl(QStandardItemModel *model,
                     QString fullPath = entry.absoluteFilePath();
 
                     // 跳过一些系统目录和无关目录
-                    if (entryName.startsWith(".") || entryName == "System32"
-                        || entryName == "Windows" || entryName == "proc" || entryName == "sys"
-                        || entryName == "dev") {
+                    if (entryName.startsWith(u'.') || entryName == u"System32"_s
+                        || entryName == u"Windows"_s || entryName == u"proc"_s
+                        || entryName == u"sys"_s || entryName == u"dev"_s) {
                         continue;
                     }
 
@@ -121,7 +123,7 @@ void buildFileSystemTreeImpl(QStandardItemModel *model,
                 QString path = rootPair.first;
                 QString displayName = rootPair.second;
 
-                statusLabel->setText(QString("Scanning: %1").arg(path));
+                statusLabel->setText(u"Scanning: %1"_s.arg(path));
                 qApp->processEvents(); // 处理事件，更新UI
 
                 CheckableTreeItem *driveItem = new CheckableTreeItem(displayName);
@@ -146,22 +148,21 @@ void buildFileSystemTreeImpl(QStandardItemModel *model,
 
             // 显示统计信息
             int totalItems = countTreeItems(rootItem);
-            statusLabel->setText(QString("Loaded %1 directory items").arg(totalItems));
+            statusLabel->setText(u"Loaded %1 directory items"_s.arg(totalItems));
             statusLabel->setVisible(true);
 
             // 初始计数
             int checkedCount = countCheckedItems(rootItem);
-            countLabel->setText(QString("Checked Items: %1").arg(checkedCount));
+            countLabel->setText(u"Checked Items: %1"_s.arg(checkedCount));
         },
         Qt::QueuedConnection);
 }
 
 } // namespace
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
-    setWindowTitle("File System Checkbox Tree");
+    setWindowTitle(u"File System Checkbox Tree"_s);
     resize(700, 650);
 
     QWidget *centralWidget = new QWidget(this);
@@ -171,16 +172,16 @@ MainWindow::MainWindow(QWidget *parent)
     QVBoxLayout *mainLayout = new QVBoxLayout(centralWidget);
 
     // 添加标题
-    QLabel *titleLabel = new QLabel("Local File System Hierarchical Checkboxes", this);
+    QLabel *titleLabel = new QLabel(u"Local File System Hierarchical Checkboxes"_s, this);
     mainLayout->addWidget(titleLabel);
 
     // 创建说明标签
     QLabel *descriptionLabel
-        = new QLabel("This example uses local real file paths to build a tree structure, "
+        = new QLabel(u"This example uses local real file paths to build a tree structure, "
                      "demonstrating recursive checkbox functionality:\n"
                      "- Maximum depth limited to 5 levels to prevent excessive data\n"
                      "- Supports real directory structure of file system\n"
-                     "- Automatically skips directories without access permissions",
+                     "- Automatically skips directories without access permissions"_s,
                      this);
     descriptionLabel->setWordWrap(true);
     mainLayout->addWidget(descriptionLabel);
@@ -197,20 +198,20 @@ MainWindow::MainWindow(QWidget *parent)
     progressBar->setValue(0);
     progressBar->setVisible(false);
 
-    QLabel *statusLabel = new QLabel("Building file tree...", this);
+    QLabel *statusLabel = new QLabel(u"Building file tree..."_s, this);
     statusLabel->setAlignment(Qt::AlignCenter);
     statusLabel->setFrameStyle(QFrame::Box);
     statusLabel->setVisible(false);
 
     // 创建操作按钮组
-    QGroupBox *controlGroup = new QGroupBox("Operation Control", this);
+    QGroupBox *controlGroup = new QGroupBox(u"Operation Control"_s, this);
     QHBoxLayout *controlLayout = new QHBoxLayout(controlGroup);
 
-    QPushButton *selectAllBtn = new QPushButton("Select All", this);
-    QPushButton *deselectAllBtn = new QPushButton("Deselect All", this);
-    QPushButton *expandAllBtn = new QPushButton("Expand All", this);
-    QPushButton *collapseAllBtn = new QPushButton("Collapse All", this);
-    QPushButton *refreshBtn = new QPushButton("Refresh", this);
+    QPushButton *selectAllBtn = new QPushButton(u"Select All"_s, this);
+    QPushButton *deselectAllBtn = new QPushButton(u"Deselect All"_s, this);
+    QPushButton *expandAllBtn = new QPushButton(u"Expand All"_s, this);
+    QPushButton *collapseAllBtn = new QPushButton(u"Collapse All"_s, this);
+    QPushButton *refreshBtn = new QPushButton(u"Refresh"_s, this);
 
     controlLayout->addWidget(selectAllBtn);
     controlLayout->addWidget(deselectAllBtn);
@@ -219,7 +220,7 @@ MainWindow::MainWindow(QWidget *parent)
     controlLayout->addWidget(refreshBtn);
 
     // 统计显示
-    QLabel *countLabel = new QLabel("Checked Items: 0", this);
+    QLabel *countLabel = new QLabel(u"Checked Items: 0"_s, this);
 
     // 将组件添加到主布局
     mainLayout->addWidget(treeView);
@@ -291,7 +292,7 @@ MainWindow::MainWindow(QWidget *parent)
         }
         // 更新计数
         int checkedCount = countCheckedItems(model->item(0));
-        countLabel->setText(QString("Checked Items: %1").arg(checkedCount));
+        countLabel->setText(u"Checked Items: %1"_s.arg(checkedCount));
     });
 
     connect(deselectAllBtn, &QPushButton::clicked, [model, countLabel]() {
@@ -302,7 +303,7 @@ MainWindow::MainWindow(QWidget *parent)
             }
         }
         // 更新计数
-        countLabel->setText("Checked Items: 0");
+        countLabel->setText(u"Checked Items: 0"_s);
     });
 
     connect(expandAllBtn, &QPushButton::clicked, this, [treeView]() { treeView->expandAll(); });
@@ -317,13 +318,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(model,
             &QStandardItemModel::itemChanged,
             this,
-            [model, countLabel, countCheckedItems](QStandardItem *item) {
-                Q_UNUSED(item)
+            [model, countLabel, countCheckedItems]([[maybe_unused]] QStandardItem *item) {
                 if (model->rowCount() > 0) {
                     int checkedCount = countCheckedItems(model->item(0));
-                    countLabel->setText(QString("Checked Items: %1").arg(checkedCount));
+                    countLabel->setText(u"Checked Items: %1"_s.arg(checkedCount));
                 }
             });
 }
-
-MainWindow::~MainWindow() {}

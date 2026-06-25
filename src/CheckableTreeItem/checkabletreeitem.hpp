@@ -32,7 +32,7 @@ public:
      * @brief 获取当前复选框状态
      * @return 当前的复选框状态
      */
-    Qt::CheckState checkState() const
+    [[nodiscard]] Qt::CheckState checkState() const
     { return static_cast<Qt::CheckState>(data(Qt::CheckStateRole).toInt()); }
 
 private:
@@ -51,7 +51,7 @@ private:
      * @brief 根据子节点状态计算当前节点的应有状态
      * @return 计算出的复选框状态
      */
-    Qt::CheckState calculateStateFromChildren() const;
+    [[nodiscard]] Qt::CheckState calculateStateFromChildren() const;
 
     /// 防止递归更新的标志
     bool m_updating = false;

@@ -7,9 +7,7 @@ class HoverEventFilter : public QObject
 {
 public:
     HoverEventFilter(QWidget *widget, const QString &name, QLabel *statusLabel)
-        : QObject(widget)
-        , m_name(name)
-        , m_statusLabel(statusLabel)
+        : QObject(widget), m_name(name), m_statusLabel(statusLabel)
     {}
 
 protected:
@@ -32,8 +30,7 @@ private:
     QLabel *m_statusLabel;
 };
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     // 创建主控件和布局
     auto *centralWidget = new QWidget(this);
@@ -204,5 +201,3 @@ MainWindow::MainWindow(QWidget *parent)
     installHoverHandler(button4, tr("Radio Style Button 1"));
     installHoverHandler(button5, tr("Radio Style Button 2"));
 }
-
-MainWindow::~MainWindow() {}

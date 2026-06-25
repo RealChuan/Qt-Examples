@@ -2,8 +2,7 @@
 
 #include <QDebug>
 
-CheckableTreeItem::CheckableTreeItem(const QString &text)
-    : QStandardItem(text)
+CheckableTreeItem::CheckableTreeItem(const QString &text) : QStandardItem(text)
 {
     setCheckable(true);
     // 初始状态设置为未选中
@@ -92,8 +91,8 @@ void CheckableTreeItem::updateParentState()
                 QStandardItem *child = parentItem->child(i);
                 if (child && child->isCheckable()) {
                     totalCheckable++;
-                    Qt::CheckState childState = static_cast<Qt::CheckState>(
-                        child->data(Qt::CheckStateRole).toInt());
+                    Qt::CheckState childState
+                        = static_cast<Qt::CheckState>(child->data(Qt::CheckStateRole).toInt());
                     if (childState == Qt::Checked) {
                         checkedCount++;
                     } else if (childState == Qt::Unchecked) {
@@ -118,7 +117,7 @@ void CheckableTreeItem::updateParentState()
     }
 }
 
-Qt::CheckState CheckableTreeItem::calculateStateFromChildren() const
+[[nodiscard]] Qt::CheckState CheckableTreeItem::calculateStateFromChildren() const
 {
     // 如果没有子节点，返回当前状态
     if (rowCount() == 0) {
@@ -134,8 +133,8 @@ Qt::CheckState CheckableTreeItem::calculateStateFromChildren() const
         QStandardItem *childItem = child(i);
         if (childItem && childItem->isCheckable()) {
             totalCheckable++;
-            Qt::CheckState childState = static_cast<Qt::CheckState>(
-                childItem->data(Qt::CheckStateRole).toInt());
+            Qt::CheckState childState
+                = static_cast<Qt::CheckState>(childItem->data(Qt::CheckStateRole).toInt());
             switch (childState) {
             case Qt::Checked: checkedCount++; break;
             case Qt::Unchecked: uncheckedCount++; break;

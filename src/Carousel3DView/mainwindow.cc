@@ -3,22 +3,23 @@
 
 #include <QtWidgets>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+using namespace Qt::StringLiterals;
+
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     // 创建3D轮播视图
     auto *carouselView = new Carousel3DView(this);
 
     // 创建基本控制按钮
-    auto *previousButton = new QPushButton("Previous", this);
-    auto *nextButton = new QPushButton("Next", this);
+    auto *previousButton = new QPushButton(u"Previous"_s, this);
+    auto *nextButton = new QPushButton(u"Next"_s, this);
 
     // 创建动画控制
     auto *animationDurationSlider = new QSlider(Qt::Horizontal, this);
     animationDurationSlider->setRange(200, 2000);
     animationDurationSlider->setValue(carouselView->animationDuration());
-    auto *durationLabel = new QLabel(tr("Animation: %1ms").arg(carouselView->animationDuration()),
-                                     this);
+    auto *durationLabel
+        = new QLabel(tr("Animation: %1ms").arg(carouselView->animationDuration()), this);
 
     // 创建自动轮播控制
     auto *autoRotationCheckbox = new QCheckBox(tr("Auto Rotation"), this);
@@ -27,13 +28,13 @@ MainWindow::MainWindow(QWidget *parent)
     auto *rotationIntervalSlider = new QSlider(Qt::Horizontal, this);
     rotationIntervalSlider->setRange(500, 5000);
     rotationIntervalSlider->setValue(carouselView->autoRotationInterval());
-    auto *intervalLabel = new QLabel(tr("Interval: %1ms").arg(carouselView->autoRotationInterval()),
-                                     this);
+    auto *intervalLabel
+        = new QLabel(tr("Interval: %1ms").arg(carouselView->autoRotationInterval()), this);
 
     // 创建自动轮播控制按钮
-    auto *startRotationButton = new QPushButton("Start", this);
-    auto *stopRotationButton = new QPushButton("Stop", this);
-    auto *toggleRotationButton = new QPushButton("Toggle", this);
+    auto *startRotationButton = new QPushButton(u"Start"_s, this);
+    auto *stopRotationButton = new QPushButton(u"Stop"_s, this);
+    auto *toggleRotationButton = new QPushButton(u"Toggle"_s, this);
 
     // 创建状态显示
     auto *statusLabel = new QLabel(tr("3D Image Carousel Ready"), this);
@@ -114,10 +115,8 @@ MainWindow::MainWindow(QWidget *parent)
             &QPushButton::clicked,
             carouselView,
             &Carousel3DView::startAutoRotation);
-    connect(stopRotationButton,
-            &QPushButton::clicked,
-            carouselView,
-            &Carousel3DView::stopAutoRotation);
+    connect(
+        stopRotationButton, &QPushButton::clicked, carouselView, &Carousel3DView::stopAutoRotation);
     connect(toggleRotationButton,
             &QPushButton::clicked,
             carouselView,
@@ -170,5 +169,3 @@ MainWindow::MainWindow(QWidget *parent)
     statusLabel->setText(tr("3D Image Carousel Ready - Use controls to customize behavior"));
     clearStatusTimer->start(3000);
 }
-
-MainWindow::~MainWindow() {}

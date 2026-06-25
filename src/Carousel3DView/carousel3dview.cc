@@ -7,6 +7,8 @@
 #include <QResizeEvent>
 #include <QTimer>
 
+using namespace Qt::StringLiterals;
+
 namespace {
 
 struct CarouselLayout
@@ -24,16 +26,14 @@ public:
     CarouselElement(InteractiveImageItem *item,
                     QPropertyAnimation *posAnimation,
                     QPropertyAnimation *sizeAnimation)
-        : imageItemPtr(item)
-        , posAnimationPtr(posAnimation)
-        , sizeAnimationPtr(sizeAnimation)
+        : imageItemPtr(item), posAnimationPtr(posAnimation), sizeAnimationPtr(sizeAnimation)
     {}
 
     ~CarouselElement() = default;
 
-    QScopedPointer<InteractiveImageItem> imageItemPtr;
-    QScopedPointer<QPropertyAnimation> posAnimationPtr;
-    QScopedPointer<QPropertyAnimation> sizeAnimationPtr;
+    std::unique_ptr<InteractiveImageItem> imageItemPtr;
+    std::unique_ptr<QPropertyAnimation> posAnimationPtr;
+    std::unique_ptr<QPropertyAnimation> sizeAnimationPtr;
 };
 
 using CarouselElementList = QList<QSharedPointer<CarouselElement>>;
@@ -64,10 +64,7 @@ class Carousel3DView::Carousel3DViewPrivate
 {
 public:
     explicit Carousel3DViewPrivate(Carousel3DView *q)
-        : q_ptr(q)
-        , animationDuration(800)
-        , autoRotationInterval(2000)
-        , autoRotationEnabled(true)
+        : q_ptr(q), animationDuration(800), autoRotationInterval(2000), autoRotationEnabled(true)
     {
         initializeScene();
         initializeLayouts();
@@ -137,19 +134,16 @@ public:
             animationGroup->addAnimation(posAnimation);
             animationGroup->addAnimation(sizeAnimation);
 
-            auto element = QSharedPointer<CarouselElement>::create(imageItem,
-                                                                   posAnimation,
-                                                                   sizeAnimation);
+            auto element
+                = QSharedPointer<CarouselElement>::create(imageItem, posAnimation, sizeAnimation);
             carouselElements.append(element);
         }
     }
 
     void setupElementConnections(InteractiveImageItem *item)
     {
-        q_ptr->connect(item,
-                       &InteractiveImageItem::itemClicked,
-                       q_ptr,
-                       &Carousel3DView::onItemClicked);
+        q_ptr->connect(
+            item, &InteractiveImageItem::itemClicked, q_ptr, &Carousel3DView::onItemClicked);
         q_ptr->connect(item, &InteractiveImageItem::mouseEntered, q_ptr, [this]() {
             if (autoRotationEnabled) {
                 autoRotationTimer->stop();
@@ -170,7 +164,7 @@ public:
 
         // 使用固定尺寸创建占位图
         QSize itemSize = layout.geometry.size().toSize();
-        auto pixmap = createPlaceholderPixmap(QString("Item %1").arg(index + 1), itemSize);
+        auto pixmap = createPlaceholderPixmap(u"Item %1"_s.arg(index + 1), itemSize);
         item->setSourcePixmap(pixmap);
         item->setPixmap(pixmap);
     }
@@ -235,7 +229,7 @@ public:
     int findElementIndex(InteractiveImageItem *item) const
     {
         for (int i = 0; i < carouselElements.size(); ++i) {
-            if (carouselElements[i]->imageItemPtr.data() == item) {
+            if (carouselElements[i]->imageItemPtr.get() == item) {
                 return i;
             }
         }
@@ -276,8 +270,7 @@ public:
 };
 
 Carousel3DView::Carousel3DView(QWidget *parent)
-    : QGraphicsView(parent)
-    , d_ptr(new Carousel3DViewPrivate(this))
+    : QGraphicsView(parent), d_ptr(std::make_unique<Carousel3DViewPrivate>(this))
 {
     setRenderHints(QPainter::Antialiasing | QPainter::SmoothPixmapTransform);
     setFrameStyle(QFrame::NoFrame);
@@ -287,7 +280,7 @@ Carousel3DView::Carousel3DView(QWidget *parent)
     setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
 }
 
-Carousel3DView::~Carousel3DView() {}
+Carousel3DView::~Carousel3DView() = default;
 
 // 动画持续时间设置
 void Carousel3DView::setAnimationDuration(int duration)
@@ -300,9 +293,7 @@ void Carousel3DView::setAnimationDuration(int duration)
 }
 
 int Carousel3DView::animationDuration() const
-{
-    return d_ptr->animationDuration;
-}
+{ return d_ptr->animationDuration; }
 
 // 自动轮播间隔设置
 void Carousel3DView::setAutoRotationInterval(int interval)
@@ -312,13 +303,12 @@ void Carousel3DView::setAutoRotationInterval(int interval)
         if (d_ptr->autoRotationEnabled && d_ptr->autoRotationTimer->isActive()) {
             d_ptr->autoRotationTimer->start(interval);
         }
+        emit autoRotationIntervalChanged(interval);
     }
 }
 
 int Carousel3DView::autoRotationInterval() const
-{
-    return d_ptr->autoRotationInterval;
-}
+{ return d_ptr->autoRotationInterval; }
 
 // 自动轮播启用设置
 void Carousel3DView::setAutoRotationEnabled(bool enabled)
@@ -335,25 +325,17 @@ void Carousel3DView::setAutoRotationEnabled(bool enabled)
 }
 
 bool Carousel3DView::isAutoRotationEnabled() const
-{
-    return d_ptr->autoRotationEnabled;
-}
+{ return d_ptr->autoRotationEnabled; }
 
 // 自动轮播控制
 void Carousel3DView::startAutoRotation()
-{
-    setAutoRotationEnabled(true);
-}
+{ setAutoRotationEnabled(true); }
 
 void Carousel3DView::stopAutoRotation()
-{
-    setAutoRotationEnabled(false);
-}
+{ setAutoRotationEnabled(false); }
 
 void Carousel3DView::toggleAutoRotation()
-{
-    setAutoRotationEnabled(!d_ptr->autoRotationEnabled);
-}
+{ setAutoRotationEnabled(!d_ptr->autoRotationEnabled); }
 
 void Carousel3DView::rotateToNext()
 {

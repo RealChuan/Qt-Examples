@@ -3,6 +3,8 @@
 #include <QGraphicsPixmapItem>
 #include <QObject>
 
+#include <memory>
+
 class InteractiveImageItem : public QObject, public QGraphicsPixmapItem
 {
     Q_OBJECT
@@ -14,10 +16,10 @@ public:
     ~InteractiveImageItem() override;
 
     void setSourcePixmap(const QPixmap &pixmap);
-    QPixmap sourcePixmap() const;
+    [[nodiscard]] QPixmap sourcePixmap() const;
 
     void setSize(const QSize &size);
-    QSize size() const;
+    [[nodiscard]] QSize size() const;
 
 signals:
     void itemClicked();
@@ -29,5 +31,5 @@ protected:
 
 private:
     class InteractiveImageItemPrivate;
-    QScopedPointer<InteractiveImageItemPrivate> d_ptr;
+    std::unique_ptr<InteractiveImageItemPrivate> d_ptr;
 };

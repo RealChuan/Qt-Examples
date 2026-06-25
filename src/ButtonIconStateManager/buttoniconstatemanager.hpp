@@ -2,6 +2,8 @@
 
 #include <QAbstractButton>
 
+#include <memory>
+
 class ButtonIconStateManager : public QObject
 {
     Q_OBJECT
@@ -30,7 +32,7 @@ public:
     void resetToNormal();
 
 private slots:
-    void onButtonToggled(bool checked);
+    void onButtonToggled([[maybe_unused]] bool checked);
 
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
@@ -40,5 +42,5 @@ private:
     void updateIconBasedOnState();
 
     class ButtonIconStateManagerPrivate;
-    QScopedPointer<ButtonIconStateManagerPrivate> d_ptr;
+    std::unique_ptr<ButtonIconStateManagerPrivate> d_ptr;
 };

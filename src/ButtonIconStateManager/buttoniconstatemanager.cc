@@ -23,9 +23,7 @@ QIcon createIconFromPaths(const QStringList &paths)
 class ButtonIconStateManager::ButtonIconStateManagerPrivate
 {
 public:
-    explicit ButtonIconStateManagerPrivate(ButtonIconStateManager *q)
-        : q_ptr(q)
-    {}
+    explicit ButtonIconStateManagerPrivate(ButtonIconStateManager *q) : q_ptr(q) {}
 
     ButtonIconStateManager *q_ptr;
 
@@ -41,8 +39,7 @@ public:
 };
 
 ButtonIconStateManager::ButtonIconStateManager(QAbstractButton *parent)
-    : QObject(parent)
-    , d_ptr(new ButtonIconStateManagerPrivate(this))
+    : QObject(parent), d_ptr(std::make_unique<ButtonIconStateManagerPrivate>(this))
 {
     d_ptr->buttonPtr = parent;
     if (d_ptr->buttonPtr) {
@@ -74,9 +71,7 @@ void ButtonIconStateManager::setNormalIcon(const QIcon &icon)
 }
 
 void ButtonIconStateManager::setNormalIcon(const QStringList &iconPaths)
-{
-    setNormalIcon(createIconFromPaths(iconPaths));
-}
+{ setNormalIcon(createIconFromPaths(iconPaths)); }
 
 void ButtonIconStateManager::setHoverIcon(const QIcon &icon)
 {
@@ -86,9 +81,7 @@ void ButtonIconStateManager::setHoverIcon(const QIcon &icon)
 }
 
 void ButtonIconStateManager::setHoverIcon(const QStringList &iconPaths)
-{
-    setHoverIcon(createIconFromPaths(iconPaths));
-}
+{ setHoverIcon(createIconFromPaths(iconPaths)); }
 
 void ButtonIconStateManager::setPressedIcon(const QIcon &icon)
 {
@@ -98,9 +91,7 @@ void ButtonIconStateManager::setPressedIcon(const QIcon &icon)
 }
 
 void ButtonIconStateManager::setPressedIcon(const QStringList &iconPaths)
-{
-    setPressedIcon(createIconFromPaths(iconPaths));
-}
+{ setPressedIcon(createIconFromPaths(iconPaths)); }
 
 void ButtonIconStateManager::setCheckedIcon(const QIcon &icon)
 {
@@ -111,9 +102,7 @@ void ButtonIconStateManager::setCheckedIcon(const QIcon &icon)
 }
 
 void ButtonIconStateManager::setCheckedIcon(const QStringList &iconPaths)
-{
-    setCheckedIcon(createIconFromPaths(iconPaths));
-}
+{ setCheckedIcon(createIconFromPaths(iconPaths)); }
 
 void ButtonIconStateManager::resetToNormal()
 {
@@ -123,10 +112,7 @@ void ButtonIconStateManager::resetToNormal()
 }
 
 void ButtonIconStateManager::onButtonToggled(bool checked)
-{
-    Q_UNUSED(checked)
-    updateIconBasedOnState();
-}
+{ updateIconBasedOnState(); }
 
 bool ButtonIconStateManager::eventFilter(QObject *watched, QEvent *event)
 {
