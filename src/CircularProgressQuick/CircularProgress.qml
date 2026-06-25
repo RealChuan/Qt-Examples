@@ -13,24 +13,27 @@ Item {
     property bool showPercent: true
     property string title: "Progress"
 
-    // 颜色属性
-    property color arcColor: "#4da1ff"
-    property color textColor: "#4da1ff"
-    property color titleColor: "#505050"
-    property color baseColor: "#b3b3b3"
+    // 颜色属性 (iOS 风格调色板)
+    property color arcColor: "#007aff"
+    property color textColor: "#1c1c1e"
+    property color titleColor: "#8e8e93"
+    property color baseColor: "#d1d1d6"
     property color backgroundColor: "transparent"
 
     // 动画属性
     property int animationDuration: 500
 
-    // 尺寸属性
+    // 尺寸属性 (与 QWidget 版本保持一致的视觉比例)
     property real arcWidth: Math.min(width, height) * 0.1
+    property real arcMargin: Math.min(width, height) * 0.05
 
     // === 计算属性 ===
     readonly property bool isAnimating: privateData.animationRunning
     readonly property real progress: (value - minValue) / (maxValue - minValue)
     readonly property real totalAngle: endAngle - startAngle
     readonly property real progressAngle: totalAngle * progress
+    // 圆弧半径 (与 QWidget 版本一致: minSize/2 - arcWidth - arcMargin)
+    readonly property real arcRadius: Math.min(width, height) / 2 - arcWidth - arcMargin
 
     // === 信号定义 === (只定义QML不会自动生成的信号)
     signal valueIncreased(real newValue)
@@ -84,12 +87,12 @@ Item {
 
     // === 外观组件 ===
 
-    // 背景
+    // 背景卡片 (iOS 风格圆角卡片, 与 QWidget 版本一致)
     Rectangle {
         id: backgroundRect
         anchors.fill: parent
         color: root.backgroundColor
-        radius: Math.min(width, height) * 0.5
+        radius: Math.min(width, height) * 0.1
     }
 
     // 使用 Shape 绘制圆弧
@@ -99,7 +102,7 @@ Item {
         vendorExtensionsEnabled: true
         preferredRendererType: Shape.CurveRenderer
 
-        // 背景圆弧
+        // 1. 轨道弧 (纯色, QML 不支持 strokeGradient)
         ShapePath {
             id: baseArc
             strokeColor: root.baseColor
@@ -110,14 +113,14 @@ Item {
             PathAngleArc {
                 centerX: root.width / 2
                 centerY: root.height / 2
-                radiusX: Math.min(root.width, root.height) / 2 - root.arcWidth / 2
-                radiusY: Math.min(root.width, root.height) / 2 - root.arcWidth / 2
+                radiusX: root.arcRadius
+                radiusY: root.arcRadius
                 startAngle: root.startAngle
                 sweepAngle: root.totalAngle
             }
         }
 
-        // 进度圆弧
+        // 2. 进度弧主体 (纯色, 与 QWidget 版本保持一致的设计语言)
         ShapePath {
             id: progressArc
             strokeColor: root.arcColor
@@ -128,22 +131,21 @@ Item {
             PathAngleArc {
                 centerX: root.width / 2
                 centerY: root.height / 2
-                radiusX: Math.min(root.width, root.height) / 2 - root.arcWidth / 2
-                radiusY: Math.min(root.width, root.height) / 2 - root.arcWidth / 2
+                radiusX: root.arcRadius
+                radiusY: root.arcRadius
                 startAngle: root.startAngle
                 sweepAngle: root.progressAngle
             }
         }
     }
 
-    // 数值文本
+    // 数值文本 (居中, 与 QWidget 版本一致)
     Text {
         id: valueText
         anchors.centerIn: parent
-        anchors.verticalCenterOffset: parent.height * 0.1
         text: {
             if (root.showPercent) {
-                var percent = ((root.value - root.minValue) / (root.maxValue - root.minValue)) * 100;
+                let percent = ((root.value - root.minValue) / (root.maxValue - root.minValue)) * 100;
                 return percent.toFixed(2) + "%";
             } else {
                 return root.value.toFixed(2);
@@ -156,13 +158,13 @@ Item {
         verticalAlignment: Text.AlignVCenter
     }
 
-    // 标题文本
+    // 标题文本 (位于数值上方, 与 QWidget 版本一致: -arcRadius/2.5)
     Text {
         id: titleText
         anchors {
-            top: valueText.bottom
             horizontalCenter: parent.horizontalCenter
-            topMargin: Math.min(root.width, root.height) * 0.05
+            verticalCenter: parent.verticalCenter
+            verticalCenterOffset: -root.arcRadius / 2.5
         }
         text: root.title
         color: root.titleColor
@@ -172,8 +174,8 @@ Item {
     }
 
     // === 公共方法 ===
-    function setValue(newValue) {
-        var clampedValue = Math.max(root.minValue, Math.min(root.maxValue, newValue));
+    function setValue(newValue: real) {
+        const clampedValue = Math.max(root.minValue, Math.min(root.maxValue, newValue));
         if (clampedValue !== root.value) {
             privateData.previousValue = root.value;
             privateData.animationRunning = false;
@@ -183,8 +185,8 @@ Item {
         }
     }
 
-    function setValueAnimated(newValue) {
-        var clampedValue = Math.max(root.minValue, Math.min(root.maxValue, newValue));
+    function setValueAnimated(newValue: real) {
+        const clampedValue = Math.max(root.minValue, Math.min(root.maxValue, newValue));
         if (clampedValue !== root.value) {
             privateData.previousValue = root.value;
             privateData.animationRunning = true;
@@ -194,23 +196,23 @@ Item {
         }
     }
 
-    function increaseValue(increment) {
-        var actualIncrement = increment || 1.0;
+    function increaseValue(increment: real) {
+        const actualIncrement = increment || 1.0;
         if (actualIncrement <= 0)
             return;
 
-        var newValue = Math.min(root.maxValue, root.value + actualIncrement);
+        const newValue = Math.min(root.maxValue, root.value + actualIncrement);
         if (newValue !== root.value) {
             root.setValueAnimated(newValue);
         }
     }
 
-    function decreaseValue(decrement) {
-        var actualDecrement = decrement || 1.0;
+    function decreaseValue(decrement: real) {
+        const actualDecrement = decrement || 1.0;
         if (actualDecrement <= 0)
             return;
 
-        var newValue = Math.max(root.minValue, root.value - actualDecrement);
+        const newValue = Math.max(root.minValue, root.value - actualDecrement);
         if (newValue !== root.value) {
             root.setValueAnimated(newValue);
         }

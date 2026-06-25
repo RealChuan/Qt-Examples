@@ -12,10 +12,46 @@ ApplicationWindow {
     visible: true
     title: qsTr("Circular Progress Quick Example")
 
+    // 当前正在编辑颜色的目标 (用于 ColorDialog 异步回调)
+    property string currentColorTarget: ""
+
     // 颜色对话框
     ColorDialog {
         id: colorDialog
         title: qsTr("Choose color")
+    }
+
+    // 接受颜色对话框 (替代 arguments.callee 模式)
+    Connections {
+        target: colorDialog
+        function onAccepted() {
+            if (!colorDialog.selectedColor)
+                return;
+
+            switch (mainWindow.currentColorTarget) {
+            case "arc":
+                circularProgress.arcColor = colorDialog.selectedColor;
+                arcColorButton.palette.buttonText = getContrastTextColor(circularProgress.arcColor);
+                break;
+            case "text":
+                circularProgress.textColor = colorDialog.selectedColor;
+                textColorButton.palette.buttonText = getContrastTextColor(circularProgress.textColor);
+                break;
+            case "title":
+                circularProgress.titleColor = colorDialog.selectedColor;
+                titleColorButton.palette.buttonText = getContrastTextColor(circularProgress.titleColor);
+                break;
+            case "base":
+                circularProgress.baseColor = colorDialog.selectedColor;
+                baseColorButton.palette.buttonText = getContrastTextColor(circularProgress.baseColor);
+                break;
+            case "background":
+                circularProgress.backgroundColor = colorDialog.selectedColor;
+                backgroundColorButton.palette.buttonText = getContrastTextColor(circularProgress.backgroundColor);
+                break;
+            }
+            mainWindow.currentColorTarget = "";
+        }
     }
 
     ColumnLayout {
@@ -187,20 +223,6 @@ ApplicationWindow {
                             editable: true
                             onValueModified: circularProgress.endAngle = value
                         }
-
-                        Label {
-                            text: qsTr("Arc width:")
-                            Layout.alignment: Qt.AlignRight
-                        }
-
-                        SpinBox {
-                            id: arcWidthSpinBox
-                            from: 5
-                            to: 50
-                            value: circularProgress.arcWidth
-                            editable: true
-                            onValueModified: circularProgress.arcWidth = value
-                        }
                     }
                 }
 
@@ -225,13 +247,7 @@ ApplicationWindow {
                             text: circularProgress.arcColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = circularProgress.arcColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        circularProgress.arcColor = colorDialog.selectedColor;
-                                        arcColorButton.palette.buttonText = getContrastTextColor(circularProgress.arcColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "arc";
                                 colorDialog.open();
                             }
 
@@ -253,13 +269,7 @@ ApplicationWindow {
                             text: circularProgress.textColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = circularProgress.textColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        circularProgress.textColor = colorDialog.selectedColor;
-                                        textColorButton.palette.buttonText = getContrastTextColor(circularProgress.textColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "text";
                                 colorDialog.open();
                             }
 
@@ -281,13 +291,7 @@ ApplicationWindow {
                             text: circularProgress.titleColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = circularProgress.titleColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        circularProgress.titleColor = colorDialog.selectedColor;
-                                        titleColorButton.palette.buttonText = getContrastTextColor(circularProgress.titleColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "title";
                                 colorDialog.open();
                             }
 
@@ -310,13 +314,7 @@ ApplicationWindow {
                             text: circularProgress.baseColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = circularProgress.baseColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        circularProgress.baseColor = colorDialog.selectedColor;
-                                        baseColorButton.palette.buttonText = getContrastTextColor(circularProgress.baseColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "base";
                                 colorDialog.open();
                             }
 
@@ -338,13 +336,7 @@ ApplicationWindow {
                             text: circularProgress.backgroundColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = circularProgress.backgroundColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        circularProgress.backgroundColor = colorDialog.selectedColor;
-                                        backgroundColorButton.palette.buttonText = getContrastTextColor(circularProgress.backgroundColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "background";
                                 colorDialog.open();
                             }
 
@@ -420,13 +412,13 @@ ApplicationWindow {
                     }
                 }
 
-                // 快速主题组
+                // 快速主题组 (iOS 风格调色板, 与 QWidget 版本一致)
                 GroupBox {
                     title: qsTr("Quick Themes")
                     Layout.fillWidth: true
 
                     GridLayout {
-                        columns: 2
+                        columns: 3
                         anchors.fill: parent
 
                         Button {
@@ -445,12 +437,6 @@ ApplicationWindow {
                             text: qsTr("Modern")
                             Layout.fillWidth: true
                             onClicked: mainWindow.applyModernTheme()
-                        }
-
-                        Button {
-                            text: qsTr("Reset Colors")
-                            Layout.fillWidth: true
-                            onClicked: mainWindow.resetColors()
                         }
                     }
                 }
@@ -471,32 +457,27 @@ ApplicationWindow {
     Connections {
         target: circularProgress
 
-        function onValueIncreased(newValue) {
-            console.log("Value increased to:", newValue);
+        function onValueIncreased(newValue: real) {
             statusLabel.text = qsTr("Value increased to: %1").arg(newValue);
             statusLabel.background.color = "lightgreen";
         }
 
-        function onValueDecreased(newValue) {
-            console.log("Value decreased to:", newValue);
+        function onValueDecreased(newValue: real) {
             statusLabel.text = qsTr("Value decreased to: %1").arg(newValue);
             statusLabel.background.color = "lightcoral";
         }
 
         function onValueReset() {
-            console.log("Value reset");
             statusLabel.text = qsTr("Value reset to minimum");
             statusLabel.background.color = "lightyellow";
         }
 
-        function onAnimationStarted(oldValue, newValue) {
-            console.log("Animation started from", oldValue, "to", newValue);
+        function onAnimationStarted(oldValue: real, newValue: real) {
             statusLabel.text = qsTr("Animating: %1 → %2").arg(oldValue).arg(newValue);
             statusLabel.background.color = "lightblue";
         }
 
-        function onAnimationFinished(value) {
-            console.log("Animation finished at:", value);
+        function onAnimationFinished(value: real) {
             statusLabel.text = qsTr("Animation finished: %1").arg(value);
             statusLabel.background.color = "lightgreen";
         }
@@ -509,21 +490,16 @@ ApplicationWindow {
 
     // === 工具函数 ===
 
-    // 计算对比度足够的文本颜色（WCAG标准）
-    function getContrastTextColor(bgColor) {
-        function normalize(x) {
-            return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
-        }
+    // 计算对比度足够的文本颜色 (WCAG 标准)
+    function getContrastTextColor(bgColor: color): color {
+        const normalize = x => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
+        const getRelativeLuminance = (r, g, b) => 0.2126 * normalize(r / 255.0) + 0.7152 * normalize(g / 255.0) + 0.0722 * normalize(b / 255.0);
 
-        function getRelativeLuminance(r, g, b) {
-            return 0.2126 * normalize(r / 255.0) + 0.7152 * normalize(g / 255.0) + 0.0722 * normalize(b / 255.0);
-        }
-
-        var luminance = getRelativeLuminance(bgColor.r * 255, bgColor.g * 255, bgColor.b * 255);
+        const luminance = getRelativeLuminance(bgColor.r * 255, bgColor.g * 255, bgColor.b * 255);
         return luminance > 0.179 ? "black" : "white";
     }
 
-    // 更新所有颜色按钮的文本和颜色
+    // 更新所有颜色按钮的文本颜色
     function updateColorButtons() {
         arcColorButton.palette.buttonText = getContrastTextColor(circularProgress.arcColor);
         textColorButton.palette.buttonText = getContrastTextColor(circularProgress.textColor);
@@ -532,54 +508,41 @@ ApplicationWindow {
         backgroundColorButton.palette.buttonText = getContrastTextColor(circularProgress.backgroundColor);
     }
 
-    // === 主题函数 ===
+    // === 主题函数 (iOS 风格调色板, 与 QWidget 版本一致) ===
 
     function applyClassicTheme() {
-        circularProgress.arcColor = "#4da1ff";
-        circularProgress.textColor = "#4da1ff";
-        circularProgress.titleColor = "#505050";
-        circularProgress.baseColor = "#b3b3b3";
+        circularProgress.arcColor = "#007aff";
+        circularProgress.textColor = "#1c1c1e";
+        circularProgress.titleColor = "#8e8e93";
+        circularProgress.baseColor = "#d1d1d6";
         circularProgress.backgroundColor = "transparent";
 
         updateColorButtons();
         statusLabel.text = qsTr("Classic theme applied");
-        statusLabel.background.color = "lightblue";
+        statusLabel.color = "lightblue";
     }
 
     function applyDarkTheme() {
-        circularProgress.arcColor = "#61afef";
-        circularProgress.textColor = "#98c379";
-        circularProgress.titleColor = "#e06c75";
-        circularProgress.baseColor = "#3c4048";
-        circularProgress.backgroundColor = "#21252b";
+        circularProgress.arcColor = "#0a84ff";
+        circularProgress.textColor = "#ffffff";
+        circularProgress.titleColor = "#aeaeb2";
+        circularProgress.baseColor = "#48484a";
+        circularProgress.backgroundColor = "#1c1c1e";
 
         updateColorButtons();
         statusLabel.text = qsTr("Dark theme applied");
-        statusLabel.background.color = "darkgray";
+        statusLabel.color = "darkgray";
     }
 
     function applyModernTheme() {
-        circularProgress.arcColor = "#dc143c";
-        circularProgress.textColor = "#191970";
-        circularProgress.titleColor = "#4169e1";
-        circularProgress.baseColor = "#d3d3d3";
-        circularProgress.backgroundColor = "#f0f8ff";
+        circularProgress.arcColor = "#ff9500";
+        circularProgress.textColor = "#1c1c1e";
+        circularProgress.titleColor = "#ff2d55";
+        circularProgress.baseColor = "#c7c7cc";
+        circularProgress.backgroundColor = "#f2f2f7";
 
         updateColorButtons();
         statusLabel.text = qsTr("Modern theme applied");
-        statusLabel.background.color = "lightpink";
-    }
-
-    function resetColors() {
-        circularProgress.arcColor = "#4da1ff";
-        circularProgress.textColor = "#4da1ff";
-        circularProgress.titleColor = "#505050";
-        circularProgress.baseColor = "#b3b3b3";
-        circularProgress.backgroundColor = "transparent";
-
-        updateColorButtons();
-
-        statusLabel.text = qsTr("Colors reset to default");
-        statusLabel.background.color = "lightyellow";
+        statusLabel.color = "lightpink";
     }
 }

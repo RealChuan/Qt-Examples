@@ -6,7 +6,7 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     // 创建圆形进度控件
-    auto *circularProgress = new CircularProgress("Loading Progress", this);
+    auto *circularProgress = new CircularProgress(u"Loading Progress"_s, this);
 
     // 创建数值控制
     auto *valueSlider = new QSlider(Qt::Horizontal, this);
@@ -50,7 +50,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // 创建文本控制
     auto *titleLabel = new QLabel(tr("Title:"), this);
-    auto *titleEdit = new QLineEdit("Loading Progress", this);
+    auto *titleEdit = new QLineEdit(u"Loading Progress"_s, this);
 
     // 创建颜色选择控件
     auto *arcColorButton = new QPushButton(this);
@@ -191,10 +191,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         };
 
         double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
-        QString textColor = luminance > 0.179 ? "black" : "white";
+        QString textColor = luminance > 0.179 ? u"black"_s : u"white"_s;
 
         button->setStyleSheet(
-            QString("background-color: %1; color: %2; border: 1px solid gray; padding: 5px;")
+            u"background-color: %1; color: %2; border: 1px solid gray; padding: 5px;"_s
                 .arg(colorName)
                 .arg(textColor));
         button->setText(colorName);
@@ -218,7 +218,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     });
 
     connect(valueSpinBox,
-            QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            qOverload<double>(&QDoubleSpinBox::valueChanged),
             this,
             [circularProgress, valueSlider](double value) {
                 valueSlider->blockSignals(true);
@@ -229,21 +229,21 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // 范围控制
     connect(minValueSpinBox,
-            QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            qOverload<double>(&QDoubleSpinBox::valueChanged),
             circularProgress,
             &CircularProgress::setMinValue);
     connect(maxValueSpinBox,
-            QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            qOverload<double>(&QDoubleSpinBox::valueChanged),
             circularProgress,
             &CircularProgress::setMaxValue);
 
     // 角度控制
     connect(startAngleSpinBox,
-            QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            qOverload<double>(&QDoubleSpinBox::valueChanged),
             circularProgress,
             &CircularProgress::setStartAngle);
     connect(endAngleSpinBox,
-            QOverload<double>::of(&QDoubleSpinBox::valueChanged),
+            qOverload<double>(&QDoubleSpinBox::valueChanged),
             circularProgress,
             &CircularProgress::setEndAngle);
 
@@ -349,11 +349,11 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
              titleColorButton,
              baseColorButton,
              backgroundColorButton]() {
-                // 设置经典主题颜色
-                circularProgress->setArcColor(QColor(77, 161, 255));
-                circularProgress->setTextColor(QColor(77, 161, 255));
-                circularProgress->setTitleColor(QColor(80, 80, 80));
-                circularProgress->setBaseColor(QColor(179, 179, 179));
+                // 设置经典主题颜色 (iOS Blue)
+                circularProgress->setArcColor(QColor(0, 122, 255));
+                circularProgress->setTextColor(QColor(28, 28, 30));
+                circularProgress->setTitleColor(QColor(142, 142, 147));
+                circularProgress->setBaseColor(QColor(209, 209, 214)); // #d1d1d6
                 circularProgress->setBackgroundColor(Qt::transparent);
 
                 // 更新按钮颜色
@@ -374,12 +374,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
              titleColorButton,
              baseColorButton,
              backgroundColorButton]() {
-                // 设置暗色主题颜色
-                circularProgress->setArcColor(QColor(97, 175, 239));
-                circularProgress->setTextColor(QColor(152, 195, 121));
-                circularProgress->setTitleColor(QColor(224, 108, 117));
-                circularProgress->setBaseColor(QColor(60, 64, 72));
-                circularProgress->setBackgroundColor(QColor(33, 37, 43));
+                // 设置暗色主题颜色 (iOS Dark)
+                circularProgress->setArcColor(QColor(10, 132, 255));
+                circularProgress->setTextColor(QColor(255, 255, 255));
+                circularProgress->setTitleColor(QColor(174, 174, 178));
+                circularProgress->setBaseColor(QColor(72, 72, 74));
+                circularProgress->setBackgroundColor(QColor(28, 28, 30));
 
                 // 更新按钮颜色
                 updateColorButton(arcColorButton, circularProgress->arcColor());
@@ -399,12 +399,12 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
              titleColorButton,
              baseColorButton,
              backgroundColorButton]() {
-                // 设置现代主题颜色
-                circularProgress->setArcColor(QColor(220, 20, 60));
-                circularProgress->setTextColor(QColor(25, 25, 112));
-                circularProgress->setTitleColor(QColor(65, 105, 225));
-                circularProgress->setBaseColor(QColor(211, 211, 211));
-                circularProgress->setBackgroundColor(QColor(240, 248, 255));
+                // 设置现代主题颜色 (iOS Vibrant)
+                circularProgress->setArcColor(QColor(255, 149, 0));
+                circularProgress->setTextColor(QColor(28, 28, 30));
+                circularProgress->setTitleColor(QColor(255, 45, 85));
+                circularProgress->setBaseColor(QColor(199, 199, 204)); // #c7c7cc
+                circularProgress->setBackgroundColor(QColor(242, 242, 247));
 
                 // 更新按钮颜色
                 updateColorButton(arcColorButton, circularProgress->arcColor());
@@ -453,5 +453,3 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // 初始化状态
     circularProgress->setValue(0);
 }
-
-MainWindow::~MainWindow() {}

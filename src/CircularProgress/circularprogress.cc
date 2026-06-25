@@ -1,6 +1,9 @@
 #include "circularprogress.hpp"
 
+#include <QBrush>
+#include <QLinearGradient>
 #include <QPainter>
+#include <QPainterPath>
 #include <QPropertyAnimation>
 #include <QtMath>
 
@@ -18,13 +21,13 @@ public:
     double endAngle = 230.0;
     double value = minValue;
     bool showPercent = true;
-    QString title = "Progress";
+    QString title = u"Progress"_s;
 
-    // 颜色配置
-    QColor arcColor = QColor(77, 161, 255);
-    QColor textColor = QColor(77, 161, 255);
-    QColor titleColor = QColor(80, 80, 80);
-    QColor baseColor = QColor(179, 179, 179);
+    // 颜色配置 (iOS 风格调色板)
+    QColor arcColor = QColor(0, 122, 255);     // #007aff
+    QColor textColor = QColor(28, 28, 30);     // #1c1c1e
+    QColor titleColor = QColor(142, 142, 147); // #8e8e93
+    QColor baseColor = QColor(209, 209, 214);  // #d1d1d6
     QColor backgroundColor = Qt::transparent;
 
     // 动画配置
@@ -42,7 +45,7 @@ public:
 };
 
 CircularProgress::CircularProgress(const QString &title, QWidget *parent)
-    : QWidget(parent), d_ptr(new CircularProgressPrivate(this))
+    : QWidget(parent), d_ptr(std::make_unique<CircularProgressPrivate>(this))
 {
     d_ptr->title = title;
     initAnimations();
@@ -147,6 +150,7 @@ void CircularProgress::setStartAngle(double startAngle)
 
     d_ptr->startAngle = startAngle;
     update();
+    emit startAngleChanged(startAngle);
 }
 
 auto CircularProgress::startAngle() const -> double
@@ -160,6 +164,7 @@ void CircularProgress::setEndAngle(double endAngle)
 
     d_ptr->endAngle = endAngle;
     update();
+    emit endAngleChanged(endAngle);
 }
 
 auto CircularProgress::endAngle() const -> double
@@ -187,6 +192,7 @@ void CircularProgress::setTitle(const QString &title)
 
     d_ptr->title = title;
     update();
+    emit titleChanged(title);
 }
 
 auto CircularProgress::title() const -> QString
@@ -200,6 +206,7 @@ void CircularProgress::setArcColor(const QColor &color)
 
     d_ptr->arcColor = color;
     update();
+    emit arcColorChanged(color);
 }
 
 auto CircularProgress::arcColor() const -> QColor
@@ -213,6 +220,7 @@ void CircularProgress::setTextColor(const QColor &color)
 
     d_ptr->textColor = color;
     update();
+    emit textColorChanged(color);
 }
 
 auto CircularProgress::textColor() const -> QColor
@@ -226,6 +234,7 @@ void CircularProgress::setTitleColor(const QColor &color)
 
     d_ptr->titleColor = color;
     update();
+    emit titleColorChanged(color);
 }
 
 auto CircularProgress::titleColor() const -> QColor
@@ -239,6 +248,7 @@ void CircularProgress::setBaseColor(const QColor &color)
 
     d_ptr->baseColor = color;
     update();
+    emit baseColorChanged(color);
 }
 
 auto CircularProgress::baseColor() const -> QColor
@@ -266,6 +276,7 @@ void CircularProgress::setAnimationDuration(int duration)
 
     d_ptr->animationDuration = duration;
     d_ptr->animation->setDuration(duration);
+    emit animationDurationChanged(duration);
 }
 
 auto CircularProgress::animationDuration() const -> int
@@ -317,13 +328,17 @@ void CircularProgress::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHints(QPainter::Antialiasing | QPainter::TextAntialiasing);
 
+    const double minSize = qMin(width(), height());
+
+    // 绘制背景卡片 (iOS 风格圆角卡片)
     if (d_ptr->backgroundColor != Qt::transparent) {
-        painter.fillRect(rect(), d_ptr->backgroundColor);
+        painter.setPen(Qt::NoPen);
+        painter.setBrush(d_ptr->backgroundColor);
+        const double cardRadius = minSize * 0.1;
+        painter.drawRoundedRect(rect(), cardRadius, cardRadius);
     }
 
     painter.translate(width() / 2.0, height() / 2.0);
-
-    const double minSize = qMin(width(), height());
 
     drawArc(painter, minSize);
     drawText(painter, minSize);
@@ -380,26 +395,38 @@ void CircularProgress::drawArc(QPainter &painter, double minSize)
     const double radius = minSize / 2.0 - arcWidth - margin;
     const QRectF rect = QRectF(-radius, -radius, radius * 2, radius * 2);
 
-    QPen pen;
-    pen.setWidthF(arcWidth);
-    pen.setCapStyle(Qt::RoundCap);
-
-    // 绘制背景圆弧
     const double totalAngle = d_ptr->endAngle - d_ptr->startAngle;
-    pen.setColor(d_ptr->baseColor);
-    painter.setPen(pen);
-    painter.drawArc(rect, d_ptr->startAngle * 16, totalAngle * 16);
 
-    // 绘制进度圆弧
-    if (d_ptr->value > d_ptr->minValue) {
-        const double progressAngle
-            = totalAngle * ((d_ptr->value - d_ptr->minValue) / (d_ptr->maxValue - d_ptr->minValue));
-        const double startAngle = d_ptr->endAngle - progressAngle;
+    // 1. 轨道弧 (垂直渐变, 参考 Battery 腔体渐变营造内凹深度感)
+    QLinearGradient trackGradient(QPointF(0, -radius), QPointF(0, radius));
+    trackGradient.setColorAt(0.0, d_ptr->baseColor.lighter(105));
+    trackGradient.setColorAt(1.0, d_ptr->baseColor.darker(110));
 
-        pen.setColor(d_ptr->arcColor);
-        painter.setPen(pen);
-        painter.drawArc(rect, startAngle * 16, progressAngle * 16);
-    }
+    QPen basePen;
+    basePen.setBrush(QBrush(trackGradient));
+    basePen.setWidthF(arcWidth);
+    basePen.setCapStyle(Qt::RoundCap);
+    painter.setPen(basePen);
+    painter.drawArc(rect, d_ptr->startAngle * 16, static_cast<int>(totalAngle * 16));
+
+    // 2. 进度弧 (垂直渐变, 参考 Battery 电量填充渐变营造立体感)
+    if (d_ptr->value <= d_ptr->minValue)
+        return;
+
+    const double progressAngle
+        = totalAngle * ((d_ptr->value - d_ptr->minValue) / (d_ptr->maxValue - d_ptr->minValue));
+    const double startAngle = d_ptr->endAngle - progressAngle;
+
+    QLinearGradient progressGradient(QPointF(0, -radius), QPointF(0, radius));
+    progressGradient.setColorAt(0.0, d_ptr->arcColor.lighter(112));
+    progressGradient.setColorAt(1.0, d_ptr->arcColor.darker(118));
+
+    QPen progressPen;
+    progressPen.setBrush(QBrush(progressGradient));
+    progressPen.setWidthF(arcWidth);
+    progressPen.setCapStyle(Qt::RoundCap);
+    painter.setPen(progressPen);
+    painter.drawArc(rect, static_cast<int>(startAngle * 16), static_cast<int>(progressAngle * 16));
 }
 
 void CircularProgress::drawText(QPainter &painter, double minSize)
@@ -414,9 +441,9 @@ void CircularProgress::drawText(QPainter &painter, double minSize)
     if (d_ptr->showPercent) {
         const double percent
             = (d_ptr->value - d_ptr->minValue) / (d_ptr->maxValue - d_ptr->minValue) * 100.0;
-        valueText = QString("%1%").arg(percent, 0, 'f', 2);
+        valueText = u"%1%"_s.arg(percent, 0, 'f', 2);
     } else {
-        valueText = QString("%1").arg(d_ptr->value, 0, 'f', 2);
+        valueText = u"%1"_s.arg(d_ptr->value, 0, 'f', 2);
     }
 
     const QRectF valueRect = getValueRect(minSize);

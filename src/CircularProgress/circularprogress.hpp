@@ -2,25 +2,31 @@
 
 #include <QWidget>
 
+#include <memory>
+
+using namespace Qt::StringLiterals;
+
 class CircularProgress : public QWidget
 {
     Q_OBJECT
     Q_PROPERTY(double value READ value WRITE setValue NOTIFY valueChanged)
-    Q_PROPERTY(double minValue READ minValue WRITE setMinValue)
-    Q_PROPERTY(double maxValue READ maxValue WRITE setMaxValue)
-    Q_PROPERTY(double startAngle READ startAngle WRITE setStartAngle)
-    Q_PROPERTY(double endAngle READ endAngle WRITE setEndAngle)
-    Q_PROPERTY(bool showPercent READ showPercent WRITE setShowPercent)
-    Q_PROPERTY(QString title READ title WRITE setTitle)
-    Q_PROPERTY(QColor arcColor READ arcColor WRITE setArcColor)
-    Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
-    Q_PROPERTY(QColor titleColor READ titleColor WRITE setTitleColor)
-    Q_PROPERTY(QColor baseColor READ baseColor WRITE setBaseColor)
-    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor)
-    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration)
+    Q_PROPERTY(double minValue READ minValue WRITE setMinValue NOTIFY minValueChanged)
+    Q_PROPERTY(double maxValue READ maxValue WRITE setMaxValue NOTIFY maxValueChanged)
+    Q_PROPERTY(double startAngle READ startAngle WRITE setStartAngle NOTIFY startAngleChanged)
+    Q_PROPERTY(double endAngle READ endAngle WRITE setEndAngle NOTIFY endAngleChanged)
+    Q_PROPERTY(bool showPercent READ showPercent WRITE setShowPercent NOTIFY showPercentChanged)
+    Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
+    Q_PROPERTY(QColor arcColor READ arcColor WRITE setArcColor NOTIFY arcColorChanged)
+    Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor NOTIFY textColorChanged)
+    Q_PROPERTY(QColor titleColor READ titleColor WRITE setTitleColor NOTIFY titleColorChanged)
+    Q_PROPERTY(QColor baseColor READ baseColor WRITE setBaseColor NOTIFY baseColorChanged)
+    Q_PROPERTY(QColor backgroundColor READ backgroundColor WRITE setBackgroundColor NOTIFY
+                   backgroundColorChanged)
+    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration NOTIFY
+                   animationDurationChanged)
 
 public:
-    explicit CircularProgress(const QString &title = "Progress", QWidget *parent = nullptr);
+    explicit CircularProgress(const QString &title = u"Progress"_s, QWidget *parent = nullptr);
     ~CircularProgress() override;
 
     [[nodiscard]] auto minimumSizeHint() const -> QSize override;
@@ -90,11 +96,13 @@ signals:
     void startAngleChanged(double value);
     void endAngleChanged(double value);
     void showPercentChanged(bool percent);
+    void titleChanged(const QString &title);
     void arcColorChanged(const QColor &color);
     void textColorChanged(const QColor &color);
     void titleColorChanged(const QColor &color);
     void baseColorChanged(const QColor &color);
     void backgroundColorChanged(const QColor &color);
+    void animationDurationChanged(int duration);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -112,5 +120,5 @@ private:
     void startAnimation(double targetValue);
 
     class CircularProgressPrivate;
-    QScopedPointer<CircularProgressPrivate> d_ptr;
+    std::unique_ptr<CircularProgressPrivate> d_ptr;
 };
