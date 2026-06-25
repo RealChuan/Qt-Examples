@@ -1,9 +1,13 @@
 #include "batterywidget.hpp"
 
 #include <QFontMetrics>
+#include <QLinearGradient>
 #include <QPainter>
 #include <QPainterPath>
 #include <QPropertyAnimation>
+#include <QVariantAnimation>
+
+using namespace Qt::StringLiterals;
 
 class BatteryWidget::BatteryWidgetPrivate
 {
@@ -13,11 +17,11 @@ public:
     BatteryWidget *q_ptr;
 
     // 可配置属性
-    QColor borderColor = QColor(80, 80, 80);
-    QColor powerColor = QColor(65, 205, 82);
-    QColor alarmColor = QColor(250, 118, 113);
+    QColor borderColor = QColor(44, 44, 46);    // #2c2c2e
+    QColor powerColor = QColor(52, 199, 89);    // #34c759
+    QColor alarmColor = QColor(255, 69, 58);    // #ff453a
     int alarmValue = 20;
-    int value = 0;
+    int value = 75;
     int animationDuration = 500;
 
     // 状态标志
@@ -27,7 +31,9 @@ public:
 
     // 动画
     QPropertyAnimation *animation = nullptr;
+    QVariantAnimation *pulseAnimation = nullptr;
     int targetValue = 0; // 动画目标值
+    qreal chargingOpacity = 1.0;
 
     // 常量定义
     static constexpr double BORDER_MARGIN_RATIO = 0.03;
@@ -35,11 +41,11 @@ public:
     static constexpr double CORNER_RADIUS_RATIO = 1.0 / 30.0;
     static constexpr double POWER_MARGIN_RATIO = 0.02;
     static constexpr double FONT_SIZE_RATIO = 0.5;
-    static constexpr double CHARGING_SYMBOL_FONT_RATIO = 0.5; // 充电符号字体比例
+    static constexpr double CHARGING_SYMBOL_FONT_RATIO = 0.5;
 };
 
 BatteryWidget::BatteryWidget(QWidget *parent)
-    : QWidget(parent), d_ptr(new BatteryWidgetPrivate(this))
+    : QWidget(parent), d_ptr(std::make_unique<BatteryWidgetPrivate>(this))
 {
     initAnimations();
 
@@ -61,6 +67,19 @@ void BatteryWidget::initAnimations()
     d_ptr->animation->setDuration(d_ptr->animationDuration);
     d_ptr->animation->setEasingCurve(QEasingCurve::InOutQuad);
 
+    // 充电脉冲动画（opacity 0.5 ↔ 1.0）
+    d_ptr->pulseAnimation = new QVariantAnimation(this);
+    d_ptr->pulseAnimation->setDuration(1200);
+    d_ptr->pulseAnimation->setLoopCount(-1);
+    d_ptr->pulseAnimation->setKeyValueAt(0.0, 0.5);
+    d_ptr->pulseAnimation->setKeyValueAt(0.5, 1.0);
+    d_ptr->pulseAnimation->setKeyValueAt(1.0, 0.5);
+    d_ptr->pulseAnimation->setEasingCurve(QEasingCurve::InOutQuad);
+    connect(d_ptr->pulseAnimation, &QVariantAnimation::valueChanged, this, [this](const QVariant &value) {
+        d_ptr->chargingOpacity = value.toReal();
+        update();
+    });
+
     // 连接内部信号
     connect(
         d_ptr->animation, &QPropertyAnimation::finished, this, &BatteryWidget::onAnimationFinished);
@@ -74,6 +93,7 @@ void BatteryWidget::setBorderColor(const QColor &color)
         return;
     d_ptr->borderColor = color;
     update();
+    emit borderColorChanged(color);
 }
 
 auto BatteryWidget::borderColor() const -> QColor
@@ -86,6 +106,7 @@ void BatteryWidget::setPowerColor(const QColor &color)
         return;
     d_ptr->powerColor = color;
     update();
+    emit powerColorChanged(color);
 }
 
 auto BatteryWidget::powerColor() const -> QColor
@@ -98,6 +119,7 @@ void BatteryWidget::setAlarmColor(const QColor &color)
         return;
     d_ptr->alarmColor = color;
     update();
+    emit alarmColorChanged(color);
 }
 
 auto BatteryWidget::alarmColor() const -> QColor
@@ -163,6 +185,7 @@ void BatteryWidget::setAnimationDuration(int duration)
         return;
     d_ptr->animationDuration = duration;
     d_ptr->animation->setDuration(duration);
+    emit animationDurationChanged(duration);
 }
 
 auto BatteryWidget::animationDuration() const -> int
@@ -178,6 +201,15 @@ void BatteryWidget::setCharging(bool charging)
     if (d_ptr->charging == charging)
         return;
     d_ptr->charging = charging;
+
+    // 启停充电脉冲动画
+    if (charging) {
+        d_ptr->pulseAnimation->start();
+    } else {
+        d_ptr->pulseAnimation->stop();
+        d_ptr->chargingOpacity = 1.0;
+    }
+
     update();
     emit chargingChanged(charging);
 }
@@ -292,11 +324,8 @@ void BatteryWidget::onAnimationFinished()
     }
 }
 
-void BatteryWidget::onValueChanged(int value)
-{
-    Q_UNUSED(value)
-    checkAlarmState();
-}
+void BatteryWidget::onValueChanged([[maybe_unused]] int value)
+{ checkAlarmState(); }
 
 void BatteryWidget::checkAlarmState()
 {
@@ -311,9 +340,19 @@ void BatteryWidget::checkAlarmState()
 
 void BatteryWidget::drawBorder(QPainter &painter, const QRectF &batteryRect, const qreal linew)
 {
+    qreal borderRadius = batteryRect.height() * BatteryWidgetPrivate::CORNER_RADIUS_RATIO;
+
+    // 电池腔体背景（内凹深度感）
+    QLinearGradient cavityGradient(batteryRect.topLeft(), batteryRect.bottomLeft());
+    cavityGradient.setColorAt(0, QColor(242, 242, 247)); // #f2f2f7
+    cavityGradient.setColorAt(1, QColor(229, 229, 234)); // #e5e5ea
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(cavityGradient);
+    painter.drawRoundedRect(batteryRect, borderRadius, borderRadius);
+
+    // 边框
     painter.setPen(QPen(d_ptr->borderColor, linew));
     painter.setBrush(Qt::NoBrush);
-    qreal borderRadius = batteryRect.height() * BatteryWidgetPrivate::CORNER_RADIUS_RATIO;
     painter.drawRoundedRect(batteryRect, borderRadius, borderRadius);
 }
 
@@ -323,8 +362,8 @@ void BatteryWidget::drawPower(QPainter &painter, const QRectF &batteryRect, cons
         return;
     }
 
-    // 确定电量颜色
-    auto powerColor = d_ptr->isInAlarmState ? d_ptr->alarmColor : d_ptr->powerColor;
+    // 确定电量基础色
+    auto baseColor = d_ptr->isInAlarmState ? d_ptr->alarmColor : d_ptr->powerColor;
 
     // 计算电量区域边距
     qreal powerMargin = qMin(width(), height()) * BatteryWidgetPrivate::POWER_MARGIN_RATIO;
@@ -340,10 +379,15 @@ void BatteryWidget::drawPower(QPainter &painter, const QRectF &batteryRect, cons
                         batteryRect.bottom() - powerMargin);
     QRectF powerRect(topLeft, bottomRight);
 
+    // 渐变填充（上浅下深，立体感）
+    QLinearGradient gradient(powerRect.topLeft(), powerRect.bottomLeft());
+    gradient.setColorAt(0, baseColor.lighter(112));
+    gradient.setColorAt(1, baseColor.darker(118));
+
     // 绘制电量
     qreal powerRadius = powerRect.height() * BatteryWidgetPrivate::CORNER_RADIUS_RATIO;
     painter.setPen(Qt::NoPen);
-    painter.setBrush(powerColor);
+    painter.setBrush(gradient);
     painter.drawRoundedRect(powerRect, powerRadius, powerRadius);
 }
 
@@ -360,15 +404,15 @@ void BatteryWidget::drawValue(QPainter &painter, const QRectF &batteryRect)
     font.setPixelSize(qRound(fontSize));
     font.setWeight(QFont::Bold);
 
-    QString text = QString("%1%").arg(d_ptr->value);
+    const QString text = u"%1%"_s.arg(d_ptr->value);
 
     // 确定文字颜色 - 充电状态下使用深色文字以确保可读性
     QColor textColor;
     if (d_ptr->charging) {
         // 充电状态下使用深色文字以确保在浅色闪电上可读
-        textColor = QColor(30, 30, 30);
+        textColor = QColor(28, 28, 30); // #1c1c1e
     } else {
-        textColor = d_ptr->isInAlarmState ? d_ptr->alarmColor : QColor(64, 65, 66);
+        textColor = d_ptr->isInAlarmState ? d_ptr->alarmColor : QColor(28, 28, 30);
     }
 
     painter.setFont(font);
@@ -394,11 +438,17 @@ void BatteryWidget::drawHeader(QPainter &painter, const QRectF &batteryRect)
 
 void BatteryWidget::drawChargingSymbol(QPainter &painter, const QRectF &batteryRect)
 {
-    static QString text = "⚡";
+    painter.save();
+    painter.setOpacity(d_ptr->chargingOpacity);
+
+    const auto text = u"⚡"_s;
     auto font = painter.font();
     font.setPixelSize(batteryRect.height() * BatteryWidgetPrivate::CHARGING_SYMBOL_FONT_RATIO);
 
     painter.setFont(font);
-    painter.setPen(Qt::white);
+    // 与 QML 版本一致：报警时用报警色，否则用深色
+    painter.setPen(d_ptr->isInAlarmState ? d_ptr->alarmColor : QColor(28, 28, 30));
     painter.drawText(batteryRect, Qt::AlignCenter, text);
+
+    painter.restore();
 }

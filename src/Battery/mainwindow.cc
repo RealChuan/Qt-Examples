@@ -1,10 +1,24 @@
 #include "mainwindow.hpp"
 #include "batterywidget.hpp"
 
-#include <QtWidgets>
+#include <QCheckBox>
+#include <QColorDialog>
+#include <QDebug>
+#include <QFrame>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QLabel>
+#include <QPushButton>
+#include <QSlider>
+#include <QSpinBox>
+#include <QVBoxLayout>
+#include <QWidget>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+#include <cmath>
+
+using namespace Qt::StringLiterals;
+
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     // 创建电池控件
     auto *battery = new BatteryWidget(this);
@@ -129,7 +143,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 统一的颜色按钮更新函数
     auto updateColorButton = [](QPushButton *button, const QColor &color) {
-        auto colorName = color.name(QColor::HexArgb).toUpper();
+        const auto colorName = color.name(QColor::HexArgb).toUpper();
 
         // 计算相对亮度（sRGB颜色空间）
         auto getRelativeLuminance = [](int r, int g, int b) {
@@ -140,13 +154,13 @@ MainWindow::MainWindow(QWidget *parent)
                    + 0.0722 * normalize(b / 255.0);
         };
 
-        double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
+        const double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
 
         // 根据WCAG标准选择对比度足够的文字颜色
-        QString textColor = luminance > 0.179 ? "black" : "white";
+        const auto textColor = luminance > 0.179 ? u"black"_s : u"white"_s;
 
         button->setStyleSheet(
-            QString("background-color: %1; color: %2; border: 1px solid gray; padding: 5px;")
+            u"background-color: %1; color: %2; border: 1px solid gray; padding: 5px;"_s
                 .arg(colorName)
                 .arg(textColor));
         button->setText(colorName);
@@ -169,7 +183,7 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     connect(valueSpinBox,
-            QOverload<int>::of(&QSpinBox::valueChanged),
+            qOverload<int>(&QSpinBox::valueChanged),
             this,
             [battery, valueSlider](int value) {
                 // 阻塞slider信号，避免循环
@@ -188,7 +202,7 @@ MainWindow::MainWindow(QWidget *parent)
     });
 
     connect(alarmSpinBox,
-            QOverload<int>::of(&QSpinBox::valueChanged),
+            qOverload<int>(&QSpinBox::valueChanged),
             this,
             [battery, alarmSlider](int value) {
                 alarmSlider->blockSignals(true);
@@ -205,9 +219,8 @@ MainWindow::MainWindow(QWidget *parent)
             &QPushButton::clicked,
             this,
             [this, battery, powerColorButton, updateColorButton]() {
-                QColor color = QColorDialog::getColor(battery->powerColor(),
-                                                      this,
-                                                      tr("Select Power Color"));
+                const QColor color
+                    = QColorDialog::getColor(battery->powerColor(), this, tr("Select Power Color"));
                 if (color.isValid()) {
                     battery->setPowerColor(color);
                     updateColorButton(powerColorButton, color);
@@ -218,9 +231,8 @@ MainWindow::MainWindow(QWidget *parent)
             &QPushButton::clicked,
             this,
             [this, battery, alarmColorButton, updateColorButton]() {
-                QColor color = QColorDialog::getColor(battery->alarmColor(),
-                                                      this,
-                                                      tr("Select Alarm Color"));
+                const QColor color
+                    = QColorDialog::getColor(battery->alarmColor(), this, tr("Select Alarm Color"));
                 if (color.isValid()) {
                     battery->setAlarmColor(color);
                     updateColorButton(alarmColorButton, color);
@@ -231,9 +243,8 @@ MainWindow::MainWindow(QWidget *parent)
             &QPushButton::clicked,
             this,
             [this, battery, borderColorButton, updateColorButton]() {
-                QColor color = QColorDialog::getColor(battery->borderColor(),
-                                                      this,
-                                                      tr("Select Border Color"));
+                const QColor color = QColorDialog::getColor(
+                    battery->borderColor(), this, tr("Select Border Color"));
                 if (color.isValid()) {
                     battery->setBorderColor(color);
                     updateColorButton(borderColorButton, color);
@@ -241,22 +252,18 @@ MainWindow::MainWindow(QWidget *parent)
             });
 
     // 动画设置
-    connect(animationDurationSlider,
-            &QSlider::valueChanged,
-            this,
-            [battery, durationLabel](int value) {
-                battery->setAnimationDuration(value);
-                durationLabel->setText(tr("Animation duration: %1ms").arg(value));
-            });
+    connect(
+        animationDurationSlider, &QSlider::valueChanged, this, [battery, durationLabel](int value) {
+            battery->setAnimationDuration(value);
+            durationLabel->setText(tr("Animation duration: %1ms").arg(value));
+        });
 
     // 操作按钮
-    connect(increaseButton, &QPushButton::clicked, this, [battery]() {
-        battery->increaseValue(10);
-    });
+    connect(
+        increaseButton, &QPushButton::clicked, this, [battery]() { battery->increaseValue(10); });
 
-    connect(decreaseButton, &QPushButton::clicked, this, [battery]() {
-        battery->decreaseValue(10);
-    });
+    connect(
+        decreaseButton, &QPushButton::clicked, this, [battery]() { battery->decreaseValue(10); });
 
     connect(resetButton, &QPushButton::clicked, battery, &BatteryWidget::reset);
 
@@ -285,26 +292,24 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(battery, &BatteryWidget::valueReset, this, []() { qDebug() << "Value reset"; });
 
-    connect(battery,
-            &BatteryWidget::animationStarted,
-            this,
-            [statusLabel](int oldValue, int newValue) {
-                statusLabel->setText(tr("Animating: %1% → %2%").arg(oldValue).arg(newValue));
-                statusLabel->setStyleSheet("color: orange;");
-            });
+    connect(
+        battery, &BatteryWidget::animationStarted, this, [statusLabel](int oldValue, int newValue) {
+            statusLabel->setText(tr("Animating: %1% → %2%").arg(oldValue).arg(newValue));
+            statusLabel->setStyleSheet(u"color: orange;"_s);
+        });
 
     connect(battery, &BatteryWidget::animationFinished, this, [statusLabel](int value) {
         statusLabel->setText(tr("Animation finished: %1%").arg(value));
-        statusLabel->setStyleSheet("color: green;");
+        statusLabel->setStyleSheet(u"color: green;"_s);
     });
 
     connect(battery, &BatteryWidget::alarmStateChanged, this, [statusLabel](bool isAlarm) {
         if (isAlarm) {
             statusLabel->setText(tr("Status: Low battery alarm!"));
-            statusLabel->setStyleSheet("color: red; font-weight: bold;");
+            statusLabel->setStyleSheet(u"color: red; font-weight: bold;"_s);
         } else {
             statusLabel->setText(tr("Status: Normal"));
-            statusLabel->setStyleSheet("");
+            statusLabel->setStyleSheet(u""_s);
         }
     });
 
@@ -318,7 +323,7 @@ MainWindow::MainWindow(QWidget *parent)
 
                 if (charging) {
                     statusLabel->setText(tr("Status: Charging..."));
-                    statusLabel->setStyleSheet("color: blue;");
+                    statusLabel->setStyleSheet(u"color: blue;"_s);
                 }
             });
 
@@ -326,4 +331,4 @@ MainWindow::MainWindow(QWidget *parent)
     battery->setValue(75);
 }
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow() = default;

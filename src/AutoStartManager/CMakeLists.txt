@@ -1,8 +1,9 @@
 set(PROJECT_SOURCES autostartmanager.hpp main.cc mainwindow.cc mainwindow.hpp)
 
-if(CMAKE_HOST_WIN32)
+# 按目标平台（而非宿主机平台）选择实现，支持交叉编译
+if(WIN32)
   list(APPEND PROJECT_SOURCES autostartmanager_windows.cc)
-elseif(CMAKE_HOST_APPLE)
+elseif(APPLE)
   list(APPEND PROJECT_SOURCES autostartmanager_macos.cc)
 else()
   list(APPEND PROJECT_SOURCES autostartmanager_linux.cc)

@@ -4,7 +4,6 @@
 - 用 `QML_ELEMENT`/`QML_NAMED_ELEMENT` 将 C++ 类型暴露给 QML
 - 用 `QProperty`/`QBindable` 实现响应式绑定
 - 用 `std::make_unique` 或 Qt 父对象所有权；禁止裸 `new`
-- 不可拷贝类型使用 `Q_DISABLE_COPY_MOVE`
 - 优先用 `QMetaObject::invokeMethod` 的 functor 重载
 - 槽函数中禁止阻塞调用；使用 `QtConcurrent` 或 `QThreadPool`
 - 异步操作使用 `QFutureWatcher` 或 `QCoro`

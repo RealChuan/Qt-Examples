@@ -1,16 +1,19 @@
 #pragma once
 
+#include <memory>
+
 #include <QWidget>
 
 class BatteryWidget : public QWidget
 {
     Q_OBJECT
     Q_PROPERTY(int value READ value WRITE setValue NOTIFY valueChanged)
-    Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor)
-    Q_PROPERTY(QColor powerColor READ powerColor WRITE setPowerColor)
-    Q_PROPERTY(QColor alarmColor READ alarmColor WRITE setAlarmColor)
-    Q_PROPERTY(int alarmValue READ alarmValue WRITE setAlarmValue)
-    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration)
+    Q_PROPERTY(QColor borderColor READ borderColor WRITE setBorderColor NOTIFY borderColorChanged)
+    Q_PROPERTY(QColor powerColor READ powerColor WRITE setPowerColor NOTIFY powerColorChanged)
+    Q_PROPERTY(QColor alarmColor READ alarmColor WRITE setAlarmColor NOTIFY alarmColorChanged)
+    Q_PROPERTY(int alarmValue READ alarmValue WRITE setAlarmValue NOTIFY alarmValueChanged)
+    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration NOTIFY
+                   animationDurationChanged)
     Q_PROPERTY(bool charging READ isCharging WRITE setCharging NOTIFY chargingChanged)
 
 public:
@@ -40,7 +43,7 @@ public:
     // 动画设置
     void setAnimationDuration(int duration);
     [[nodiscard]] auto animationDuration() const -> int;
-    bool isAnimating() const;
+    [[nodiscard]] bool isAnimating() const;
 
     // 充电状态
     void setCharging(bool charging);
@@ -73,6 +76,7 @@ signals:
     void powerColorChanged(const QColor &color);
     void alarmColorChanged(const QColor &color);
     void alarmValueChanged(int value);
+    void animationDurationChanged(int duration);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -92,5 +96,5 @@ private:
     void checkAlarmState();
 
     class BatteryWidgetPrivate;
-    QScopedPointer<BatteryWidgetPrivate> d_ptr;
+    std::unique_ptr<BatteryWidgetPrivate> d_ptr;
 };

@@ -2,7 +2,7 @@ macx {
     QMAKE_MACOSX_DEPLOYMENT_TARGET = 13.0
 }
 
-CONFIG += c++20 strict_c++
+CONFIG += c++23 strict_c++
 
 # Qt 弃用控制（Qt 6.9+ 推荐使用 _UP_TO 后缀）
 DEFINES += \

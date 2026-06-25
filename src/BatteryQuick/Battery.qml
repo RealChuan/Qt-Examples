@@ -6,9 +6,9 @@ Item {
     // === 属性定义 ===
     property int value: 75
     property int alarmValue: 20
-    property color borderColor: "#505050"
-    property color powerColor: "#41cd52"
-    property color alarmColor: "#fa7671"
+    property color borderColor: "#2c2c2e"
+    property color powerColor: "#34c759"
+    property color alarmColor: "#ff453a"
     property int animationDuration: 500
     property bool charging: false
 
@@ -77,11 +77,22 @@ Item {
         id: rootBody
         width: parent.width - rootHead.width
         height: parent.height
-        radius: Math.max(2, height * 0.05)
-        color: "transparent"
+        radius: Math.max(2, height * (1.0 / 30.0))
         border {
             color: root.borderColor
             width: Math.max(1, height * 0.03)
+        }
+
+        // 电池腔体背景（内凹深度感）
+        gradient: Gradient {
+            GradientStop {
+                position: 0.0
+                color: "#f2f2f7"
+            }
+            GradientStop {
+                position: 1.0
+                color: "#e5e5ea"
+            }
         }
 
         // 电量填充
@@ -92,7 +103,18 @@ Item {
             x: rootBody.border.width
             y: rootBody.border.width
             radius: Math.max(0, rootBody.radius - rootBody.border.width)
-            color: root.currentPowerColor
+
+            // 渐变填充（上浅下深，立体感）
+            gradient: Gradient {
+                GradientStop {
+                    position: 0.0
+                    color: Qt.lighter(root.currentPowerColor, 1.12)
+                }
+                GradientStop {
+                    position: 1.0
+                    color: Qt.darker(root.currentPowerColor, 1.18)
+                }
+            }
         }
 
         // 数值显示
@@ -100,13 +122,13 @@ Item {
             id: valueText
             text: root.value + "%"
             font {
-                pixelSize: Math.max(12, rootBody.height * 0.3)
+                pixelSize: Math.max(12, rootBody.height * 0.5)
                 bold: true
             }
             color: {
                 if (root.charging)
-                    return "#1e1e1e";
-                return root.isInAlarmState ? root.alarmColor : "#404142";
+                    return "#1c1c1e";
+                return root.isInAlarmState ? root.alarmColor : "#1c1c1e";
             }
             anchors {
                 top: parent.top
@@ -123,8 +145,8 @@ Item {
             id: chargingSymbol
             visible: root.charging
             text: "⚡"
-            font.pixelSize: Math.max(12, rootBody.height * 0.25)
-            color: root.isInAlarmState ? root.alarmColor : "#1e1e1e"
+            font.pixelSize: Math.max(12, rootBody.height * 0.5)
+            color: root.isInAlarmState ? root.alarmColor : "#1c1c1e"
             anchors {
                 top: parent.top
                 bottom: parent.bottom
@@ -139,11 +161,41 @@ Item {
     // 电池头部
     Rectangle {
         id: rootHead
-        width: Math.max(5, parent.width * 0.07)
-        height: Math.max(8, rootBody.height * 0.35)
+        width: Math.max(5, parent.width * (1.0 / 11.0))
+        height: Math.max(8, rootBody.height / 3.0)
         x: rootBody.width - 1
         y: (parent.height - height) / 2
         color: root.borderColor
+    }
+
+    // 充电脉冲动画（opacity 0.5 ↔ 1.0）
+    SequentialAnimation {
+        id: chargingPulse
+        running: root.charging
+        loops: Animation.Infinite
+        NumberAnimation {
+            target: chargingSymbol
+            property: "opacity"
+            from: 0.5
+            to: 1.0
+            duration: 600
+            easing.type: Easing.InOutQuad
+        }
+        NumberAnimation {
+            target: chargingSymbol
+            property: "opacity"
+            from: 1.0
+            to: 0.5
+            duration: 600
+            easing.type: Easing.InOutQuad
+        }
+    }
+
+    // 充电停止时重置 opacity
+    onChargingChanged: {
+        if (!charging) {
+            chargingSymbol.opacity = 1.0;
+        }
     }
 
     // === 公共方法 ===

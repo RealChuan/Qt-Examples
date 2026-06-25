@@ -1,39 +1,52 @@
 #include "autostartmanager.hpp"
 
-#include <QApplication>
+#include <QCoreApplication>
 #include <QDir>
 #include <QSettings>
+
+using namespace Qt::StringLiterals;
 
 namespace Utils {
 
 // 注册表路径定义
 static const QString REG_RUN_PATH
-    = "HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run";
+    = u"HKEY_CURRENT_USER\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run"_s;
 
-bool isAutoRunStart()
+[[nodiscard]] std::expected<bool, QString> isAutoRunStart()
 {
-    QString appName = qApp->applicationName();
-    QString currentPath = QSettings(REG_RUN_PATH, QSettings::NativeFormat).value(appName).toString();
-    QString expectedPath = QString("\"%1\"").arg(
-        QDir::toNativeSeparators(qApp->applicationFilePath()));
+    const QString appName = QCoreApplication::applicationName();
+    const QSettings settings(REG_RUN_PATH, QSettings::NativeFormat);
+    const QString currentPath = settings.value(appName).toString();
 
-    return (currentPath == expectedPath);
+    if (currentPath.isEmpty()) {
+        return false;
+    }
+
+    // Windows 文件系统大小写不敏感：规范化后按大小写不敏感比较
+    const QString expectedPath
+        = u"\"%1\""_s.arg(QDir::toNativeSeparators(QCoreApplication::applicationFilePath()));
+    return QString::compare(currentPath, expectedPath, Qt::CaseInsensitive) == 0;
 }
 
-void setAutoRunStart(bool run)
+[[nodiscard]] std::expected<void, QString> setAutoRunStart(bool run)
 {
-    QString appName = qApp->applicationName();
+    const QString appName = QCoreApplication::applicationName();
     QSettings settings(REG_RUN_PATH, QSettings::NativeFormat);
 
     if (run) {
-        QString appPath = QString("\"%1\"").arg(
-            QDir::toNativeSeparators(qApp->applicationFilePath()));
+        const QString appPath
+            = u"\"%1\""_s.arg(QDir::toNativeSeparators(QCoreApplication::applicationFilePath()));
         settings.setValue(appName, appPath);
-        qInfo() << "Auto-run enabled for:" << appPath;
     } else {
         settings.remove(appName);
-        qInfo() << "Auto-run disabled for:" << appName;
     }
+
+    if (settings.status() != QSettings::NoError) {
+        return std::unexpected(u"Failed to access Windows registry"_s);
+    }
+
+    qInfo() << "Auto-run" << (run ? "enabled" : "disabled") << "for:" << appName;
+    return {};
 }
 
 } // namespace Utils

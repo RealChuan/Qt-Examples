@@ -4,67 +4,68 @@
 #include <QDebug>
 #include <QDir>
 #include <QFile>
+#include <QSaveFile>
+#include <QStandardPaths>
+
+using namespace Qt::StringLiterals;
 
 namespace Utils {
 
-bool isAutoRunStart()
+// 获取 autostart 目录路径（遵循 XDG）
+static QString autostartDirPath()
 {
-    QString appName = qApp->applicationName();
-    QString desktopFilePath = QDir::homePath()
-                              + QString("/.config/autostart/%1.desktop").arg(appName);
-
-    return QFile::exists(desktopFilePath);
+    return u"%1/autostart"_s.arg(
+        QStandardPaths::writableLocation(QStandardPaths::GenericConfigLocation));
 }
 
-void setAutoRunStart(bool run)
+static QString desktopFilePath()
+{ return autostartDirPath() + u"/%1.desktop"_s.arg(QCoreApplication::applicationName()); }
+
+[[nodiscard]] std::expected<bool, QString> isAutoRunStart()
+{ return QFile::exists(desktopFilePath()); }
+
+[[nodiscard]] std::expected<void, QString> setAutoRunStart(bool run)
 {
-    QString appName = qApp->applicationName();
-    QDir autostartDir(QDir::homePath() + "/.config/autostart");
-
-    if (!autostartDir.exists() && !autostartDir.mkpath(".")) {
-        qWarning() << "Failed to create autostart directory";
-        return;
-    }
-
-    QString desktopFilePath = autostartDir.filePath(appName + ".desktop");
+    const QString filePath = desktopFilePath();
 
     if (run) {
-        // 创建桌面文件
-        QString desktopContent = QString(R"(
-[Desktop Entry]
+        // 确保目录存在
+        const QDir autostartDir(autostartDirPath());
+        if (!autostartDir.exists() && !autostartDir.mkpath(u"."_s)) {
+            return std::unexpected(u"Failed to create autostart directory"_s);
+        }
+
+        const QString desktopContent = uR"([Desktop Entry]
 Type=Application
 Name=%1
 Exec=%2
 Hidden=false
 NoDisplay=false
 X-GNOME-Autostart-enabled=true
-)")
-                                     .arg(appName, QCoreApplication::applicationFilePath());
+)"_s.arg(QCoreApplication::applicationName(), QCoreApplication::applicationFilePath());
 
-        QFile desktopFile(desktopFilePath);
+        // 原子写入：QSaveFile 先写临时文件再原子替换
+        QSaveFile desktopFile(filePath);
         if (!desktopFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-            qWarning() << "Failed to create desktop file:" << desktopFile.errorString();
-            return;
+            return std::unexpected(
+                u"Failed to create desktop file: %1"_s.arg(desktopFile.errorString()));
         }
-
         if (desktopFile.write(desktopContent.toUtf8()) == -1) {
-            qWarning() << "Failed to write desktop file:" << desktopFile.errorString();
-            desktopFile.close();
-            return;
+            return std::unexpected(
+                u"Failed to write desktop file: %1"_s.arg(desktopFile.errorString()));
         }
-        desktopFile.close();
-
-        qInfo() << "Auto-run enabled using desktop file";
+        if (!desktopFile.commit()) {
+            return std::unexpected(
+                u"Failed to commit desktop file: %1"_s.arg(desktopFile.errorString()));
+        }
     } else {
-        // 删除桌面文件
-        if (QFile::exists(desktopFilePath)) {
-            if (!QFile::remove(desktopFilePath)) {
-                qWarning() << "Failed to remove desktop file";
-            } else {
-                qInfo() << "Auto-run disabled";
-            }
+        if (QFile::exists(filePath) && !QFile::remove(filePath)) {
+            return std::unexpected(u"Failed to remove desktop file"_s);
         }
     }
+
+    qInfo() << "Auto-run" << (run ? "enabled" : "disabled");
+    return {};
 }
 
 } // namespace Utils

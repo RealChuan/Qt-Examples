@@ -18,6 +18,34 @@ ApplicationWindow {
         title: qsTr("Choose color")
     }
 
+    // 当前正在编辑的颜色目标
+    property string colorTarget: ""
+
+    // 颜色对话框确认处理
+    Connections {
+        target: colorDialog
+        function onAccepted() {
+            if (!colorDialog.selectedColor)
+                return;
+
+            switch (colorTarget) {
+            case "power":
+                battery.powerColor = colorDialog.selectedColor;
+                powerColorButton.palette.buttonText = getContrastTextColor(battery.powerColor);
+                break;
+            case "alarm":
+                battery.alarmColor = colorDialog.selectedColor;
+                alarmColorButton.palette.buttonText = getContrastTextColor(battery.alarmColor);
+                break;
+            case "border":
+                battery.borderColor = colorDialog.selectedColor;
+                borderColorButton.palette.buttonText = getContrastTextColor(battery.borderColor);
+                break;
+            }
+            colorTarget = "";
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 10
@@ -107,13 +135,7 @@ ApplicationWindow {
                 text: battery.powerColor.toString().toUpperCase()
                 onClicked: {
                     colorDialog.selectedColor = battery.powerColor;
-                    colorDialog.accepted.connect(function () {
-                        if (colorDialog.selectedColor) {
-                            battery.powerColor = colorDialog.selectedColor;
-                            powerColorButton.palette.buttonText = getContrastTextColor(battery.powerColor);
-                        }
-                        colorDialog.accepted.disconnect(arguments.callee);
-                    });
+                    colorTarget = "power";
                     colorDialog.open();
                 }
 
@@ -140,13 +162,7 @@ ApplicationWindow {
                 text: battery.alarmColor.toString().toUpperCase()
                 onClicked: {
                     colorDialog.selectedColor = battery.alarmColor;
-                    colorDialog.accepted.connect(function () {
-                        if (colorDialog.selectedColor) {
-                            battery.alarmColor = colorDialog.selectedColor;
-                            alarmColorButton.palette.buttonText = getContrastTextColor(battery.alarmColor);
-                        }
-                        colorDialog.accepted.disconnect(arguments.callee);
-                    });
+                    colorTarget = "alarm";
                     colorDialog.open();
                 }
 
@@ -173,13 +189,7 @@ ApplicationWindow {
                 text: battery.borderColor.toString().toUpperCase()
                 onClicked: {
                     colorDialog.selectedColor = battery.borderColor;
-                    colorDialog.accepted.connect(function () {
-                        if (colorDialog.selectedColor) {
-                            battery.borderColor = colorDialog.selectedColor;
-                            borderColorButton.palette.buttonText = getContrastTextColor(battery.borderColor);
-                        }
-                        colorDialog.accepted.disconnect(arguments.callee);
-                    });
+                    colorTarget = "border";
                     colorDialog.open();
                 }
 

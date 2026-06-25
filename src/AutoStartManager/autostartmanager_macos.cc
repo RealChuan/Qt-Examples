@@ -6,34 +6,36 @@
 #include <QFile>
 #include <QProcess>
 
+using namespace Qt::StringLiterals;
+
 namespace Utils {
 
-bool isAutoRunStart()
+// 获取 LaunchAgent 服务名与 plist 路径
+static QString launchServiceName()
+{ return u"com.%1.launcher"_s.arg(QCoreApplication::applicationName().toLower()); }
+
+static QString plistPath()
+{ return QDir::homePath() + u"/Library/LaunchAgents/%1.plist"_s.arg(launchServiceName()); }
+
+[[nodiscard]] std::expected<bool, QString> isAutoRunStart()
 {
-    QString appName = qApp->applicationName();
-    QString launchServiceName = QString("com.%1.launcher").arg(appName.toLower());
-
-    QProcess process;
-    process.start("launchctl", {"list", launchServiceName});
-
-    if (!process.waitForFinished(3000)) {
-        qWarning() << "launchctl list timeout";
-        return false;
-    }
-
-    return (process.exitCode() == 0);
+    // 通过 plist 文件是否存在判断自启动配置（launchctl list 反映的是运行状态）
+    return QFile::exists(plistPath());
 }
 
-void setAutoRunStart(bool run)
+[[nodiscard]] std::expected<void, QString> setAutoRunStart(bool run)
 {
-    QString appName = qApp->applicationName();
-    QString launchServiceName = QString("com.%1.launcher").arg(appName.toLower());
-    QString plistPath = QDir::homePath()
-                        + QString("/Library/LaunchAgents/%1.plist").arg(launchServiceName);
+    const QString path = plistPath();
 
-    // 动态生成plist内容
-    QString plistContent = QString(R"(
-<?xml version="1.0" encoding="UTF-8"?>
+    if (run) {
+        // 确保目录存在
+        const QDir launchAgentsDir(QDir::homePath() + u"/Library/LaunchAgents"_s);
+        if (!launchAgentsDir.exists() && !launchAgentsDir.mkpath(u"."_s)) {
+            return std::unexpected(u"Failed to create LaunchAgents directory"_s);
+        }
+
+        // 动态生成 plist 内容
+        const QString plistContent = uR"(<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
@@ -47,45 +49,49 @@ void setAutoRunStart(bool run)
     <true/>
 </dict>
 </plist>
-)")
-                               .arg(launchServiceName, QCoreApplication::applicationFilePath());
+)"_s.arg(launchServiceName(), QCoreApplication::applicationFilePath());
 
-    // 确保目录存在
-    QDir launchAgentsDir(QDir::homePath() + "/Library/LaunchAgents");
-    if (!launchAgentsDir.exists() && !launchAgentsDir.mkpath(".")) {
-        qWarning() << "Failed to create LaunchAgents directory";
-        return;
-    }
-
-    // 写入plist文件
-    QFile plistFile(plistPath);
-    if (!plistFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
-        qWarning() << "Failed to open plist file for writing:" << plistFile.errorString();
-        return;
-    }
-
-    if (plistFile.write(plistContent.toUtf8()) == -1) {
-        qWarning() << "Failed to write plist file:" << plistFile.errorString();
+        // 写入 plist 文件
+        QFile plistFile(path);
+        if (!plistFile.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            return std::unexpected(
+                u"Failed to open plist file for writing: %1"_s.arg(plistFile.errorString()));
+        }
+        if (plistFile.write(plistContent.toUtf8()) == -1) {
+            return std::unexpected(
+                u"Failed to write plist file: %1"_s.arg(plistFile.errorString()));
+        }
         plistFile.close();
-        return;
-    }
-    plistFile.close();
 
-    // 加载或卸载服务
-    QProcess process;
-    process.start("launchctl", {run ? "load" : "unload", "-w", plistPath});
-
-    if (!process.waitForFinished(5000)) {
-        qWarning() << "launchctl operation timeout";
-        return;
-    }
-
-    if (process.exitCode() != 0) {
-        qWarning() << "launchctl failed with exit code:" << process.exitCode();
-        qWarning() << "Error:" << process.readAllStandardError();
+        // 加载服务
+        QProcess process;
+        process.start(u"launchctl"_s, {u"load"_s, u"-w"_s, path});
+        if (!process.waitForFinished(5000)) {
+            return std::unexpected(u"launchctl load timeout"_s);
+        }
+        if (process.exitCode() != 0) {
+            return std::unexpected(u"launchctl load failed: %1"_s.arg(
+                QString::fromUtf8(process.readAllStandardError())));
+        }
     } else {
-        qInfo() << "Auto-run" << (run ? "enabled" : "disabled") << "successfully";
+        // 先卸载服务，再删除 plist 文件（修复原实现先写 plist 再 unload 的 Bug）
+        QProcess process;
+        process.start(u"launchctl"_s, {u"unload"_s, u"-w"_s, path});
+        if (!process.waitForFinished(5000)) {
+            return std::unexpected(u"launchctl unload timeout"_s);
+        }
+        if (process.exitCode() != 0) {
+            qWarning() << "launchctl unload failed:" << process.readAllStandardError();
+            // 即使卸载失败也尝试删除 plist，避免残留
+        }
+
+        if (QFile::exists(path) && !QFile::remove(path)) {
+            return std::unexpected(u"Failed to remove plist file"_s);
+        }
     }
+
+    qInfo() << "Auto-run" << (run ? "enabled" : "disabled") << "successfully";
+    return {};
 }
 
 } // namespace Utils
