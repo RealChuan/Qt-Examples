@@ -15,10 +15,11 @@ public:
     {
         bubble = new BubbleWidget(q_ptr);
 
+        // 暖棕阴影（与米色背景同源，像浮在木桌上的牛皮纸便签）
         auto *shadowEffect = new QGraphicsDropShadowEffect(bubble);
-        shadowEffect->setOffset(0, 0);
-        shadowEffect->setColor(Qt::gray);
-        shadowEffect->setBlurRadius(margin);
+        shadowEffect->setOffset(0, 3);
+        shadowEffect->setColor(QColor(74, 55, 40, 40));
+        shadowEffect->setBlurRadius(18);
         bubble->setGraphicsEffect(shadowEffect);
     }
 
@@ -45,7 +46,7 @@ public:
 
 BubbleWrapperWidget::BubbleWrapperWidget(QWidget *parent)
     : QWidget(parent)
-    , d_ptr(new BubbleWrapperWidgetPrivate(this))
+    , d_ptr(std::make_unique<BubbleWrapperWidgetPrivate>(this))
 {
     setupUI();
     buildConnect();
@@ -81,6 +82,7 @@ void BubbleWrapperWidget::setAnimationDuration(int duration)
     d_ptr->animationDuration = qMax(0, duration);
     d_ptr->showAnimation->setDuration(d_ptr->animationDuration);
     d_ptr->hideAnimation->setDuration(d_ptr->animationDuration);
+    emit animationDurationChanged(d_ptr->animationDuration);
 }
 
 auto BubbleWrapperWidget::animationDuration() const -> int

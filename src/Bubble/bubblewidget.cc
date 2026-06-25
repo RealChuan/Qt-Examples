@@ -1,25 +1,27 @@
 #include "bubblewidget.hpp"
 
 #include <QApplication>
+#include <QLinearGradient>
 #include <QPainter>
 #include <QPainterPath>
 #include <QScreen>
+
+using namespace Qt::StringLiterals;
 
 class BubbleWidget::BubbleWidgetPrivate
 {
 public:
     explicit BubbleWidgetPrivate(BubbleWidget *q) : q_ptr(q)
     {
-        // 初始化画笔
-        pen.setWidth(2);
-        pen.setColor(QColor(219, 186, 146));
+        // 初始化画笔（细线，暖米 tan）
+        pen.setWidth(1);
+        pen.setColor(QColor(201, 169, 106)); // #c9a96a
 
-        // 初始化字体
-        textFont.setPixelSize(15);
-        textFont.setBold(true);
+        // 初始化字体（14px 常规）
+        textFont.setPixelSize(14);
 
-        // 初始化画刷
-        brush.setColor(QColor(255, 248, 240));
+        // 初始化画刷（manila 暖米，主色）
+        brush.setColor(QColor(245, 230, 200)); // #f5e6c8
         brush.setStyle(Qt::SolidPattern);
     }
 
@@ -29,17 +31,17 @@ public:
     BubbleWidget *q_ptr;
 
     // 可配置属性
-    int borderRadius = 5;
-    int textMargin = 8;
+    int borderRadius = 12;
+    int textMargin = 12;
 
     QPen pen;
     QBrush brush;
     QFont textFont;
-    QColor textColor = QColor(219, 186, 146);
-    QString text = QLatin1String("Are you ok!");
+    QColor textColor = QColor(74, 55, 40); // #4a3728 deep coffee
+    QString text = u"Are you ok!"_s;
 
     // 三角形属性
-    QSize triangleSize = QSize(10, 10);
+    QSize triangleSize = QSize(12, 8);
     Direction direction = Direction::Top;
 
     // 状态标志
@@ -56,7 +58,8 @@ public:
     static constexpr int MAX_HEIGHT = 300;
 };
 
-BubbleWidget::BubbleWidget(QWidget *parent) : QWidget(parent), d_ptr(new BubbleWidgetPrivate(this))
+BubbleWidget::BubbleWidget(QWidget *parent)
+    : QWidget(parent), d_ptr(std::make_unique<BubbleWidgetPrivate>(this))
 { updateSize(); }
 
 BubbleWidget::~BubbleWidget() = default;
@@ -129,6 +132,7 @@ void BubbleWidget::setPen(const QPen &pen)
         return;
     d_ptr->pen = pen;
     update();
+    emit penChanged(pen);
 }
 
 auto BubbleWidget::pen() const -> QPen
@@ -141,6 +145,7 @@ void BubbleWidget::setBrush(const QBrush &brush)
         return;
     d_ptr->brush = brush;
     update();
+    emit brushChanged(brush);
 }
 
 auto BubbleWidget::brush() const -> QBrush
@@ -154,6 +159,7 @@ void BubbleWidget::setBorderRadius(int radius)
     d_ptr->borderRadius = qMax(0, radius);
     d_ptr->pathDirty = true;
     update();
+    emit borderRadiusChanged(radius);
 }
 
 auto BubbleWidget::borderRadius() const -> int
@@ -165,6 +171,7 @@ void BubbleWidget::setText(const QString &text)
     if (d_ptr->text != text) {
         d_ptr->text = text;
         updateSize();
+        emit textChanged(text);
     }
 }
 
@@ -177,6 +184,7 @@ void BubbleWidget::setTextMargin(int margin)
         return;
     d_ptr->textMargin = qMax(0, margin);
     updateSize();
+    emit textMarginChanged(margin);
 }
 
 auto BubbleWidget::textMargin() const -> int
@@ -187,6 +195,7 @@ void BubbleWidget::setTextFont(const QFont &font)
     if (d_ptr->textFont != font) {
         d_ptr->textFont = font;
         updateSize();
+        emit textFontChanged(font);
     }
 }
 
@@ -198,6 +207,7 @@ void BubbleWidget::setTextColor(const QColor &color)
     if (d_ptr->textColor != color) {
         d_ptr->textColor = color;
         update();
+        emit textColorChanged(color);
     }
 }
 
@@ -211,6 +221,7 @@ void BubbleWidget::setTriangleSize(const QSize &size)
         d_ptr->triangleSize = QSize(qMax(0, size.width()), qMax(0, size.height()));
         d_ptr->pathDirty = true;
         updateSize();
+        emit triangleSizeChanged(d_ptr->triangleSize);
     }
 }
 
@@ -224,16 +235,15 @@ void BubbleWidget::setDirection(Direction direction)
     d_ptr->direction = direction;
     d_ptr->pathDirty = true;
     updateSize();
+    emit directionChanged(direction);
 }
 
 auto BubbleWidget::direction() const -> Direction
 { return d_ptr->direction; }
 
 // 事件处理
-void BubbleWidget::paintEvent(QPaintEvent *event)
+void BubbleWidget::paintEvent([[maybe_unused]] QPaintEvent *event)
 {
-    Q_UNUSED(event)
-
     if (d_ptr->pathDirty) {
         calculateBubblePath();
     }
@@ -241,9 +251,18 @@ void BubbleWidget::paintEvent(QPaintEvent *event)
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    // 绘制气泡主体
+    // 绘制气泡主体（纯色画刷时使用渐变填充增强纸张/黏土立体感）
     painter.setPen(d_ptr->pen);
-    painter.setBrush(d_ptr->brush);
+    QBrush fillBrush = d_ptr->brush;
+    if (fillBrush.style() == Qt::SolidPattern) {
+        QRect bubbleRect = calculateBubbleRect();
+        QColor baseColor = fillBrush.color();
+        QLinearGradient gradient(bubbleRect.topLeft(), bubbleRect.bottomLeft());
+        gradient.setColorAt(0, baseColor.lighter(106));
+        gradient.setColorAt(1, baseColor.darker(112));
+        fillBrush = QBrush(gradient);
+    }
+    painter.setBrush(fillBrush);
     painter.drawPath(d_ptr->bubblePath);
 
     // 绘制文本

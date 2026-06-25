@@ -3,18 +3,21 @@
 #include <QPen>
 #include <QWidget>
 
+#include <memory>
+
 class BubbleWidget : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(QPen pen READ pen WRITE setPen)
-    Q_PROPERTY(QBrush brush READ brush WRITE setBrush)
-    Q_PROPERTY(int borderRadius READ borderRadius WRITE setBorderRadius)
-    Q_PROPERTY(QString text READ text WRITE setText)
-    Q_PROPERTY(QSize triangleSize READ triangleSize WRITE setTriangleSize)
-    Q_PROPERTY(Direction direction READ direction WRITE setDirection)
-    Q_PROPERTY(int textMargin READ textMargin WRITE setTextMargin)
-    Q_PROPERTY(QFont textFont READ textFont WRITE setTextFont)
-    Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor)
+    Q_PROPERTY(QPen pen READ pen WRITE setPen NOTIFY penChanged)
+    Q_PROPERTY(QBrush brush READ brush WRITE setBrush NOTIFY brushChanged)
+    Q_PROPERTY(int borderRadius READ borderRadius WRITE setBorderRadius NOTIFY borderRadiusChanged)
+    Q_PROPERTY(QString text READ text WRITE setText NOTIFY textChanged)
+    Q_PROPERTY(
+        QSize triangleSize READ triangleSize WRITE setTriangleSize NOTIFY triangleSizeChanged)
+    Q_PROPERTY(Direction direction READ direction WRITE setDirection NOTIFY directionChanged)
+    Q_PROPERTY(int textMargin READ textMargin WRITE setTextMargin NOTIFY textMarginChanged)
+    Q_PROPERTY(QFont textFont READ textFont WRITE setTextFont NOTIFY textFontChanged)
+    Q_PROPERTY(QColor textColor READ textColor WRITE setTextColor NOTIFY textColorChanged)
 
 public:
     enum class Direction : int { Left, Right, Top, Bottom };
@@ -61,6 +64,17 @@ public:
     void setDirection(Direction direction);
     [[nodiscard]] auto direction() const -> Direction;
 
+signals:
+    void penChanged(const QPen &pen);
+    void brushChanged(const QBrush &brush);
+    void borderRadiusChanged(int radius);
+    void textChanged(const QString &text);
+    void triangleSizeChanged(const QSize &size);
+    void directionChanged(Direction direction);
+    void textMarginChanged(int margin);
+    void textFontChanged(const QFont &font);
+    void textColorChanged(const QColor &color);
+
 protected:
     void paintEvent(QPaintEvent *event) override;
     void resizeEvent(QResizeEvent *event) override;
@@ -73,5 +87,5 @@ private:
     [[nodiscard]] auto getAvailableScreenGeometry() const -> QRect;
 
     class BubbleWidgetPrivate;
-    QScopedPointer<BubbleWidgetPrivate> d_ptr;
+    std::unique_ptr<BubbleWidgetPrivate> d_ptr;
 };

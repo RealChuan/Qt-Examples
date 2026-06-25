@@ -3,6 +3,10 @@
 
 #include <QtWidgets>
 
+#include <cmath>
+
+using namespace Qt::StringLiterals;
+
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     // 创建气泡包装控件
@@ -158,7 +162,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // 文本属性连接
     connect(textEdit, &QLineEdit::textChanged, bubble, &BubbleWidget::setText);
 
-    connect(fontSizeSpin, QOverload<int>::of(&QSpinBox::valueChanged), [bubble](int size) {
+    connect(fontSizeSpin, qOverload<int>(&QSpinBox::valueChanged), [bubble](int size) {
         QFont font = bubble->textFont();
         font.setPixelSize(size);
         bubble->setTextFont(font);
@@ -166,7 +170,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 
     // 方向控制连接
     connect(directionCombo,
-            QOverload<int>::of(&QComboBox::currentIndexChanged),
+            qOverload<int>(&QComboBox::currentIndexChanged),
             [bubble, directionCombo]() {
                 BubbleWidget::Direction direction
                     = static_cast<BubbleWidget::Direction>(directionCombo->currentData().toInt());
@@ -177,17 +181,17 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     auto updateTriangleSize = [bubble, triangleWidthSpin, triangleHeightSpin]() {
         bubble->setTriangleSize(QSize(triangleWidthSpin->value(), triangleHeightSpin->value()));
     };
-    connect(triangleWidthSpin, QOverload<int>::of(&QSpinBox::valueChanged), updateTriangleSize);
-    connect(triangleHeightSpin, QOverload<int>::of(&QSpinBox::valueChanged), updateTriangleSize);
+    connect(triangleWidthSpin, qOverload<int>(&QSpinBox::valueChanged), updateTriangleSize);
+    connect(triangleHeightSpin, qOverload<int>(&QSpinBox::valueChanged), updateTriangleSize);
 
     // 样式控制连接
     connect(borderRadiusSlider, &QSlider::valueChanged, [bubble, borderRadiusLabel](int value) {
-        borderRadiusLabel->setText(QString("%1 px").arg(value));
+        borderRadiusLabel->setText(u"%1 px"_s.arg(value));
         bubble->setBorderRadius(value);
     });
 
     connect(textMarginSlider, &QSlider::valueChanged, [bubble, textMarginLabel](int value) {
-        textMarginLabel->setText(QString("%1 px").arg(value));
+        textMarginLabel->setText(u"%1 px"_s.arg(value));
         bubble->setTextMargin(value);
     });
 
@@ -207,10 +211,10 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
         double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
 
         // 根据WCAG标准选择对比度足够的文字颜色
-        QString textColor = luminance > 0.179 ? "black" : "white";
+        QString textColor = luminance > 0.179 ? u"black"_s : u"white"_s;
 
         button->setStyleSheet(
-            QString("background-color: %1; color: %2; border: 1px solid gray; padding: 5px;")
+            u"background-color: %1; color: %2; border: 1px solid gray; padding: 5px;"_s
                 .arg(colorName)
                 .arg(textColor));
         button->setText(colorName);
@@ -266,7 +270,7 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     connect(animationDurationSlider,
             &QSlider::valueChanged,
             [bubbleWrapper, animationDurationLabel, animationCheckbox](int value) {
-                animationDurationLabel->setText(QString("%1 ms").arg(value));
+                animationDurationLabel->setText(u"%1 ms"_s.arg(value));
                 if (animationCheckbox->isChecked()) {
                     bubbleWrapper->setAnimationDuration(value);
                 }
@@ -329,4 +333,4 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     bubbleWrapper->setAnimationDuration(animationDurationSlider->value());
 }
 
-MainWindow::~MainWindow() {}
+MainWindow::~MainWindow() = default;

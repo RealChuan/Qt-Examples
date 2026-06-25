@@ -4,10 +4,13 @@
 
 #include <QPropertyAnimation>
 
+#include <memory>
+
 class BubbleWrapperWidget : public QWidget
 {
     Q_OBJECT
-    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration)
+    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration NOTIFY
+                   animationDurationChanged)
     Q_PROPERTY(double opacity READ windowOpacity WRITE setWindowOpacity)
 
 public:
@@ -23,7 +26,7 @@ public:
     // 动画设置
     void setAnimationDuration(int duration);
     [[nodiscard]] auto animationDuration() const -> int;
-    bool isAnimating() const;
+    [[nodiscard]] bool isAnimating() const;
 
 signals:
     void aboutToShow();
@@ -31,6 +34,7 @@ signals:
     void animationStarted();
     void animationFinished();
     void animationStopped();
+    void animationDurationChanged(int duration);
 
 public slots:
     // 显示控制
@@ -65,5 +69,5 @@ private:
     void startHideAnimation();
 
     class BubbleWrapperWidgetPrivate;
-    QScopedPointer<BubbleWrapperWidgetPrivate> d_ptr;
+    std::unique_ptr<BubbleWrapperWidgetPrivate> d_ptr;
 };
