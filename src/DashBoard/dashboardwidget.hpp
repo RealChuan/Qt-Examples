@@ -2,6 +2,8 @@
 
 #include <QWidget>
 
+#include <memory>
+
 class DashBoardWidget : public QWidget
 {
     Q_OBJECT
@@ -12,8 +14,8 @@ class DashBoardWidget : public QWidget
     Q_PROPERTY(double endAngle READ endAngle WRITE setEndAngle NOTIFY endAngleChanged)
     Q_PROPERTY(int scaleMajor READ scaleMajor WRITE setScaleMajor NOTIFY scaleMajorChanged)
     Q_PROPERTY(int scaleMinor READ scaleMinor WRITE setScaleMinor NOTIFY scaleMinorChanged)
-    Q_PROPERTY(QString unit READ unit WRITE setUnit)
-    Q_PROPERTY(QString title READ title WRITE setTitle)
+    Q_PROPERTY(QString unit READ unit WRITE setUnit NOTIFY unitChanged)
+    Q_PROPERTY(QString title READ title WRITE setTitle NOTIFY titleChanged)
     Q_PROPERTY(QColor arcColor READ arcColor WRITE setArcColor NOTIFY arcColorChanged)
     Q_PROPERTY(QColor scaleColor READ scaleColor WRITE setScaleColor NOTIFY scaleColorChanged)
     Q_PROPERTY(
@@ -23,7 +25,8 @@ class DashBoardWidget : public QWidget
                    backgroundColorChanged)
     Q_PROPERTY(QColor valueColor READ valueColor WRITE setValueColor NOTIFY valueColorChanged)
     Q_PROPERTY(QColor titleColor READ titleColor WRITE setTitleColor NOTIFY titleColorChanged)
-    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration)
+    Q_PROPERTY(int animationDuration READ animationDuration WRITE setAnimationDuration NOTIFY
+                   animationDurationChanged)
 
 public:
     explicit DashBoardWidget(QWidget *parent = nullptr);
@@ -110,6 +113,8 @@ signals:
     void endAngleChanged(double value);
     void scaleMajorChanged(int value);
     void scaleMinorChanged(int value);
+    void unitChanged(const QString &unit);
+    void titleChanged(const QString &title);
     void arcColorChanged(const QColor &color);
     void scaleColorChanged(const QColor &color);
     void pointerColorChanged(const QColor &color);
@@ -117,6 +122,7 @@ signals:
     void backgroundColorChanged(const QColor &color);
     void valueColorChanged(const QColor &color);
     void titleColorChanged(const QColor &color);
+    void animationDurationChanged(int duration);
 
 protected:
     void paintEvent(QPaintEvent *event) override;
@@ -126,16 +132,17 @@ private slots:
 
 private:
     void setupFont(QPainter &painter, double minSize, double ratio);
-    QRectF getTextRect(double minSize, double verticalRatio, double heightRatio) const;
     void drawArc(QPainter &painter, double minSize);
+    void drawProgressArc(QPainter &painter, double minSize);
     void drawScale(QPainter &painter, double minSize);
     void drawScaleNumbers(QPainter &painter, double minSize);
     void drawPointer(QPainter &painter, double minSize);
+    void drawCenterHub(QPainter &painter, double minSize);
     void drawValue(QPainter &painter, double minSize);
     void drawTitle(QPainter &painter, double minSize);
     void initAnimations();
     void startAnimation(double targetValue);
 
     class DashBoardWidgetPrivate;
-    QScopedPointer<DashBoardWidgetPrivate> d_ptr;
+    std::unique_ptr<DashBoardWidgetPrivate> d_ptr;
 };

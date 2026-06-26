@@ -4,6 +4,8 @@
 
 #include <QListView>
 
+#include <memory>
+
 class GridView : public QListView
 {
     Q_OBJECT
@@ -23,5 +25,5 @@ private:
     void buildConnect();
 
     class GridViewPrivate;
-    QScopedPointer<GridViewPrivate> d_ptr;
+    std::unique_ptr<GridViewPrivate> d_ptr;
 };

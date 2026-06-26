@@ -16,34 +16,46 @@ Item {
     property string title: "SPEED"
 
     // === 刻度属性 ===
-    property int scaleMajor: 10      // 主刻度数量
-    property int scaleMinor: 5       // 每个主刻度间的次刻度数量
-    property color scaleColor: "#04A8AD"
-    property color scaleTextColor: "#04A8AD"
+    property int scaleMajor: 10
+    property int scaleMinor: 5
+    property color scaleColor: "#04a8ad"
+    property color scaleTextColor: "#908574"
 
-    // === 颜色属性 ===
-    property color arcColor: "#383D4A"       // 背景弧颜色
-    property color pointerColor: "#04B5C8"    // 指针颜色
-    property color valueColor: "#2c3e50"      // 数值颜色
-    property color titleColor: "#7f8c8d"      // 标题颜色
+    // === Classic 主题默认颜色 ===
+    property color arcColor: "#383d4a"
+    property color pointerColor: "#04b5c8"
+    property color valueColor: "#908574"
+    property color titleColor: "#908574"
     property color backgroundColor: "transparent"
-
-    // === 尺寸属性 ===
-    property real arcWidth: Math.min(width, height) * 0.08
-    property real pointerWidth: Math.min(width, height) * 0.02
-    property real pointerLength: Math.min(width, height) * 0.45
 
     // === 动画属性 ===
     property int animationDuration: 800
     property bool animationEnabled: true
 
+    // === 比例常量（与 QWidget 版本完全一致）===
+    readonly property real arcWidth: minSize / 20.0
+    readonly property real arcRadius: minSize * 0.38 - arcWidth / 2
+    readonly property real scaleRadius: minSize * 0.40
+    readonly property real scaleNumberRadius: minSize * 0.46
+    readonly property real majorScaleInLength: minSize / 15.0
+    readonly property real majorScaleOutLength: minSize / 30.0
+    readonly property real minorScaleLength: minSize / 45.0
+    readonly property real pointerLength: minSize * 0.35
+    readonly property real pointerHalfWidth: minSize / 100.0
+    readonly property real pointerTail: minSize / 30.0
+    readonly property real hubRadius: minSize / 40.0
+    readonly property real hubInnerRatio: 0.4
+    readonly property real valueY: minSize * 0.15
+    readonly property real titleY: minSize * 0.25
+
     // === 计算属性 ===
+    readonly property real minSize: Math.min(width, height)
     readonly property real totalAngle: endAngle - startAngle
     readonly property real progress: (value - minValue) / (maxValue - minValue)
     readonly property real currentAngle: startAngle + progress * totalAngle
     readonly property real centerX: width / 2
     readonly property real centerY: height / 2
-    readonly property real radius: Math.min(width, height) / 2 - arcWidth / 2
+    readonly property real progressSweep: totalAngle * progress
 
     // === 信号 ===
     signal valueIncreased(real newValue)
@@ -59,7 +71,6 @@ Item {
         property bool isAnimating: false
     }
 
-    // === 隐式尺寸 ===
     implicitWidth: 200
     implicitHeight: 200
 
@@ -75,7 +86,6 @@ Item {
                 privateData.isAnimating = true;
                 root.animationStarted(privateData.previousValue, root.value);
             }
-
             onStopped: {
                 privateData.isAnimating = false;
                 privateData.previousValue = root.value;
@@ -84,7 +94,6 @@ Item {
         }
     }
 
-    // === 值变化处理 ===
     onValueChanged: {
         if (!privateData.isAnimating) {
             if (value > privateData.previousValue) {
@@ -96,40 +105,54 @@ Item {
         }
     }
 
-    // === 外观组件 ===
-
-    // 背景
+    // === 背景 ===
     Rectangle {
         anchors.fill: parent
         color: root.backgroundColor
     }
 
-    // 主形状容器
+    // === 弧线（背景轨道 + 进度弧，FlatCap 锐利切口）===
     Shape {
-        id: progressShape
         anchors.fill: parent
         vendorExtensionsEnabled: true
         preferredRendererType: Shape.CurveRenderer
 
-        // 背景圆弧
+        // 背景轨道弧
         ShapePath {
-            id: baseArc
             strokeColor: root.arcColor
             fillColor: "transparent"
             strokeWidth: root.arcWidth
+            capStyle: ShapePath.FlatCap
 
             PathAngleArc {
                 centerX: root.centerX
                 centerY: root.centerY
-                radiusX: root.radius
-                radiusY: root.radius
+                radiusX: root.arcRadius
+                radiusY: root.arcRadius
                 startAngle: root.startAngle
                 sweepAngle: root.totalAngle
             }
         }
+
+        // 进度弧
+        ShapePath {
+            strokeColor: root.valueColor
+            fillColor: "transparent"
+            strokeWidth: root.arcWidth
+            capStyle: ShapePath.FlatCap
+
+            PathAngleArc {
+                centerX: root.centerX
+                centerY: root.centerY
+                radiusX: root.arcRadius
+                radiusY: root.arcRadius
+                startAngle: root.startAngle
+                sweepAngle: root.progressSweep
+            }
+        }
     }
 
-    // 刻度线
+    // === 刻度线（主刻度双向延伸，次刻度单向向内）===
     Repeater {
         model: root.scaleMajor * root.scaleMinor + 1
 
@@ -138,29 +161,25 @@ Item {
             required property int index
             readonly property real angle: root.startAngle + index * (root.totalAngle / (root.scaleMajor * root.scaleMinor))
             readonly property bool isMajor: index % root.scaleMinor === 0
-            readonly property real length: isMajor ? root.radius * 0.12 : root.radius * 0.06
-            readonly property real lineWidth: isMajor ? 2 : 1
+            readonly property real inLen: isMajor ? root.majorScaleInLength : root.minorScaleLength
+            readonly property real outLen: isMajor ? root.majorScaleOutLength : 0
+            readonly property real totalLen: inLen + outLen
+            readonly property real lineW: isMajor ? 2 : 1
+            readonly property real midR: root.scaleRadius + (outLen - inLen) / 2
+            readonly property real rad: scale.angle * Math.PI / 180
 
-            width: lineWidth
-            height: length
-            color: root.scaleColor
+            width: lineW
+            height: totalLen
+            x: root.centerX + midR * Math.cos(rad) - lineW / 2
+            y: root.centerY + midR * Math.sin(rad) - totalLen / 2
+            rotation: scale.angle + 90
+            transformOrigin: Item.Center
+            color: isMajor ? root.scaleColor : Qt.rgba(root.scaleColor.r, root.scaleColor.g, root.scaleColor.b, 0.39)
             antialiasing: true
-
-            transform: [
-                Rotation {
-                    origin.x: scale.lineWidth / 2
-                    origin.y: 0
-                    angle: scale.angle - 90
-                },
-                Translate {
-                    x: root.centerX + (root.radius - scale.length) * Math.cos(scale.angle * Math.PI / 180) - scale.lineWidth / 2
-                    y: root.centerY + (root.radius - scale.length) * Math.sin(scale.angle * Math.PI / 180)
-                }
-            ]
         }
     }
 
-    // 刻度数字
+    // === 刻度数字 ===
     Repeater {
         model: root.scaleMajor + 1
 
@@ -168,27 +187,33 @@ Item {
             required property int index
             readonly property real angle: root.startAngle + index * (root.totalAngle / root.scaleMajor)
             readonly property real numberValue: root.minValue + index * (root.maxValue - root.minValue) / root.scaleMajor
+            readonly property real rad: angle * Math.PI / 180
 
-            text: numberValue.toFixed(1)
+            text: numberValue.toFixed(0)
             color: root.scaleTextColor
-            font.pixelSize: Math.min(root.width, root.height) * 0.05
+            font {
+                family: "Consolas"
+                pixelSize: root.minSize / 26.0
+                bold: false
+            }
             antialiasing: true
 
-            x: root.centerX + (root.radius * 0.75) * Math.cos(angle * Math.PI / 180) - width / 2
-            y: root.centerY + (root.radius * 0.75) * Math.sin(angle * Math.PI / 180) - height / 2
+            x: root.centerX + root.scaleNumberRadius * Math.cos(rad) - width / 2
+            y: root.centerY + root.scaleNumberRadius * Math.sin(rad) - height / 2
         }
     }
 
-    // 指针
+    // === 指针（细长剑形：长端指向弧方向，短尾部）===
     Shape {
         id: pointer
         x: root.centerX
         y: root.centerY
-        width: root.pointerWidth
-        height: root.pointerLength
+        width: 1
+        height: 1
+        rotation: root.currentAngle - 90
+        transformOrigin: Item.TopLeft
         preferredRendererType: Shape.CurveRenderer
 
-        // 指针形状 - 简单的三角形，指向正下方
         ShapePath {
             strokeColor: root.pointerColor
             fillColor: root.pointerColor
@@ -196,70 +221,118 @@ Item {
             joinStyle: ShapePath.MiterJoin
 
             PathMove {
-                x: 0
+                x: -root.pointerHalfWidth
                 y: 0
             }
             PathLine {
-                x: -root.pointerWidth
-                y: root.radius / 20
-            }
-            PathLine {
-                x: root.pointerWidth
+                x: 0
                 y: root.pointerLength
             }
             PathLine {
-                x: root.pointerWidth
-                y: root.radius / 20
+                x: root.pointerHalfWidth
+                y: 0
             }
             PathLine {
                 x: 0
-                y: 0
+                y: -root.pointerTail
+            }
+        }
+    }
+
+    // === 中心轴（六边形外环 + 圆形内核）===
+    Shape {
+        anchors.fill: parent
+        preferredRendererType: Shape.CurveRenderer
+
+        // 六边形外环
+        ShapePath {
+            strokeColor: "transparent"
+            fillColor: root.pointerColor
+            strokeWidth: 0
+
+            PathMove {
+                x: root.centerX
+                y: root.centerY - root.hubRadius
+            }
+            PathLine {
+                x: root.centerX + root.hubRadius * 0.866
+                y: root.centerY - root.hubRadius * 0.5
+            }
+            PathLine {
+                x: root.centerX + root.hubRadius * 0.866
+                y: root.centerY + root.hubRadius * 0.5
+            }
+            PathLine {
+                x: root.centerX
+                y: root.centerY + root.hubRadius
+            }
+            PathLine {
+                x: root.centerX - root.hubRadius * 0.866
+                y: root.centerY + root.hubRadius * 0.5
+            }
+            PathLine {
+                x: root.centerX - root.hubRadius * 0.866
+                y: root.centerY - root.hubRadius * 0.5
             }
         }
 
-        rotation: root.currentAngle - 90
-        transformOrigin: Item.TopLeft
+        // 圆形内核
+        ShapePath {
+            strokeColor: "transparent"
+            fillColor: root.valueColor
+            strokeWidth: 0
+
+            PathAngleArc {
+                centerX: root.centerX
+                centerY: root.centerY
+                radiusX: root.hubRadius * root.hubInnerRatio
+                radiusY: root.hubRadius * root.hubInnerRatio
+                startAngle: 0
+                sweepAngle: 360
+            }
+        }
     }
 
-    // 数值显示
+    // === 数值显示（与 Widget 版本对齐：中心向下 0.15*minSize）===
     Text {
         id: valueText
         anchors {
             horizontalCenter: parent.horizontalCenter
             verticalCenter: parent.verticalCenter
-            verticalCenterOffset: -parent.height * 0.1
+            verticalCenterOffset: root.valueY
         }
         text: root.value.toFixed(2) + " " + root.unit
         color: root.valueColor
         font {
-            pixelSize: Math.min(root.width, root.height) * 0.1
+            family: "Consolas"
+            pixelSize: root.minSize / 14.0
             bold: true
-            family: "Arial"
         }
         horizontalAlignment: Text.AlignHCenter
     }
 
-    // 标题
+    // === 标题（与 Widget 版本对齐：中心向下 0.25*minSize）===
     Text {
         id: titleText
         anchors {
-            top: valueText.bottom
             horizontalCenter: parent.horizontalCenter
-            topMargin: Math.min(root.width, root.height) * 0.05
+            verticalCenter: parent.verticalCenter
+            verticalCenterOffset: root.titleY
         }
-        text: root.title
+        text: root.title.toUpperCase()
         color: root.titleColor
         font {
-            pixelSize: Math.min(root.width, root.height) * 0.06
-            capitalization: Font.AllUppercase
-            letterSpacing: 1.5
+            family: "Consolas"
+            pixelSize: root.minSize / 30.0
+            bold: false
+            letterSpacing: 2
         }
         horizontalAlignment: Text.AlignHCenter
     }
 
     // === 公共方法 ===
-    function setValue(newValue) {
-        var clampedValue = Math.max(root.minValue, Math.min(root.maxValue, newValue));
+    function setValue(newValue: real) {
+        const clampedValue = Math.max(root.minValue, Math.min(root.maxValue, newValue));
         if (clampedValue !== root.value) {
             root.animationEnabled = false;
             root.value = clampedValue;
@@ -267,20 +340,20 @@ Item {
         }
     }
 
-    function setValueAnimated(newValue) {
-        var clampedValue = Math.max(root.minValue, Math.min(root.maxValue, newValue));
+    function setValueAnimated(newValue: real) {
+        const clampedValue = Math.max(root.minValue, Math.min(root.maxValue, newValue));
         if (clampedValue !== root.value) {
             root.value = clampedValue;
         }
     }
 
-    function increaseValue(increment = 1.0) {
+    function increaseValue(increment: real) {
         if (increment > 0) {
             root.setValueAnimated(root.value + increment);
         }
     }
 
-    function decreaseValue(decrement = 1.0) {
+    function decreaseValue(decrement: real) {
         if (decrement > 0) {
             root.setValueAnimated(root.value - decrement);
         }
@@ -293,7 +366,6 @@ Item {
         }
     }
 
-    // === 组件初始化 ===
     Component.onCompleted: {
         privateData.previousValue = root.value;
     }

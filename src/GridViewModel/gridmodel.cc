@@ -16,7 +16,7 @@ public:
 
 GridModel::GridModel(QObject *parent)
     : QAbstractListModel(parent)
-    , d_ptr(new GridModelPrivate(this))
+    , d_ptr(std::make_unique<GridModelPrivate>(this))
 {}
 
 GridModel::~GridModel() = default;

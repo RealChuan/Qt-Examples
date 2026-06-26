@@ -4,6 +4,8 @@
 #include <QImage>
 #include <QList>
 
+#include <memory>
+
 struct GridCell
 {
     QImage image;
@@ -30,9 +32,9 @@ public:
     void clearCells();
 
     void setCellSize(int width, int height);
-    QSize cellSize() const;
+    [[nodiscard]] QSize cellSize() const;
 
 private:
     class GridModelPrivate;
-    QScopedPointer<GridModelPrivate> d_ptr;
+    std::unique_ptr<GridModelPrivate> d_ptr;
 };

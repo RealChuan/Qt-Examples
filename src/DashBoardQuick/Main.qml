@@ -11,38 +11,41 @@ ApplicationWindow {
     visible: true
     title: qsTr("DashBoard Quick Example")
 
+    // 当前颜色编辑目标（用于 ColorDialog 回填）
+    property string currentColorTarget: ""
+
     // 颜色对话框
     ColorDialog {
         id: colorDialog
         title: qsTr("Choose color")
     }
 
-    // 计算对比度足够的文本颜色（WCAG标准）
-    function getContrastTextColor(bgColor) {
-        function normalize(x) {
+    // 计算对比度足够的文本颜色（WCAG 标准）
+    function getContrastTextColor(bgColor: color): color {
+        function normalize(x: real): real {
             return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4);
         }
 
-        function getRelativeLuminance(r, g, b) {
+        function getRelativeLuminance(r: real, g: real, b: real): real {
             return 0.2126 * normalize(r / 255.0) + 0.7152 * normalize(g / 255.0) + 0.0722 * normalize(b / 255.0);
         }
 
-        var luminance = getRelativeLuminance(bgColor.r * 255, bgColor.g * 255, bgColor.b * 255);
+        const luminance = getRelativeLuminance(bgColor.r * 255, bgColor.g * 255, bgColor.b * 255);
         return luminance > 0.179 ? "black" : "white";
     }
 
-    // 初始化颜色按钮
+    // 初始化颜色按钮文字色
     function initializeColorButtons() {
         arcColorButton.palette.buttonText = getContrastTextColor(dashboard.arcColor);
         scaleColorButton.palette.buttonText = getContrastTextColor(dashboard.scaleColor);
         pointerColorButton.palette.buttonText = getContrastTextColor(dashboard.pointerColor);
-        scaleColorButton.palette.buttonText = getContrastTextColor(dashboard.scaleTextColor);
+        scaleTextColorButton.palette.buttonText = getContrastTextColor(dashboard.scaleTextColor);
         backgroundColorButton.palette.buttonText = getContrastTextColor(dashboard.backgroundColor);
         valueColorButton.palette.buttonText = getContrastTextColor(dashboard.valueColor);
         titleColorButton.palette.buttonText = getContrastTextColor(dashboard.titleColor);
     }
 
-    // 快速主题函数
+    // === 三套主题（与 QWidget 版本完全一致，明暗区分明显）===
     function applyClassicTheme() {
         dashboard.arcColor = "#383d4a";
         dashboard.scaleColor = "#04a8ad";
@@ -92,14 +95,15 @@ ApplicationWindow {
                 Layout.fillHeight: true
                 spacing: 10
 
-                // 仪表盘显示
+                // 仪表盘显示（默认 Classic 主题，背景 transparent）
                 DashBoard {
                     id: dashboard
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.margins: 10
                     value: 25
-                    title: qsTr("Dashboard")
+                    title: qsTr("SPEED")
+                    unit: qsTr("km/h")
                 }
 
                 // 数值控制组
@@ -291,7 +295,6 @@ ApplicationWindow {
                         columns: 4
                         anchors.fill: parent
 
-                        // 第一列
                         Label {
                             text: qsTr("Arc color:")
                             Layout.alignment: Qt.AlignRight
@@ -303,13 +306,7 @@ ApplicationWindow {
                             text: dashboard.arcColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = dashboard.arcColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        dashboard.arcColor = colorDialog.selectedColor;
-                                        arcColorButton.palette.buttonText = getContrastTextColor(dashboard.arcColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "arcColor";
                                 colorDialog.open();
                             }
 
@@ -331,13 +328,7 @@ ApplicationWindow {
                             text: dashboard.scaleColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = dashboard.scaleColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        dashboard.scaleColor = colorDialog.selectedColor;
-                                        scaleColorButton.palette.buttonText = getContrastTextColor(dashboard.scaleColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "scaleColor";
                                 colorDialog.open();
                             }
 
@@ -359,13 +350,7 @@ ApplicationWindow {
                             text: dashboard.pointerColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = dashboard.pointerColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        dashboard.pointerColor = colorDialog.selectedColor;
-                                        pointerColorButton.palette.buttonText = getContrastTextColor(dashboard.pointerColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "pointerColor";
                                 colorDialog.open();
                             }
 
@@ -376,7 +361,6 @@ ApplicationWindow {
                             }
                         }
 
-                        // 第二列
                         Label {
                             text: qsTr("Text color:")
                             Layout.alignment: Qt.AlignRight
@@ -388,13 +372,7 @@ ApplicationWindow {
                             text: dashboard.scaleTextColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = dashboard.scaleTextColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        dashboard.scaleTextColor = colorDialog.selectedColor;
-                                        scaleTextColorButton.palette.buttonText = getContrastTextColor(dashboard.scaleTextColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "scaleTextColor";
                                 colorDialog.open();
                             }
 
@@ -416,13 +394,7 @@ ApplicationWindow {
                             text: dashboard.backgroundColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = dashboard.backgroundColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        dashboard.backgroundColor = colorDialog.selectedColor;
-                                        backgroundColorButton.palette.buttonText = getContrastTextColor(dashboard.backgroundColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "backgroundColor";
                                 colorDialog.open();
                             }
 
@@ -444,13 +416,7 @@ ApplicationWindow {
                             text: dashboard.valueColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = dashboard.valueColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        dashboard.valueColor = colorDialog.selectedColor;
-                                        valueColorButton.palette.buttonText = getContrastTextColor(dashboard.valueColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "valueColor";
                                 colorDialog.open();
                             }
 
@@ -472,13 +438,7 @@ ApplicationWindow {
                             text: dashboard.titleColor.toString().toUpperCase()
                             onClicked: {
                                 colorDialog.selectedColor = dashboard.titleColor;
-                                colorDialog.accepted.connect(function () {
-                                    if (colorDialog.selectedColor) {
-                                        dashboard.titleColor = colorDialog.selectedColor;
-                                        titleColorButton.palette.buttonText = getContrastTextColor(dashboard.titleColor);
-                                    }
-                                    colorDialog.accepted.disconnect(arguments.callee);
-                                });
+                                mainWindow.currentColorTarget = "titleColor";
                                 colorDialog.open();
                             }
 
@@ -594,54 +554,93 @@ ApplicationWindow {
         }
     }
 
-    // === 信号连接 ===
+    // === ColorDialog 接受信号（替代 arguments.callee 模式）===
+    Connections {
+        target: colorDialog
+
+        function onAccepted() {
+            if (!colorDialog.selectedColor) {
+                return;
+            }
+            const c = colorDialog.selectedColor;
+            switch (mainWindow.currentColorTarget) {
+            case "arcColor":
+                dashboard.arcColor = c;
+                arcColorButton.palette.buttonText = getContrastTextColor(c);
+                break;
+            case "scaleColor":
+                dashboard.scaleColor = c;
+                scaleColorButton.palette.buttonText = getContrastTextColor(c);
+                break;
+            case "pointerColor":
+                dashboard.pointerColor = c;
+                pointerColorButton.palette.buttonText = getContrastTextColor(c);
+                break;
+            case "scaleTextColor":
+                dashboard.scaleTextColor = c;
+                scaleTextColorButton.palette.buttonText = getContrastTextColor(c);
+                break;
+            case "backgroundColor":
+                dashboard.backgroundColor = c;
+                backgroundColorButton.palette.buttonText = getContrastTextColor(c);
+                break;
+            case "valueColor":
+                dashboard.valueColor = c;
+                valueColorButton.palette.buttonText = getContrastTextColor(c);
+                break;
+            case "titleColor":
+                dashboard.titleColor = c;
+                titleColorButton.palette.buttonText = getContrastTextColor(c);
+                break;
+            }
+            mainWindow.currentColorTarget = "";
+        }
+    }
+
+    // === 仪表盘信号连接 ===
     Connections {
         target: dashboard
 
-        function onValueChanged(value) {
+        function onValueChanged(value: real) {
             console.log("Value changed to:", dashboard.value);
             statusLabel.text = qsTr("Current value: %1").arg(dashboard.value);
         }
 
-        function onValueIncreased(newValue) {
+        function onValueIncreased(newValue: real) {
             console.log("Value increased to:", newValue);
             statusLabel.text = qsTr("Value increased to: %1").arg(newValue);
-            statusLabel.background.color = "lightgreen";
+            statusLabel.color = "lightgreen";
         }
 
-        function onValueDecreased(newValue) {
+        function onValueDecreased(newValue: real) {
             console.log("Value decreased to:", newValue);
             statusLabel.text = qsTr("Value decreased to: %1").arg(newValue);
-            statusLabel.background.color = "lightcoral";
+            statusLabel.color = "lightcoral";
         }
 
         function onValueReset() {
             console.log("Value reset");
             statusLabel.text = qsTr("Value reset to minimum");
-            statusLabel.background.color = "lightyellow";
+            statusLabel.color = "lightyellow";
         }
 
-        function onAnimationStarted(oldValue, newValue) {
+        function onAnimationStarted(oldValue: real, newValue: real) {
             console.log("Animation started from", oldValue, "to", newValue);
             statusLabel.text = qsTr("Animating: %1 → %2").arg(oldValue).arg(newValue);
-            statusLabel.background.color = "lightblue";
+            statusLabel.color = "lightblue";
         }
 
-        function onAnimationFinished(value) {
+        function onAnimationFinished(value: real) {
             console.log("Animation finished at:", value);
             statusLabel.text = qsTr("Animation finished: %1").arg(value);
-            statusLabel.background.color = "lightgreen";
+            statusLabel.color = "lightgreen";
         }
     }
 
     // === 初始化 ===
     Component.onCompleted: {
         initializeColorButtons();
-
-        // 设置初始值
         dashboard.setValueAnimated(25);
-
-        // 更新状态
         statusLabel.text = qsTr("Dashboard initialized");
     }
 }

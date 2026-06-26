@@ -3,10 +3,7 @@
 class GridView::GridViewPrivate
 {
 public:
-    explicit GridViewPrivate(GridView *parent)
-        : q_ptr(parent)
-        , gridModel(new GridModel(parent))
-    {}
+    explicit GridViewPrivate(GridView *parent) : q_ptr(parent), gridModel(new GridModel(parent)) {}
 
     GridView *q_ptr;
 
@@ -14,8 +11,7 @@ public:
 };
 
 GridView::GridView(QWidget *parent)
-    : QListView(parent)
-    , d_ptr(new GridViewPrivate(this))
+    : QListView(parent), d_ptr(std::make_unique<GridViewPrivate>(this))
 {
     setupUI();
     buildConnect();
@@ -24,14 +20,10 @@ GridView::GridView(QWidget *parent)
 GridView::~GridView() = default;
 
 void GridView::setCellList(const GridCellList &cellList)
-{
-    d_ptr->gridModel->setCellList(cellList);
-}
+{ d_ptr->gridModel->setCellList(cellList); }
 
 void GridView::clearCells()
-{
-    d_ptr->gridModel->clearCells();
-}
+{ d_ptr->gridModel->clearCells(); }
 
 void GridView::onSelectionChanged()
 {
@@ -43,8 +35,7 @@ void GridView::onSelectionChanged()
     const auto selectedIndexes = selModel->selectedIndexes();
     for (const auto &index : selectedIndexes) {
         if (index.isValid()) {
-            auto label = index.data(Qt::ToolTipRole).toString();
-            // 可以在这里处理选中项
+            // 可通过 index.data(Qt::ToolTipRole) 获取单元格标签
         }
     }
 }
