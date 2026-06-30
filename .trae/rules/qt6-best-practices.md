@@ -5,7 +5,6 @@
 - 用 `QProperty`/`QBindable` 实现响应式绑定
 - 用 `std::make_unique` 或 Qt 父对象所有权；禁止裸 `new`
 - 优先用 `QMetaObject::invokeMethod` 的 functor 重载
-- 槽函数中禁止阻塞调用；使用 `QtConcurrent` 或 `QThreadPool`
 - 异步操作使用 `QFutureWatcher` 或 `QCoro`
 - 发射信号时使用 `emit` 关键字
 - 元数据反射优先用 `Q_ENUM`/`Q_FLAG`

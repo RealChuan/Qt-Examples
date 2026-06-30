@@ -1,7 +1,6 @@
 - 要求 CMake 3.25+；使用 `cmake_minimum_required(VERSION 3.25)`
 - 优先使用 `target_*` 命令；仅当设置需应用于所有目标时才用全局 `add_compile_definitions`/`add_compile_options`
 - 禁止全局 `include_directories`/`add_definitions`（路径/定义应按目标控制）
-- 用 `target_compile_features(target PRIVATE cxx_std_20)` 设置语言标准
 - 用 `GNUInstallDirs` 实现可移植安装路径
 - 用 `FetchContent` 或带版本约束的 `find_package`
 - 禁止 `file(GLOB)` 收集源文件；显式列出

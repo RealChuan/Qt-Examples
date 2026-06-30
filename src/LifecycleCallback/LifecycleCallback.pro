@@ -1,11 +1,13 @@
 include(../../qmake/ProjectSettings.pri)
 
-QT       += core  testlib
+QT += core testlib
 
 SOURCES += \
     lifecyclecallback_unittest.cc
 
-HEADERS += 
+HEADERS += \
+    lifecyclecallback.hpp \
+    lifecyclecallback_qt.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 

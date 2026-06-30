@@ -5,16 +5,33 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 
-#define NETWORK_TIMEOUT_ERROR -1
+#include <functional>
+#include <memory>
+
+// 同步等待 / 超时返回的错误码（QJsonValue 中的 "error" 字段）
+inline constexpr int NETWORK_TIMEOUT_ERROR = -1;
 
 class HttpClient : public QNetworkAccessManager
 {
     Q_OBJECT
+
 public:
     using JsonCallback = LifecycleCallback<const QJsonObject &>;
     using ProgressCallback = LifecycleCallback<qint64, qint64>;
     using HttpHeaders = QHash<QString, QString>;
+    using ResultHook = std::function<QJsonObject(const QJsonObject &)>;
     enum class Method : int { GET, POST, PUT, DELETE };
+    Q_ENUM(Method)
+
+    // 通用请求选项：超时、证书校验、完成回调、进度回调、结果钩子
+    struct RequestOptions
+    {
+        int timeout = -1;
+        bool verifyCertificate = true;
+        JsonCallback callback = {};
+        ProgressCallback progressCallback = {};
+        ResultHook resultHook = {};
+    };
 
     explicit HttpClient(QObject *parent = nullptr);
     ~HttpClient() override;
@@ -23,41 +40,22 @@ public:
                                const QUrl &url,
                                const HttpHeaders &httpHeaders,
                                const QJsonObject &body,
-                               int timeout = -1,
-                               bool verifyCertificate = true,
-                               JsonCallback callback = {});
+                               RequestOptions options = {});
 
     QJsonObject sync(QNetworkReply *reply);
     void cancel(QNetworkReply *reply);
 
-    QNetworkReply *downLoad(const QUrl &url,
-                            const QString &filePath,
-                            int timeout = -1,
-                            bool verifyCertificate = true,
-                            ProgressCallback progressCallback = {},
-                            JsonCallback callback = {});
+    QNetworkReply *downLoad(const QUrl &url, const QString &filePath, RequestOptions options = {});
 
-    QNetworkReply *upload_put(const QUrl &url,
-                              const QString &filePath,
-                              int timeout = -1,
-                              bool verifyCertificate = true,
-                              JsonCallback callback = {});
-    QNetworkReply *upload_put(const QUrl &url,
-                              const QByteArray &data,
-                              int timeout = -1,
-                              bool verifyCertificate = true,
-                              JsonCallback callback = {});
-    QNetworkReply *upload_post(const QUrl &url,
-                               const QString &filePath,
-                               int timeout = -1,
-                               bool verifyCertificate = true,
-                               JsonCallback callback = {});
+    QNetworkReply *
+    upload_put(const QUrl &url, const QString &filePath, RequestOptions options = {});
+    QNetworkReply *upload_put(const QUrl &url, const QByteArray &data, RequestOptions options = {});
+    QNetworkReply *
+    upload_post(const QUrl &url, const QString &filePath, RequestOptions options = {});
     QNetworkReply *upload_post(const QUrl &url,
                                const QString &filename,
                                const QByteArray &data,
-                               int timeout = -1,
-                               bool verifyCertificate = true,
-                               JsonCallback callback = {});
+                               RequestOptions options = {});
 
 signals:
     void timeOut();
@@ -71,14 +69,12 @@ private slots:
     void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
     void onDownloadReadyRead();
     void onDownloadFinish();
-
-protected:
-    virtual QJsonObject hookResult(const QJsonObject &object);
+    void onUploadProgress(qint64 bytesSent, qint64 bytesTotal);
 
 private:
-    void connectUploadSlots(QNetworkReply *reply, int timeout, JsonCallback callback);
+    void connectReplySignals(QNetworkReply *reply, const RequestOptions &options);
     void queryResult(QNetworkReply *reply, const QJsonObject &object);
 
     class HttpClientPrivate;
-    QScopedPointer<HttpClientPrivate> d_ptr;
+    std::unique_ptr<HttpClientPrivate> d_ptr;
 };

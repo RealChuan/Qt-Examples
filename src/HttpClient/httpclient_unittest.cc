@@ -34,6 +34,7 @@ private slots:
     void testUploadPutData();
     void testUploadPostFile();
     void testUploadPostData();
+    void testUploadProgress();
 
     // 错误和边界情况测试
     void testTimeout();
@@ -130,9 +131,7 @@ bool HttpClientTest::isTestServerAvailable()
 }
 
 QNetworkReply *HttpClientTest::createBasicGetRequest()
-{
-    return m_httpClient->sendRequest(HttpClient::Method::GET, m_baseUrl + "/test", {}, {}, -1, true);
-}
+{ return m_httpClient->sendRequest(HttpClient::Method::GET, m_baseUrl + "/test", {}, {}); }
 
 void HttpClientTest::verifySuccessfulResponse(const QJsonObject &response)
 {
@@ -230,12 +229,8 @@ void HttpClientTest::testPostRequest()
     requestBody["test_key"] = "test_value";
     requestBody["number"] = 42;
 
-    auto *reply = m_httpClient->sendRequest(HttpClient::Method::POST,
-                                            m_baseUrl + "/echo",
-                                            {},
-                                            requestBody,
-                                            -1,
-                                            true);
+    auto *reply
+        = m_httpClient->sendRequest(HttpClient::Method::POST, m_baseUrl + "/echo", {}, requestBody);
 
     QJsonObject response = waitForReply(reply);
     verifySuccessfulResponse(response);
@@ -248,10 +243,7 @@ void HttpClientTest::testPostRequest()
 
 void HttpClientTest::testPutRequest()
 {
-    auto *reply = m_httpClient->upload_put(m_baseUrl + "/echo",
-                                           QByteArray("test put data"),
-                                           -1,
-                                           true);
+    auto *reply = m_httpClient->upload_put(m_baseUrl + "/echo", QByteArray("test put data"));
 
     QJsonObject response = waitForReply(reply);
     verifySuccessfulResponse(response);
@@ -261,12 +253,8 @@ void HttpClientTest::testPutRequest()
 
 void HttpClientTest::testDeleteRequest()
 {
-    auto *reply = m_httpClient->sendRequest(HttpClient::Method::DELETE,
-                                            m_baseUrl + "/test",
-                                            {},
-                                            {},
-                                            -1,
-                                            true);
+    auto *reply
+        = m_httpClient->sendRequest(HttpClient::Method::DELETE, m_baseUrl + "/test", {}, {});
 
     QJsonObject response = waitForReply(reply);
     verifySuccessfulResponse(response);
@@ -283,24 +271,19 @@ void HttpClientTest::testPostRequestWithVariousData()
         QString description;
     };
 
-    QVector<TestCase> testCases = {{QJsonObject{{"string", "value"}}, "Simple string"},
-                                   {QJsonObject{{"number", 42}, {"float", 3.14}}, "Numbers"},
-                                   {QJsonObject{{"bool_true", true}, {"bool_false", false}},
-                                    "Booleans"},
-                                   {QJsonObject{{"array", QJsonArray{1, 2, 3}}}, "Array"},
-                                   {QJsonObject{{"nested", QJsonObject{{"key", "value"}}}},
-                                    "Nested object"},
-                                   {QJsonObject{}, "Empty object"}};
+    QVector<TestCase> testCases
+        = {{QJsonObject{{"string", "value"}}, "Simple string"},
+           {QJsonObject{{"number", 42}, {"float", 3.14}}, "Numbers"},
+           {QJsonObject{{"bool_true", true}, {"bool_false", false}}, "Booleans"},
+           {QJsonObject{{"array", QJsonArray{1, 2, 3}}}, "Array"},
+           {QJsonObject{{"nested", QJsonObject{{"key", "value"}}}}, "Nested object"},
+           {QJsonObject{}, "Empty object"}};
 
     for (const auto &testCase : testCases) {
         qDebug() << "Testing POST with:" << testCase.description;
 
-        auto *reply = m_httpClient->sendRequest(HttpClient::Method::POST,
-                                                m_baseUrl + "/echo",
-                                                {},
-                                                testCase.requestBody,
-                                                -1,
-                                                true);
+        auto *reply = m_httpClient->sendRequest(
+            HttpClient::Method::POST, m_baseUrl + "/echo", {}, testCase.requestBody);
 
         QJsonObject response = waitForReply(reply);
         QVERIFY(!response.isEmpty());
@@ -315,10 +298,7 @@ void HttpClientTest::testDownload()
 {
     QString downloadPath = m_tempDir.filePath("test_download.txt");
 
-    auto *reply = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"),
-                                         downloadPath,
-                                         -1,
-                                         true);
+    auto *reply = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"), downloadPath);
 
     QJsonObject response = waitForReply(reply);
 
@@ -359,9 +339,7 @@ void HttpClientTest::testDownloadProgress()
 
     auto *reply = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"),
                                          downloadPath,
-                                         -1,
-                                         true,
-                                         progressCallback);
+                                         {.progressCallback = progressCallback});
 
     QJsonObject response = waitForReply(reply);
 
@@ -382,10 +360,7 @@ void HttpClientTest::testUploadPutFile()
 
     createFile(filename, fileData);
 
-    auto *reply = m_httpClient->upload_put(m_baseUrl + "/echo",
-                                           m_tempDir.filePath(filename),
-                                           -1,
-                                           true);
+    auto *reply = m_httpClient->upload_put(m_baseUrl + "/echo", m_tempDir.filePath(filename));
 
     QJsonObject response = waitForReply(reply);
     verifySuccessfulResponse(response);
@@ -398,7 +373,7 @@ void HttpClientTest::testUploadPutData()
 {
     QByteArray data = "This is test data for PUT upload";
 
-    auto *reply = m_httpClient->upload_put(m_baseUrl + "/echo", data, -1, true);
+    auto *reply = m_httpClient->upload_put(m_baseUrl + "/echo", data);
 
     QJsonObject response = waitForReply(reply);
     verifySuccessfulResponse(response);
@@ -413,10 +388,7 @@ void HttpClientTest::testUploadPostFile()
 
     createFile(filename, fileData);
 
-    auto *reply = m_httpClient->upload_post(m_baseUrl + "/echo",
-                                            m_tempDir.filePath(filename),
-                                            -1,
-                                            true);
+    auto *reply = m_httpClient->upload_post(m_baseUrl + "/echo", m_tempDir.filePath(filename));
 
     QJsonObject response = waitForReply(reply);
     verifySuccessfulResponse(response);
@@ -429,10 +401,44 @@ void HttpClientTest::testUploadPostData()
 {
     QByteArray data = "This is test data for POST upload";
 
-    auto *reply = m_httpClient->upload_post(m_baseUrl + "/echo", "test_file.txt", data, -1, true);
+    auto *reply = m_httpClient->upload_post(m_baseUrl + "/echo", "test_file.txt", data);
 
     QJsonObject response = waitForReply(reply);
     verifySuccessfulResponse(response);
+
+    cleanupReply(reply);
+}
+
+void HttpClientTest::testUploadProgress()
+{
+    QByteArray data(1024, 'X'); // 1KB 数据，足够触发进度回调
+
+    QVector<qint64> progressValues;
+    QMutex progressMutex;
+    bool progressCalled = false;
+
+    HttpClient::ProgressCallback progressCallback = [&](qint64 bytesSent, qint64 bytesTotal) {
+        QMutexLocker locker(&progressMutex);
+        progressCalled = true;
+        progressValues.append(bytesSent);
+
+        qDebug() << "Upload progress:" << bytesSent << "/" << bytesTotal;
+
+        QVERIFY(bytesSent >= 0);
+        QVERIFY(bytesTotal >= 0);
+        if (bytesTotal > 0) {
+            QVERIFY(bytesSent <= bytesTotal);
+        }
+    };
+
+    auto *reply = m_httpClient->upload_put(
+        m_baseUrl + "/echo", data, {.progressCallback = progressCallback});
+
+    QJsonObject response = waitForReply(reply);
+    verifySuccessfulResponse(response);
+
+    // 验证进度回调被调用（小数据量可能只触发一次）
+    QVERIFY(progressCalled);
 
     cleanupReply(reply);
 }
@@ -458,9 +464,7 @@ void HttpClientTest::testTimeout()
                                             QUrl("http://127.0.0.1:8000/api/timeout"),
                                             {},
                                             {},
-                                            1, // 1秒超时
-                                            true,
-                                            callback);
+                                            {.timeout = 1, .callback = callback});
 
     QJsonObject response = waitForReply(reply);
 
@@ -501,13 +505,8 @@ void HttpClientTest::testNetworkErrorScenarios()
             }
         };
 
-        auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                                errorCase.url,
-                                                {},
-                                                {},
-                                                3, // 3秒超时
-                                                true,
-                                                callback);
+        auto *reply = m_httpClient->sendRequest(
+            HttpClient::Method::GET, errorCase.url, {}, {}, {.timeout = 3, .callback = callback});
 
         QTRY_VERIFY_WITH_TIMEOUT(finished, 5000);
         QCOMPARE(errorOccurred, errorCase.expectError);
@@ -526,13 +525,8 @@ void HttpClientTest::testCancelMechanism()
 
         HttpClient::JsonCallback callback = [&](const QJsonObject &) { callbackCalled = true; };
 
-        auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                                m_baseUrl + "/test",
-                                                {},
-                                                {},
-                                                -1,
-                                                true,
-                                                callback);
+        auto *reply = m_httpClient->sendRequest(
+            HttpClient::Method::GET, m_baseUrl + "/test", {}, {}, {.callback = callback});
 
         // 立即取消
         m_httpClient->cancel(reply);
@@ -551,13 +545,8 @@ void HttpClientTest::testCancelMechanism()
             loop.quit();
         };
 
-        auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                                m_baseUrl + "/test",
-                                                {},
-                                                {},
-                                                -1,
-                                                true,
-                                                callback);
+        auto *reply = m_httpClient->sendRequest(
+            HttpClient::Method::GET, m_baseUrl + "/test", {}, {}, {.callback = callback});
 
         QTimer::singleShot(50, [this, reply]() { m_httpClient->cancel(reply); });
 
@@ -572,7 +561,7 @@ void HttpClientTest::testCancelMechanism()
 void HttpClientTest::testBoundaryConditions()
 {
     // 测试空URL
-    auto *reply1 = m_httpClient->sendRequest(HttpClient::Method::GET, QUrl(), {}, {}, -1, true);
+    auto *reply1 = m_httpClient->sendRequest(HttpClient::Method::GET, QUrl(), {}, {});
     QJsonObject response1 = waitForReply(reply1);
     QVERIFY(response1.contains("error"));
     cleanupReply(reply1);
@@ -582,12 +571,8 @@ void HttpClientTest::testBoundaryConditions()
     headers["X-Custom-Header"] = "CustomValue";
     headers["Authorization"] = "Bearer test-token";
 
-    auto *reply2 = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                             m_baseUrl + "/headers",
-                                             headers,
-                                             {},
-                                             -1,
-                                             true);
+    auto *reply2
+        = m_httpClient->sendRequest(HttpClient::Method::GET, m_baseUrl + "/headers", headers, {});
     QJsonObject response2 = waitForReply(reply2);
     QVERIFY(!response2.isEmpty());
     QVERIFY(response2.contains("headers"));
@@ -597,12 +582,8 @@ void HttpClientTest::testBoundaryConditions()
     HttpClient::HttpHeaders specialHeaders{{"X-Special", "Header with spaces and \t tabs"},
                                            {"X-Unicode", "测试 🚀 emoji"}};
 
-    auto *reply3 = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                             m_baseUrl + "/headers",
-                                             specialHeaders,
-                                             {},
-                                             -1,
-                                             true);
+    auto *reply3 = m_httpClient->sendRequest(
+        HttpClient::Method::GET, m_baseUrl + "/headers", specialHeaders, {});
     QJsonObject response3 = waitForReply(reply3);
     QVERIFY(!response3.isEmpty());
     cleanupReply(reply3);
@@ -617,20 +598,14 @@ void HttpClientTest::testDownloadEdgeCases()
     existingFile.write("Existing content");
     existingFile.close();
 
-    auto *reply1 = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"),
-                                          existingPath,
-                                          -1,
-                                          true);
+    auto *reply1 = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"), existingPath);
     QJsonObject response1 = waitForReply(reply1);
     QVERIFY(QFile::exists(existingPath));
     cleanupReply(reply1);
 
     // 测试无效的下载路径
     QString invalidPath = "/invalid/path/test.txt";
-    auto *reply2 = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"),
-                                          invalidPath,
-                                          -1,
-                                          true);
+    auto *reply2 = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"), invalidPath);
 
     // 对于无效路径，reply可能为nullptr或包含错误
     if (reply2) {
@@ -660,12 +635,8 @@ void HttpClientTest::testCustomHeaders()
     headers["Authorization"] = "Bearer test-token";
     headers["X-Test-Number"] = "12345";
 
-    auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                            m_baseUrl + "/headers",
-                                            headers,
-                                            {},
-                                            -1,
-                                            true);
+    auto *reply
+        = m_httpClient->sendRequest(HttpClient::Method::GET, m_baseUrl + "/headers", headers, {});
 
     QJsonObject response = waitForReply(reply);
     QVERIFY(!response.isEmpty());
@@ -700,9 +671,7 @@ void HttpClientTest::testMultipleRequests()
                                                 m_baseUrl + "/test",
                                                 {{"X-Request-ID", QString::number(i)}},
                                                 {},
-                                                30,
-                                                true,
-                                                sharedCallback);
+                                                {.timeout = 30, .callback = sharedCallback});
         QVERIFY(reply != nullptr);
         replies.append(reply);
     }
@@ -734,21 +703,18 @@ void HttpClientTest::testConcurrentRequests()
     QEventLoop loop;
     std::atomic<int> completedCount{0};
 
-    for (int i = 0; i < concurrentCount; ++i) {
-        auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                                m_baseUrl + "/test",
-                                                {},
-                                                {},
-                                                -1,
-                                                true,
-                                                [&](const QJsonObject &json) {
-                                                    responses.append(json);
-                                                    completedCount++;
+    HttpClient::JsonCallback callback = [&](const QJsonObject &json) {
+        responses.append(json);
+        completedCount++;
 
-                                                    if (completedCount == concurrentCount) {
-                                                        loop.quit();
-                                                    }
-                                                });
+        if (completedCount == concurrentCount) {
+            loop.quit();
+        }
+    };
+
+    for (int i = 0; i < concurrentCount; ++i) {
+        auto *reply = m_httpClient->sendRequest(
+            HttpClient::Method::GET, m_baseUrl + "/test", {}, {}, {.callback = callback});
         replies.append(reply);
     }
 
@@ -774,17 +740,17 @@ void HttpClientTest::testHttpClientStateManagement()
     QVector<QJsonObject> responses;
     QMutex mutex;
 
+    HttpClient::JsonCallback callback = [&](const QJsonObject &json) {
+        QMutexLocker locker(&mutex);
+        responses.append(json);
+    };
+
     for (int i = 0; i < requestCount; ++i) {
         auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
                                                 m_baseUrl + "/test",
                                                 {{"X-Request-ID", QString::number(i)}},
                                                 {},
-                                                -1,
-                                                true,
-                                                [&](const QJsonObject &json) {
-                                                    QMutexLocker locker(&mutex);
-                                                    responses.append(json);
-                                                });
+                                                {.callback = callback});
         replies.append(reply);
     }
 

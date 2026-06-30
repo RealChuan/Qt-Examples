@@ -1,6 +1,6 @@
 #pragma once
 
-#include <LifecycleCallback/lifecyclecallback.hpp>
+#include <LifecycleCallback/lifecyclecallback_qt.hpp>
 
 #include <QAbstractSocket>
 #include <QByteArray>
