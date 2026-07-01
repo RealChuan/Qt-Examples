@@ -323,19 +323,20 @@ void HttpClientTest::testDownloadProgress()
     QMutex progressMutex;
     bool progressCalled = false;
 
-    HttpClient::ProgressCallback progressCallback = [&](qint64 bytesReceived, qint64 bytesTotal) {
-        QMutexLocker locker(&progressMutex);
-        progressCalled = true;
-        progressValues.append(bytesReceived);
+    HttpRequestOptions::ProgressCallback progressCallback
+        = [&](qint64 bytesReceived, qint64 bytesTotal) {
+              QMutexLocker locker(&progressMutex);
+              progressCalled = true;
+              progressValues.append(bytesReceived);
 
-        qDebug() << "Download progress:" << bytesReceived << "/" << bytesTotal;
+              qDebug() << "Download progress:" << bytesReceived << "/" << bytesTotal;
 
-        QVERIFY(bytesReceived >= 0);
-        QVERIFY(bytesTotal >= 0);
-        if (bytesTotal > 0) {
-            QVERIFY(bytesReceived <= bytesTotal);
-        }
-    };
+              QVERIFY(bytesReceived >= 0);
+              QVERIFY(bytesTotal >= 0);
+              if (bytesTotal > 0) {
+                  QVERIFY(bytesReceived <= bytesTotal);
+              }
+          };
 
     auto *reply = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"),
                                          downloadPath,
@@ -417,19 +418,20 @@ void HttpClientTest::testUploadProgress()
     QMutex progressMutex;
     bool progressCalled = false;
 
-    HttpClient::ProgressCallback progressCallback = [&](qint64 bytesSent, qint64 bytesTotal) {
-        QMutexLocker locker(&progressMutex);
-        progressCalled = true;
-        progressValues.append(bytesSent);
+    HttpRequestOptions::ProgressCallback progressCallback
+        = [&](qint64 bytesSent, qint64 bytesTotal) {
+              QMutexLocker locker(&progressMutex);
+              progressCalled = true;
+              progressValues.append(bytesSent);
 
-        qDebug() << "Upload progress:" << bytesSent << "/" << bytesTotal;
+              qDebug() << "Upload progress:" << bytesSent << "/" << bytesTotal;
 
-        QVERIFY(bytesSent >= 0);
-        QVERIFY(bytesTotal >= 0);
-        if (bytesTotal > 0) {
-            QVERIFY(bytesSent <= bytesTotal);
-        }
-    };
+              QVERIFY(bytesSent >= 0);
+              QVERIFY(bytesTotal >= 0);
+              if (bytesTotal > 0) {
+                  QVERIFY(bytesSent <= bytesTotal);
+              }
+          };
 
     auto *reply = m_httpClient->upload_put(
         m_baseUrl + "/echo", data, {.progressCallback = progressCallback});
@@ -454,7 +456,7 @@ void HttpClientTest::testTimeout()
         qDebug() << "Timeout signal received";
     });
 
-    HttpClient::JsonCallback callback = [&callbackCalled](const QJsonObject &json) {
+    HttpRequestOptions::JsonCallback callback = [&callbackCalled](const QJsonObject &json) {
         callbackCalled = true;
         qDebug() << "Timeout callback called with error:" << json["error"].toInt();
     };
@@ -497,7 +499,7 @@ void HttpClientTest::testNetworkErrorScenarios()
         bool errorOccurred = false;
         bool finished = false;
 
-        HttpClient::JsonCallback callback = [&](const QJsonObject &json) {
+        HttpRequestOptions::JsonCallback callback = [&](const QJsonObject &json) {
             finished = true;
             if (json.contains("error")) {
                 errorOccurred = true;
@@ -523,7 +525,8 @@ void HttpClientTest::testCancelMechanism()
     {
         bool callbackCalled = false;
 
-        HttpClient::JsonCallback callback = [&](const QJsonObject &) { callbackCalled = true; };
+        HttpRequestOptions::JsonCallback callback
+            = [&](const QJsonObject &) { callbackCalled = true; };
 
         auto *reply = m_httpClient->sendRequest(
             HttpClient::Method::GET, m_baseUrl + "/test", {}, {}, {.callback = callback});
@@ -540,7 +543,7 @@ void HttpClientTest::testCancelMechanism()
         QEventLoop loop;
         bool callbackCalled = false;
 
-        HttpClient::JsonCallback callback = [&](const QJsonObject &) {
+        HttpRequestOptions::JsonCallback callback = [&](const QJsonObject &) {
             callbackCalled = true;
             loop.quit();
         };
@@ -703,7 +706,7 @@ void HttpClientTest::testConcurrentRequests()
     QEventLoop loop;
     std::atomic<int> completedCount{0};
 
-    HttpClient::JsonCallback callback = [&](const QJsonObject &json) {
+    HttpRequestOptions::JsonCallback callback = [&](const QJsonObject &json) {
         responses.append(json);
         completedCount++;
 
@@ -740,7 +743,7 @@ void HttpClientTest::testHttpClientStateManagement()
     QVector<QJsonObject> responses;
     QMutex mutex;
 
-    HttpClient::JsonCallback callback = [&](const QJsonObject &json) {
+    HttpRequestOptions::JsonCallback callback = [&](const QJsonObject &json) {
         QMutexLocker locker(&mutex);
         responses.append(json);
     };

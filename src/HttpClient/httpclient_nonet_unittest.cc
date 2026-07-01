@@ -81,7 +81,7 @@ void HttpClientNoNetTest::testTimeoutWithUnreachableHost()
 
     connect(m_httpClient, &HttpClient::timeOut, this, [&]() { timeoutSignalReceived = true; });
 
-    HttpClient::JsonCallback callback;
+    HttpRequestOptions::JsonCallback callback;
     callback = [&](const QJsonObject &json) { callbackResult = json; };
 
     auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
@@ -102,7 +102,7 @@ void HttpClientNoNetTest::testTimeoutWithUnreachableHost()
 
     QVERIFY2(timeoutSignalReceived, "timeout signal should be emitted");
     QVERIFY(callbackResult.contains("error"));
-    QCOMPARE(callbackResult["error"].toInt(), NETWORK_TIMEOUT_ERROR);
+    QCOMPARE(callbackResult["error"].toInt(), HttpRequestOptions::NETWORK_TIMEOUT_ERROR);
 
     // 清理：queryResult 已断开信号并移除 TaskContext，但 reply 仍需手动释放
     reply->abort();
@@ -112,7 +112,7 @@ void HttpClientNoNetTest::testTimeoutWithUnreachableHost()
 void HttpClientNoNetTest::testErrorCallbackOnUnreachableHost()
 {
     QJsonObject callbackResult;
-    HttpClient::JsonCallback callback;
+    HttpRequestOptions::JsonCallback callback;
     callback = [&](const QJsonObject &json) { callbackResult = json; };
 
     auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
@@ -142,10 +142,10 @@ void HttpClientNoNetTest::testResultHook()
 {
     // resultHook 将 {"value": 1} 变换为 {"value": 1, "hooked": true}
     QJsonObject callbackResult;
-    HttpClient::JsonCallback callback;
+    HttpRequestOptions::JsonCallback callback;
     callback = [&](const QJsonObject &json) { callbackResult = json; };
 
-    HttpClient::ResultHook hook = [](const QJsonObject &input) {
+    HttpRequestOptions::ResultHook hook = [](const QJsonObject &input) {
         auto result = input;
         result["hooked"] = true;
         return result;
@@ -179,7 +179,7 @@ void HttpClientNoNetTest::testResultHook()
 void HttpClientNoNetTest::testNoCallbackAfterCancel()
 {
     bool callbackFired = false;
-    HttpClient::JsonCallback callback;
+    HttpRequestOptions::JsonCallback callback;
     callback = [&](const QJsonObject &) { callbackFired = true; };
 
     auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,

@@ -47,9 +47,9 @@ public:
 
     struct TaskContext
     {
-        JsonCallback callback;
-        ProgressCallback progressCallback;
-        ResultHook resultHook;
+        HttpRequestOptions::JsonCallback callback;
+        HttpRequestOptions::ProgressCallback progressCallback;
+        HttpRequestOptions::ResultHook resultHook;
         std::unique_ptr<QFile> file;          // 上传：输入文件；下载：输出文件
         std::unique_ptr<QTimer> timeoutTimer; // 超时定时器，随 TaskContext 析构自动停止并销毁
         QString downloadPath;                 // 仅下载非空（finish 时 rename 目标）
@@ -74,7 +74,7 @@ public:
     };
 
     // 统一构建 TaskContext：填充回调与超时定时器，避免在调用方重复样板代码
-    std::unique_ptr<TaskContext> buildTaskContext(const RequestOptions &options)
+    std::unique_ptr<TaskContext> buildTaskContext(const HttpRequestOptions &options)
     {
         auto ctx = std::make_unique<TaskContext>();
         ctx->callback = options.callback;
@@ -106,7 +106,7 @@ QNetworkReply *HttpClient::sendRequest(Method method,
                                        const QUrl &url,
                                        const HttpHeaders &httpHeaders,
                                        const QJsonObject &body,
-                                       RequestOptions options)
+                                       const HttpRequestOptions &options)
 {
     auto request = d_ptr->networkRequest(options.verifyCertificate);
     request.setUrl(url);
@@ -153,7 +153,7 @@ void HttpClient::cancel(QNetworkReply *reply)
 }
 
 QNetworkReply *
-HttpClient::downLoad(const QUrl &url, const QString &filePath, RequestOptions options)
+HttpClient::downLoad(const QUrl &url, const QString &filePath, const HttpRequestOptions &options)
 {
     Q_ASSERT(!filePath.isEmpty());
     auto file = std::make_unique<QFile>(filePath + u".temp"_s);
@@ -189,7 +189,7 @@ HttpClient::downLoad(const QUrl &url, const QString &filePath, RequestOptions op
 }
 
 QNetworkReply *
-HttpClient::upload_put(const QUrl &url, const QString &filePath, RequestOptions options)
+HttpClient::upload_put(const QUrl &url, const QString &filePath, const HttpRequestOptions &options)
 {
     Q_ASSERT(!filePath.isEmpty());
     auto file = std::make_unique<QFile>(filePath);
@@ -213,7 +213,7 @@ HttpClient::upload_put(const QUrl &url, const QString &filePath, RequestOptions 
 }
 
 QNetworkReply *
-HttpClient::upload_put(const QUrl &url, const QByteArray &data, RequestOptions options)
+HttpClient::upload_put(const QUrl &url, const QByteArray &data, const HttpRequestOptions &options)
 {
     qDebug() << u"Upload To"_s << url.toString(QUrl::RemoveUserInfo);
 
@@ -228,7 +228,7 @@ HttpClient::upload_put(const QUrl &url, const QByteArray &data, RequestOptions o
 }
 
 QNetworkReply *
-HttpClient::upload_post(const QUrl &url, const QString &filePath, RequestOptions options)
+HttpClient::upload_post(const QUrl &url, const QString &filePath, const HttpRequestOptions &options)
 {
     Q_ASSERT(!filePath.isEmpty());
     auto file = std::make_unique<QFile>(filePath);
@@ -266,7 +266,7 @@ HttpClient::upload_post(const QUrl &url, const QString &filePath, RequestOptions
 QNetworkReply *HttpClient::upload_post(const QUrl &url,
                                        const QString &filename,
                                        const QByteArray &data,
-                                       RequestOptions options)
+                                       const HttpRequestOptions &options)
 {
     qDebug() << u"Upload To"_s << url.toString(QUrl::RemoveUserInfo) + u"/"_s + filename;
     const auto disposition = u"form-data; name=\"file\"; filename=\""_s + filename + u"\""_s;
@@ -348,7 +348,7 @@ void HttpClient::onNetworkTimeout()
     emit timeOut();
 
     QJsonObject object;
-    object.insert(u"error"_s, NETWORK_TIMEOUT_ERROR);
+    object.insert(u"error"_s, HttpRequestOptions::NETWORK_TIMEOUT_ERROR);
     queryResult(targetReply, object);
 }
 
@@ -413,7 +413,7 @@ void HttpClient::onUploadProgress(qint64 bytesSent, qint64 bytesTotal)
     }
 }
 
-void HttpClient::connectReplySignals(QNetworkReply *reply, const RequestOptions &options)
+void HttpClient::connectReplySignals(QNetworkReply *reply, const HttpRequestOptions &options)
 {
     connect(reply, &QNetworkReply::errorOccurred, this, &HttpClient::onErrorOccurred);
     connect(reply, &QNetworkReply::sslErrors, this, &HttpClient::onSslErrors);
@@ -432,8 +432,6 @@ void HttpClient::queryResult(QNetworkReply *reply, const QJsonObject &object)
         return;
     }
     auto ctx = std::move(it->second);
-    // 先从 map 移除条目，再执行 callback：若 callback 触发新请求使用同一 reply，
-    // map 中不会有空壳条目导致 emplace 失败
     d_ptr->tasks.erase(it);
 
     auto json = ctx->resultHook ? ctx->resultHook(object) : object;
@@ -441,5 +439,4 @@ void HttpClient::queryResult(QNetworkReply *reply, const QJsonObject &object)
         ctx->callback(json);
     }
     emit ready(reply, json);
-    // ctx 在此析构，销毁 TaskContext 及其持有的 QFile、QTimer
 }
