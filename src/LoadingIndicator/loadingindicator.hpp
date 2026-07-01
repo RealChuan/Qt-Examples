@@ -2,6 +2,10 @@
 
 #include <QWidget>
 
+#include <memory>
+
+using namespace Qt::StringLiterals;
+
 class QMovie;
 
 class LoadingIndicator : public QWidget
@@ -14,6 +18,8 @@ class LoadingIndicator : public QWidget
                    backgroundColorChanged)
     Q_PROPERTY(
         int animationSpeed READ animationSpeed WRITE setAnimationSpeed NOTIFY animationSpeedChanged)
+    Q_PROPERTY(AnimationStyle animationStyle READ animationStyle WRITE setAnimationStyle NOTIFY
+                   animationStyleChanged)
 
 public:
     enum class AnimationStyle : int { RotatingDots, PulsingCircle, BouncingBars, CustomMovie };
@@ -21,39 +27,52 @@ public:
 
     explicit LoadingIndicator(QWidget *parent = nullptr);
     explicit LoadingIndicator(AnimationStyle style, QWidget *parent = nullptr);
-    ~LoadingIndicator();
+    ~LoadingIndicator() override;
+    LoadingIndicator(const LoadingIndicator &) = delete;
+    auto operator=(const LoadingIndicator &) -> LoadingIndicator & = delete;
+    LoadingIndicator(LoadingIndicator &&) = delete;
+    auto operator=(LoadingIndicator &&) -> LoadingIndicator & = delete;
 
-    // 主要功能
+    // 覆盖层模式
     void showOverlay(QWidget *parent);
     void hideOverlay();
 
-    // 基本属性
-    QString text() const;
+    // 文本
+    [[nodiscard]] auto text() const -> QString;
     void setText(const QString &text);
 
-    QColor textColor() const;
+    // 颜色
+    [[nodiscard]] auto textColor() const -> QColor;
     void setTextColor(const QColor &color);
 
-    QColor color() const;
+    [[nodiscard]] auto color() const -> QColor;
     void setColor(const QColor &color);
 
-    QColor backgroundColor() const;
+    [[nodiscard]] auto backgroundColor() const -> QColor;
     void setBackgroundColor(const QColor &color);
 
-    int animationSpeed() const;
+    // 动画
+    [[nodiscard]] auto animationSpeed() const -> int;
     void setAnimationSpeed(int ms);
 
-    AnimationStyle animationStyle() const;
+    [[nodiscard]] auto animationStyle() const -> AnimationStyle;
     void setAnimationStyle(AnimationStyle style);
 
-    // 电影动画相关
-    void setMovie(const QString &fileName);
+    // 自定义 GIF 动画 (所有权转移到本控件)
     void setMovie(QMovie *movie);
+    void setMovie(const QString &fileName);
 
-    // 特定动画的参数设置
+    // 动画几何参数
+    [[nodiscard]] auto dotCount() const -> int;
     void setDotCount(int count);
+
+    [[nodiscard]] auto dotRadius() const -> int;
     void setDotRadius(int radius);
+
+    [[nodiscard]] auto barCount() const -> int;
     void setBarCount(int count);
+
+    [[nodiscard]] auto barWidth() const -> int;
     void setBarWidth(int width);
 
 signals:
@@ -71,12 +90,12 @@ protected:
     bool eventFilter(QObject *obj, QEvent *event) override;
 
 private:
-    QRect drawRotatingDots(QPainter &painter);
-    QRect drawPulsingCircle(QPainter &painter);
-    QRect drawBouncingBars(QPainter &painter);
-    QRect drawMovie(QPainter &painter);
-    void drawText(QPainter &painter, const QRect &animationRect);
+    auto drawRotatingDots(QPainter &painter) -> QRectF;
+    auto drawPulsingCircle(QPainter &painter) -> QRectF;
+    auto drawBouncingBars(QPainter &painter) -> QRectF;
+    auto drawMovie(QPainter &painter) -> QRectF;
+    void drawText(QPainter &painter, const QRectF &animationRect);
 
     class LoadingIndicatorPrivate;
-    QScopedPointer<LoadingIndicatorPrivate> d_ptr;
+    std::unique_ptr<LoadingIndicatorPrivate> d_ptr;
 };

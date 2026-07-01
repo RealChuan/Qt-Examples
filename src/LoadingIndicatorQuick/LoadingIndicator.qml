@@ -1,20 +1,20 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls
 
+// iOS 风格加载指示器，与 LoadingIndicator (QWidget) 版本保持几何与色板一致。
 Item {
     id: root
 
-    // 公共属性 - QML会自动为这些属性生成相应的on<Property>Changed信号
+    // === 公共属性 ===
     property string text: ""
-    property color textColor: "#04B5C8"
-    property color color: "#4682E6"
-    property color backgroundColor: "#64FFFFFF"
+    property color textColor: "#1c1c1e"      // iOS label
+    property color color: "#007aff"          // iOS systemBlue
+    property color backgroundColor: "#F2F2F7E6" // iOS secondarySystemBackground (90% opacity)
     property int animationSpeed: 100
-    property int animationStyle: LoadingIndicator.RotatingDots
+    property int animationStyle: LoadingIndicator.AnimationStyle.RotatingDots
 
-    // 动画样式枚举
+    // 动画样式枚举 (与 C++ AnimationStyle 一致)
     enum AnimationStyle {
         RotatingDots = 0,
         PulsingCircle = 1,
@@ -22,225 +22,219 @@ Item {
         CustomMovie = 3
     }
 
-    // 特定动画参数
+    // 动画几何参数 (与 QWidget 版本同步)
     property int dotCount: 8
     property int dotRadius: 6
     property int barCount: 8
     property int barWidth: 6
 
-    // Movie 动画相关属性
+    // 自定义 GIF 动画
     property url movieSource: ""
     property bool moviePlaying: false
 
-    // 内部状态属性
-    property int _currentFrame: 0
-    property double _pulseProgress: 0.0
-    property int _pulseDirection: 1
+    // === 私有数据 (与 CircularProgressQuick 一致使用 privateData 命名) ===
+    QtObject {
+        id: privateData
+        property int currentFrame: 0
+        property real pulseProgress: 0.0
+        property int pulseDirection: 1
+    }
 
-    // 尺寸策略
+    // === 几何常量 (与 QWidget 版本同步) ===
+    readonly property real _minSize: Math.min(width, height)
+    readonly property real _rotatingRadius: _minSize * 0.25
+    readonly property real _pulsingMaxRadius: _minSize * 0.3
+    readonly property real _barMaxHeight: _minSize * 0.3
+    readonly property real _centerX: width / 2
+    readonly property real _centerY: height / 2
+
+    // 隐式尺寸
     implicitWidth: 100
     implicitHeight: 100
 
-    // 背景
+    // === 背景 ===
     Rectangle {
         anchors.fill: parent
         color: root.backgroundColor
     }
 
-    // 主要内容区域
-    Column {
-        anchors.centerIn: parent
-        spacing: root.text ? 20 : 0
+    // === 旋转点动画 ===
+    Item {
+        id: rotatingDotsLayer
+        anchors.fill: parent
+        visible: root.animationStyle === LoadingIndicator.AnimationStyle.RotatingDots
 
-        // 动画显示区域
-        Item {
-            id: animationContainer
-            width: Math.min(parent.parent.width, parent.parent.height) * 0.5
-            height: width
-            anchors.horizontalCenter: parent.horizontalCenter
+        Repeater {
+            model: root.dotCount
 
-            // 旋转点动画
-            Repeater {
-                model: root.dotCount
-                visible: root.animationStyle === LoadingIndicator.RotatingDots
-
-                Rectangle {
-                    required property int index
-
-                    width: root.dotRadius * 2
-                    height: root.dotRadius * 2
-                    radius: root.dotRadius
-                    color: root.color
-                    visible: root.animationStyle === LoadingIndicator.RotatingDots
-
-                    readonly property real angle: 2 * Math.PI * index / root.dotCount - 2 * Math.PI * root._currentFrame / 60.0
-                    readonly property real opacityValue: 0.3 + 0.7 * (Math.sin(angle + root._currentFrame * 0.1) + 1) / 2
-
-                    x: animationContainer.width / 2 + (animationContainer.width / 3) * Math.cos(angle) - root.dotRadius
-                    y: animationContainer.height / 2 + (animationContainer.height / 3) * Math.sin(angle) - root.dotRadius
-                    opacity: opacityValue
-                }
-            }
-
-            // 脉冲圆动画
             Rectangle {
-                id: pulseCircle
-                anchors.centerIn: parent
-                width: animationContainer.width * (0.4 + 0.4 * root._pulseProgress)
-                height: width
-                radius: width / 2
-                color: "transparent"
-                border.color: root.color
-                border.width: root.dotRadius
-                opacity: 0.6 + 0.4 * root._pulseProgress
-                visible: root.animationStyle === LoadingIndicator.PulsingCircle
+                required property int index
+
+                width: root.dotRadius * 2
+                height: root.dotRadius * 2
+                radius: root.dotRadius
+                color: root.color
+
+                readonly property real angle: 2 * Math.PI * index / root.dotCount - 2 * Math.PI * privateData.currentFrame / 60.0
+                readonly property real opacityValue: 0.3 + 0.7 * (Math.sin(angle + privateData.currentFrame * 0.1) + 1) / 2
+
+                x: root._centerX + root._rotatingRadius * Math.cos(angle) - root.dotRadius
+                y: root._centerY + root._rotatingRadius * Math.sin(angle) - root.dotRadius
+                opacity: opacityValue
             }
-
-            // 弹跳条动画
-            Row {
-                anchors.centerIn: parent
-                spacing: root.barWidth
-                visible: root.animationStyle === LoadingIndicator.BouncingBars
-
-                Repeater {
-                    model: root.barCount
-
-                    Rectangle {
-                        required property int index
-
-                        width: root.barWidth
-                        height: animationContainer.height * (0.3 + 0.7 * barProgress)
-                        color: root.color
-                        opacity: 0.3 + 0.7 * barProgress
-
-                        readonly property real barProgress: (Math.sin(root._currentFrame * 0.2 + index * 0.5) + 1) / 2
-                    }
-                }
-            }
-
-            // Movie 动画
-            AnimatedImage {
-                id: movieAnimation
-                anchors.centerIn: parent
-                width: Math.min(animationContainer.width, animationContainer.height)
-                height: width
-                visible: root.animationStyle === LoadingIndicator.CustomMovie
-                playing: root.visible && root.moviePlaying
-                source: root.movieSource
-                fillMode: Image.PreserveAspectFit
-
-                // 如果加载失败，显示备用文本
-                Text {
-                    anchors.centerIn: parent
-                    text: qsTr("Movie\nNot Found")
-                    color: root.textColor
-                    font.pixelSize: 12
-                    visible: movieAnimation.status === Image.Error
-                    horizontalAlignment: Text.AlignHCenter
-                }
-            }
-        }
-
-        // 文本标签
-        Label {
-            id: textLabel
-            text: root.text
-            color: root.textColor
-            font.bold: true
-            anchors.horizontalCenter: parent.horizontalCenter
-            visible: text !== ""
-
-            // 自动调整字体大小
-            font.pixelSize: Math.max(12, Math.min(16, root.height / 15))
         }
     }
 
-    // 动画定时器（不用于 Movie 动画）
+    // === 脉冲圆动画 ===
+    Rectangle {
+        id: pulseCircle
+        anchors.centerIn: parent
+        readonly property real _currentRadius: root._pulsingMaxRadius * (0.5 + 0.5 * privateData.pulseProgress)
+        width: _currentRadius * 2
+        height: _currentRadius * 2
+        radius: _currentRadius
+        color: "transparent"
+        border.color: root.color
+        border.width: root.dotRadius
+        opacity: 0.7 + 0.3 * privateData.pulseProgress
+        visible: root.animationStyle === LoadingIndicator.AnimationStyle.PulsingCircle
+    }
+
+    // === 弹跳条动画 ===
+    Item {
+        id: bouncingBarsLayer
+        anchors.fill: parent
+        visible: root.animationStyle === LoadingIndicator.AnimationStyle.BouncingBars
+
+        readonly property real _totalWidth: root.barCount * root.barWidth * 2 // 间距 = barWidth
+        readonly property real _startX: root._centerX - _totalWidth / 2
+
+        Repeater {
+            model: root.barCount
+
+            Rectangle {
+                required property int index
+
+                readonly property real _progress: (Math.sin(privateData.currentFrame * 0.2 + index * 0.5) + 1) / 2
+                readonly property real _height: root._barMaxHeight * (0.3 + 0.7 * _progress)
+
+                width: root.barWidth
+                height: _height
+                x: bouncingBarsLayer._startX + index * root.barWidth * 2
+                y: root._centerY - _height / 2
+                color: root.color
+                opacity: 0.3 + 0.7 * _progress
+                radius: root.barWidth / 2  // iOS 风格圆角条 (胶囊形)
+            }
+        }
+    }
+
+    // === 自定义 GIF 动画 ===
+    AnimatedImage {
+        id: movieAnimation
+        anchors.centerIn: parent
+        width: Math.min(root.width, root.height) / 2
+        height: width
+        visible: root.animationStyle === LoadingIndicator.AnimationStyle.CustomMovie
+        playing: root.visible && root.moviePlaying
+        source: root.movieSource
+        fillMode: Image.PreserveAspectFit
+
+        // 加载失败时显示备用文本
+        Text {
+            anchors.centerIn: parent
+            text: qsTr("Movie\nNot Found")
+            color: root.textColor
+            font.pixelSize: 12
+            visible: movieAnimation.status === Image.Error
+            horizontalAlignment: Text.AlignHCenter
+        }
+    }
+
+    // === 文本标签 (位于动画下方，间距 20px) ===
+    Text {
+        id: textLabel
+        text: root.text
+        color: root.textColor
+        font.bold: true
+        font.pixelSize: Math.max(12, Math.min(root.width, root.height) / 15)
+        // 文本位于动画区域 (centerY + minSize*0.3) 下方 20px
+        y: root._centerY + root._minSize * 0.3 + 20
+        anchors.horizontalCenter: parent.horizontalCenter
+        visible: root.text !== ""
+        horizontalAlignment: Text.AlignHCenter
+    }
+
+    // === 动画定时器 (不用于 GIF 动画) ===
     Timer {
         id: animationTimer
         interval: root.animationSpeed
-        running: root.visible && root.animationStyle !== LoadingIndicator.CustomMovie
+        running: root.visible && root.animationStyle !== LoadingIndicator.AnimationStyle.CustomMovie
         repeat: true
 
         onTriggered: {
-            root._currentFrame = (root._currentFrame + 1) % 1000;
+            privateData.currentFrame = (privateData.currentFrame + 1) % 1000;
 
-            // 更新脉冲动画
-            root._pulseProgress += 0.02 * root._pulseDirection;
-            if (root._pulseProgress >= 1.0) {
-                root._pulseProgress = 1.0;
-                root._pulseDirection = -1;
-            } else if (root._pulseProgress <= 0.0) {
-                root._pulseProgress = 0.0;
-                root._pulseDirection = 1;
+            privateData.pulseProgress += 0.02 * privateData.pulseDirection;
+            if (privateData.pulseProgress >= 1.0) {
+                privateData.pulseProgress = 1.0;
+                privateData.pulseDirection = -1;
+            } else if (privateData.pulseProgress <= 0.0) {
+                privateData.pulseProgress = 0.0;
+                privateData.pulseDirection = 1;
             }
         }
     }
 
-    // 覆盖层显示方法
+    // === 公共方法 ===
+
+    // 作为覆盖层显示在指定父项上
     function showOverlay(parentItem) {
         if (!parentItem) {
             console.warn("LoadingIndicator: showOverlay requires a parent item");
             return;
         }
 
-        // 设置父级并填充
         parent = parentItem;
         anchors.fill = parentItem;
         visible = true;
         z = 9999; // 确保在最上层
 
-        // 如果是 Movie 动画，开始播放
-        if (root.animationStyle === LoadingIndicator.CustomMovie) {
-            root.moviePlaying = true;
+        if (animationStyle === LoadingIndicator.AnimationStyle.CustomMovie) {
+            moviePlaying = true;
         }
     }
 
-    // 隐藏覆盖层方法
+    // 隐藏覆盖层
     function hideOverlay() {
         visible = false;
-        // 停止 Movie 动画
-        root.moviePlaying = false;
-        // 注意：这里不重置parent，让调用者管理生命周期
+        moviePlaying = false;
+        // 注意：不重置 parent，由调用者管理生命周期
     }
 
-    // 设置 Movie 源
+    // 设置 GIF 源并切换到 CustomMovie 样式
     function setMovie(source) {
-        root.movieSource = source;
-        animationStyle = LoadingIndicator.CustomMovie;
+        movieSource = source;
+        animationStyle = LoadingIndicator.AnimationStyle.CustomMovie;
     }
 
-    // 设置 Movie 源（字符串版本）
-    function setMovieFromString(sourceString) {
-        setMovie(sourceString);
-    }
-
-    // 组件加载完成后的初始化
-    Component.onCompleted: {
-        // 确保在组件完成时更新动画速度
-        animationTimer.interval = Qt.binding(function () {
-            return root.animationSpeed;
-        });
-    }
-
-    // 监听动画样式变化
+    // 动画样式变化处理
     onAnimationStyleChanged: {
-        // 当切换到 Movie 动画时，确保停止定时器动画
-        if (animationStyle === LoadingIndicator.CustomMovie) {
+        if (animationStyle === LoadingIndicator.AnimationStyle.CustomMovie) {
             animationTimer.running = false;
-            root.moviePlaying = true;
+            moviePlaying = true;
         } else {
             animationTimer.running = true;
-            root.moviePlaying = false;
+            moviePlaying = false;
         }
     }
 
-    // 监听可见性变化
+    // 可见性变化处理
     onVisibleChanged: {
-        if (visible && animationStyle === LoadingIndicator.CustomMovie) {
-            root.moviePlaying = true;
+        if (visible && animationStyle === LoadingIndicator.AnimationStyle.CustomMovie) {
+            moviePlaying = true;
         } else if (!visible) {
-            root.moviePlaying = false;
+            moviePlaying = false;
         }
     }
 }

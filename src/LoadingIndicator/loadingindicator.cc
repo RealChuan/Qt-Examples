@@ -5,26 +5,24 @@
 #include <QTimer>
 #include <QtMath>
 
+#include <cmath>
+#include <numbers>
+
 class LoadingIndicator::LoadingIndicatorPrivate
 {
 public:
-    explicit LoadingIndicatorPrivate(LoadingIndicator *q)
-        : q_ptr(q)
-        , timer(new QTimer(q))
-    {
-        setupTimer();
-    }
+    explicit LoadingIndicatorPrivate(LoadingIndicator *q) : q_ptr(q), timer(new QTimer(q))
+    { setupTimer(); }
 
     ~LoadingIndicatorPrivate() = default;
 
     void setupTimer()
     {
         timer->setInterval(animationSpeed);
-        q_ptr->connect(timer, &QTimer::timeout, q_ptr, [this]() {
-            currentFrame = (currentFrame + 1) % 1000;
+        QObject::connect(timer, &QTimer::timeout, q_ptr, [this]() {
+            currentFrame = (currentFrame + 1) % FRAME_MODULUS;
 
-            // 更新脉冲动画进度
-            pulseProgress += 0.02 * pulseDirection;
+            pulseProgress += PULSE_STEP * pulseDirection;
             if (pulseProgress >= 1.0) {
                 pulseProgress = 1.0;
                 pulseDirection = -1;
@@ -37,66 +35,119 @@ public:
         });
     }
 
-    QRect calculateTextRect(const QRect &animationRect) const
+    // 计算文本绘制矩形 (位于动画下方，留 TEXT_SPACING 间距)
+    [[nodiscard]] auto calculateTextRect(const QRectF &animationRect) const -> QRectF
     {
         if (text.isEmpty()) {
-            return QRect();
+            return {};
         }
 
-        // 文本显示在动画下方，至少留出20像素间距
-        const int textTop = animationRect.bottom() + 20;
-        const int availableHeight = q_ptr->height() - textTop - 10; // 底部留10像素边距
-
-        if (availableHeight <= 0) {
-            return QRect(); // 没有足够空间显示文本
+        const qreal textTop = animationRect.bottom() + TEXT_SPACING;
+        const qreal availableHeight = q_ptr->height() - textTop - TEXT_BOTTOM_MARGIN;
+        if (availableHeight <= 0.0) {
+            return {};
         }
 
-        // 计算合适的字体大小
-        const int fontSize = qMax(12, qMin(q_ptr->width(), availableHeight) / 20);
+        const int fontSize
+            = qMax(MIN_FONT_PIXEL_SIZE, qMin(q_ptr->width(), q_ptr->height()) / TEXT_FONT_DIVISOR);
         QFont font;
         font.setPixelSize(fontSize);
-        QFontMetrics fm(font);
+        font.setBold(true);
+        const QFontMetrics fm(font);
         const int textHeight = fm.height();
 
-        // 确保文本不会超出底部
-        const int finalTextTop = qMin(textTop, q_ptr->height() - textHeight - 10);
+        const qreal finalTextTop
+            = qMin(textTop, static_cast<qreal>(q_ptr->height() - textHeight - TEXT_BOTTOM_MARGIN));
 
-        return QRect(10, finalTextTop, q_ptr->width() - 20, textHeight);
+        return QRectF(TEXT_HORIZONTAL_MARGIN,
+                      finalTextTop,
+                      q_ptr->width() - 2 * TEXT_HORIZONTAL_MARGIN,
+                      textHeight);
     }
 
     LoadingIndicator *q_ptr;
 
     QTimer *timer;
-    QScopedPointer<QMovie> moviePtr;
+    std::unique_ptr<QMovie> moviePtr;
 
     // 动画状态
     int currentFrame = 0;
     double pulseProgress = 0.0;
     int pulseDirection = 1;
 
-    // 配置
+    // 配置 (iOS 默认色板)
     AnimationStyle animationStyle = AnimationStyle::RotatingDots;
     QString text;
-    QColor textColor = QColor(4, 181, 200);
-    QColor color = QColor(70, 130, 230);
-    QColor backgroundColor = QColor(255, 255, 255, 100);
-    int animationSpeed = 100;
-    int dotCount = 8;
-    int dotRadius = 6;
-    int barCount = 8;
-    int barWidth = 6;
+    QColor textColor = IOS_LABEL;
+    QColor color = IOS_SYSTEM_BLUE;
+    QColor backgroundColor = IOS_SECONDARY_BG;
+    int animationSpeed = ANIMATION_SPEED_DEFAULT;
+    int dotCount = DOT_COUNT_DEFAULT;
+    int dotRadius = DOT_RADIUS_DEFAULT;
+    int barCount = BAR_COUNT_DEFAULT;
+    int barWidth = BAR_WIDTH_DEFAULT;
+
+    // === 常量定义 (与 LoadingIndicatorQuick QML 版本同步) ===
+
+    // iOS 风格调色板 (与 CircularProgress 一致)
+    static constexpr QColor IOS_SYSTEM_BLUE = QColor(0, 122, 255);         // #007aff
+    static constexpr QColor IOS_LABEL = QColor(28, 28, 30);                // #1c1c1e
+    static constexpr QColor IOS_SECONDARY_BG = QColor(242, 242, 247, 230); // #F2F2F7E6
+
+    // 几何比例常量 (与 QML 版本完全一致)
+    static constexpr double ROTATING_RADIUS_RATIO = 0.25;   // 旋转点半径占 min(w,h) 的比例
+    static constexpr double PULSING_MAX_RADIUS_RATIO = 0.3; // 脉冲圆最大半径比例
+    static constexpr double PULSING_MIN_SCALE = 0.5;        // 脉冲圆最小缩放
+    static constexpr double PULSING_SCALE_RANGE = 0.5;      // 脉冲圆缩放范围 (1.0 - 0.5)
+    static constexpr double BAR_MAX_HEIGHT_RATIO = 0.3;     // 弹跳条最大高度比例
+    static constexpr double BAR_MIN_SCALE = 0.3;            // 弹跳条最小缩放
+    static constexpr double BAR_SCALE_RANGE = 0.7;          // 弹跳条缩放范围 (1.0 - 0.3)
+
+    // 默认参数
+    static constexpr int DOT_COUNT_DEFAULT = 8;
+    static constexpr int DOT_RADIUS_DEFAULT = 6;
+    static constexpr int BAR_COUNT_DEFAULT = 8;
+    static constexpr int BAR_WIDTH_DEFAULT = 6;
+    static constexpr int ANIMATION_SPEED_DEFAULT = 100;
+
+    // 动画参数
+    static constexpr int FRAME_MODULUS = 1000;
+    static constexpr double PULSE_STEP = 0.02;
+    static constexpr double FRAME_ANGLE_DIVISOR = 60.0; // 旋转点每帧前进角度 = 2π / 60
+    static constexpr double BAR_PHASE_SPEED = 0.2;      // 弹跳条相位推进速度
+    static constexpr double BAR_PHASE_OFFSET = 0.5;     // 相邻条之间的相位偏移
+
+    // 文本布局
+    static constexpr int TEXT_SPACING = 20; // 动画与文本之间的间距
+    static constexpr int TEXT_BOTTOM_MARGIN = 10;
+    static constexpr int TEXT_HORIZONTAL_MARGIN = 10;
+    static constexpr int MIN_FONT_PIXEL_SIZE = 12;
+    static constexpr int TEXT_FONT_DIVISOR = 15; // 字体大小 = min(w,h) / 15
+
+    // 输入约束
+    static constexpr int MIN_ANIMATION_SPEED = 16; // 约 60 FPS
+    static constexpr int MAX_ANIMATION_SPEED = 1000;
+    static constexpr int MIN_DOT_COUNT = 3;
+    static constexpr int MIN_DOT_RADIUS = 2;
+    static constexpr int MIN_BAR_COUNT = 2;
+    static constexpr int MIN_BAR_WIDTH = 2;
+
+    // 透明度计算辅助
+    static constexpr double OPACITY_BASE = 0.3;
+    static constexpr double OPACITY_RANGE = 0.7;
+    static constexpr double PULSING_ALPHA_BASE = 0.7;
+    static constexpr double PULSING_ALPHA_RANGE = 0.3;
 };
 
 LoadingIndicator::LoadingIndicator(QWidget *parent)
-    : QWidget(parent)
-    , d_ptr(new LoadingIndicatorPrivate(this))
-{}
-
-LoadingIndicator::LoadingIndicator(AnimationStyle style, QWidget *parent)
-    : LoadingIndicator(parent)
+    : QWidget(parent), d_ptr(std::make_unique<LoadingIndicatorPrivate>(this))
 {
-    setAnimationStyle(style);
+    setAttribute(Qt::WA_TransparentForMouseEvents, false);
+    setMouseTracking(false);
 }
+
+LoadingIndicator::LoadingIndicator(AnimationStyle style, QWidget *parent) : LoadingIndicator(parent)
+{ setAnimationStyle(style); }
 
 LoadingIndicator::~LoadingIndicator() = default;
 
@@ -106,12 +157,11 @@ void LoadingIndicator::paintEvent(QPaintEvent *event)
 
     QPainter painter(this);
     painter.setRenderHint(QPainter::Antialiasing);
+    painter.setRenderHint(QPainter::TextAntialiasing);
 
-    // 绘制背景
     painter.fillRect(rect(), d_ptr->backgroundColor);
 
-    // 根据样式绘制动画并获取动画区域
-    QRect animationRect;
+    QRectF animationRect;
     switch (d_ptr->animationStyle) {
     case AnimationStyle::RotatingDots: animationRect = drawRotatingDots(painter); break;
     case AnimationStyle::PulsingCircle: animationRect = drawPulsingCircle(painter); break;
@@ -119,130 +169,138 @@ void LoadingIndicator::paintEvent(QPaintEvent *event)
     case AnimationStyle::CustomMovie: animationRect = drawMovie(painter); break;
     }
 
-    // 绘制文本
     drawText(painter, animationRect);
 }
 
-QRect LoadingIndicator::drawRotatingDots(QPainter &painter)
+auto LoadingIndicator::drawRotatingDots(QPainter &painter) -> QRectF
 {
-    const double radius = qMin(width(), height()) * 0.25;
+    const double minSize = qMin(width(), height());
+    const double radius = minSize * d_ptr->ROTATING_RADIUS_RATIO;
     const QPointF center = rect().center();
     const double totalRadius = radius + d_ptr->dotRadius;
 
     for (int i = 0; i < d_ptr->dotCount; ++i) {
-        const double angle = 2 * M_PI * i / d_ptr->dotCount - 2 * M_PI * d_ptr->currentFrame / 60.0;
-        const double x = center.x() + radius * qCos(angle);
-        const double y = center.y() + radius * qSin(angle);
+        const double angle
+            = 2.0 * std::numbers::pi * i / d_ptr->dotCount
+              - 2.0 * std::numbers::pi * d_ptr->currentFrame / d_ptr->FRAME_ANGLE_DIVISOR;
+        const double x = center.x() + radius * std::cos(angle);
+        const double y = center.y() + radius * std::sin(angle);
 
-        const double opacity = 0.3 + 0.7 * (qSin(angle + d_ptr->currentFrame * 0.1) + 1) / 2;
-        QColor color = d_ptr->color;
-        color.setAlphaF(opacity);
+        // 透明度随角度脉动，形成"彗尾"效果
+        const double opacity
+            = d_ptr->OPACITY_BASE
+              + d_ptr->OPACITY_RANGE * (std::sin(angle + d_ptr->currentFrame * 0.1) + 1.0) / 2.0;
+        QColor dotColor = d_ptr->color;
+        dotColor.setAlphaF(opacity);
 
-        painter.setBrush(color);
+        painter.setBrush(dotColor);
         painter.setPen(Qt::NoPen);
         painter.drawEllipse(QPointF(x, y), d_ptr->dotRadius, d_ptr->dotRadius);
     }
 
-    return QRect(center.x() - totalRadius,
-                 center.y() - totalRadius,
-                 totalRadius * 2,
-                 totalRadius * 2);
+    return QRectF(
+        center.x() - totalRadius, center.y() - totalRadius, totalRadius * 2.0, totalRadius * 2.0);
 }
 
-QRect LoadingIndicator::drawPulsingCircle(QPainter &painter)
+auto LoadingIndicator::drawPulsingCircle(QPainter &painter) -> QRectF
 {
     const QPointF center = rect().center();
-    const double maxRadius = qMin(width(), height()) * 0.3;
-    const double currentRadius = maxRadius * (0.5 + 0.5 * d_ptr->pulseProgress);
-    const double totalRadius = currentRadius + d_ptr->dotRadius; // 考虑线宽
+    const double maxRadius = qMin(width(), height()) * d_ptr->PULSING_MAX_RADIUS_RATIO;
+    const double currentRadius
+        = maxRadius
+          * (d_ptr->PULSING_MIN_SCALE + d_ptr->PULSING_SCALE_RANGE * d_ptr->pulseProgress);
+    const double totalRadius = currentRadius + d_ptr->dotRadius;
 
-    QColor color = d_ptr->color;
-    color.setAlphaF(0.7 + 0.3 * d_ptr->pulseProgress);
+    QColor ringColor = d_ptr->color;
+    ringColor.setAlphaF(d_ptr->PULSING_ALPHA_BASE
+                        + d_ptr->PULSING_ALPHA_RANGE * d_ptr->pulseProgress);
 
     painter.setBrush(Qt::NoBrush);
-    painter.setPen(QPen(color, d_ptr->dotRadius));
+    painter.setPen(QPen(ringColor, d_ptr->dotRadius));
     painter.drawEllipse(center, currentRadius, currentRadius);
 
-    return QRect(center.x() - totalRadius,
-                 center.y() - totalRadius,
-                 totalRadius * 2,
-                 totalRadius * 2);
+    return QRectF(
+        center.x() - totalRadius, center.y() - totalRadius, totalRadius * 2.0, totalRadius * 2.0);
 }
 
-QRect LoadingIndicator::drawBouncingBars(QPainter &painter)
+auto LoadingIndicator::drawBouncingBars(QPainter &painter) -> QRectF
 {
     const QPointF center = rect().center();
-    const double totalWidth = d_ptr->barCount * d_ptr->barWidth * 2;
-    const double startX = center.x() - totalWidth / 2;
-    const double maxHeight = qMin(width(), height()) * 0.3;
+    const double totalWidth = d_ptr->barCount * d_ptr->barWidth * 2.0; // 间距 = barWidth
+    const double startX = center.x() - totalWidth / 2.0;
+    const double maxHeight = qMin(width(), height()) * d_ptr->BAR_MAX_HEIGHT_RATIO;
 
     for (int i = 0; i < d_ptr->barCount; ++i) {
-        const double progress = (qSin((d_ptr->currentFrame * 0.2) + i * 0.5) + 1) / 2;
-        const double height = maxHeight * (0.3 + 0.7 * progress);
-        const double x = startX + i * d_ptr->barWidth * 2;
-        const double y = center.y() - height / 2;
+        const double progress
+            = (std::sin(d_ptr->currentFrame * d_ptr->BAR_PHASE_SPEED + i * d_ptr->BAR_PHASE_OFFSET)
+               + 1.0)
+              / 2.0;
+        const double height
+            = maxHeight * (d_ptr->BAR_MIN_SCALE + d_ptr->BAR_SCALE_RANGE * progress);
+        const double x = startX + i * d_ptr->barWidth * 2.0;
+        const double y = center.y() - height / 2.0;
 
-        QColor color = d_ptr->color;
-        color.setAlphaF(0.3 + 0.7 * progress);
+        QColor barColor = d_ptr->color;
+        barColor.setAlphaF(d_ptr->OPACITY_BASE + d_ptr->OPACITY_RANGE * progress);
 
-        painter.setBrush(color);
+        painter.setBrush(barColor);
         painter.setPen(Qt::NoPen);
-        painter.drawRect(QRectF(x, y, d_ptr->barWidth, height));
+        // iOS 风格圆角条 (胶囊形)
+        const double barRadius = d_ptr->barWidth / 2.0;
+        painter.drawRoundedRect(QRectF(x, y, d_ptr->barWidth, height), barRadius, barRadius);
     }
 
-    return QRect(startX, center.y() - maxHeight / 2, totalWidth, maxHeight);
+    return QRectF(startX, center.y() - maxHeight / 2.0, totalWidth, maxHeight);
 }
 
-QRect LoadingIndicator::drawMovie(QPainter &painter)
+auto LoadingIndicator::drawMovie(QPainter &painter) -> QRectF
 {
     if (!d_ptr->moviePtr) {
         return drawRotatingDots(painter); // 回退到默认动画
     }
 
-    const QPixmap currentFrame = d_ptr->moviePtr->currentPixmap();
-    if (currentFrame.isNull()) {
-        return QRect();
+    const QPixmap currentPixmap = d_ptr->moviePtr->currentPixmap();
+    if (currentPixmap.isNull()) {
+        return {};
     }
 
     const QPoint center = rect().center();
     const int maxWidth = width() / 2;
     const int maxHeight = height() / 2;
-    const QSize scaledSize = currentFrame.size().scaled(maxWidth, maxHeight, Qt::KeepAspectRatio);
-    const QRect movieRect(center.x() - scaledSize.width() / 2,
-                          center.y() - scaledSize.height() / 2,
-                          scaledSize.width(),
-                          scaledSize.height());
+    const QSize scaledSize = currentPixmap.size().scaled(maxWidth, maxHeight, Qt::KeepAspectRatio);
+    const QRectF movieRect(center.x() - scaledSize.width() / 2,
+                           center.y() - scaledSize.height() / 2,
+                           scaledSize.width(),
+                           scaledSize.height());
 
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
-    painter.drawPixmap(movieRect, currentFrame);
+    painter.drawPixmap(movieRect, currentPixmap, currentPixmap.rect());
 
     return movieRect;
 }
 
-void LoadingIndicator::drawText(QPainter &painter, const QRect &animationRect)
+void LoadingIndicator::drawText(QPainter &painter, const QRectF &animationRect)
 {
     if (d_ptr->text.isEmpty() || animationRect.isEmpty()) {
         return;
     }
 
-    const QRect textRect = d_ptr->calculateTextRect(animationRect);
+    const QRectF textRect = d_ptr->calculateTextRect(animationRect);
     if (textRect.isEmpty()) {
         return;
     }
 
     painter.setPen(d_ptr->textColor);
 
-    // 设置合适的字体大小
     QFont font = painter.font();
-    const int fontSize = qMax(12, qMin(width(), textRect.height()) / 12);
+    const int fontSize
+        = qMax(d_ptr->MIN_FONT_PIXEL_SIZE, qMin(width(), height()) / d_ptr->TEXT_FONT_DIVISOR);
     font.setPixelSize(fontSize);
     font.setBold(true);
     painter.setFont(font);
 
-    const QString displayText = painter.fontMetrics().elidedText(d_ptr->text,
-                                                                 Qt::ElideRight,
-                                                                 textRect.width());
-    painter.setRenderHint(QPainter::TextAntialiasing);
+    const QString displayText = painter.fontMetrics().elidedText(
+        d_ptr->text, Qt::ElideRight, static_cast<int>(textRect.width()));
     painter.drawText(textRect, Qt::AlignCenter, displayText);
 }
 
@@ -304,11 +362,10 @@ void LoadingIndicator::hideOverlay()
     hide();
 }
 
-// 属性设置实现
-QString LoadingIndicator::text() const
-{
-    return d_ptr->text;
-}
+// === 属性实现 ===
+
+auto LoadingIndicator::text() const -> QString
+{ return d_ptr->text; }
 
 void LoadingIndicator::setText(const QString &text)
 {
@@ -322,10 +379,8 @@ void LoadingIndicator::setText(const QString &text)
     emit textChanged(text);
 }
 
-QColor LoadingIndicator::textColor() const
-{
-    return d_ptr->textColor;
-}
+auto LoadingIndicator::textColor() const -> QColor
+{ return d_ptr->textColor; }
 
 void LoadingIndicator::setTextColor(const QColor &color)
 {
@@ -338,10 +393,8 @@ void LoadingIndicator::setTextColor(const QColor &color)
     emit textColorChanged(color);
 }
 
-QColor LoadingIndicator::color() const
-{
-    return d_ptr->color;
-}
+auto LoadingIndicator::color() const -> QColor
+{ return d_ptr->color; }
 
 void LoadingIndicator::setColor(const QColor &color)
 {
@@ -356,10 +409,8 @@ void LoadingIndicator::setColor(const QColor &color)
     emit colorChanged(color);
 }
 
-QColor LoadingIndicator::backgroundColor() const
-{
-    return d_ptr->backgroundColor;
-}
+auto LoadingIndicator::backgroundColor() const -> QColor
+{ return d_ptr->backgroundColor; }
 
 void LoadingIndicator::setBackgroundColor(const QColor &color)
 {
@@ -372,10 +423,8 @@ void LoadingIndicator::setBackgroundColor(const QColor &color)
     emit backgroundColorChanged(color);
 }
 
-int LoadingIndicator::animationSpeed() const
-{
-    return d_ptr->animationSpeed;
-}
+auto LoadingIndicator::animationSpeed() const -> int
+{ return d_ptr->animationSpeed; }
 
 void LoadingIndicator::setAnimationSpeed(int ms)
 {
@@ -383,15 +432,13 @@ void LoadingIndicator::setAnimationSpeed(int ms)
         return;
     }
 
-    d_ptr->animationSpeed = qBound(16, ms, 1000);
+    d_ptr->animationSpeed = qBound(d_ptr->MIN_ANIMATION_SPEED, ms, d_ptr->MAX_ANIMATION_SPEED);
     d_ptr->timer->setInterval(d_ptr->animationSpeed);
     emit animationSpeedChanged(ms);
 }
 
-LoadingIndicator::AnimationStyle LoadingIndicator::animationStyle() const
-{
-    return d_ptr->animationStyle;
-}
+auto LoadingIndicator::animationStyle() const -> AnimationStyle
+{ return d_ptr->animationStyle; }
 
 void LoadingIndicator::setAnimationStyle(AnimationStyle style)
 {
@@ -399,7 +446,6 @@ void LoadingIndicator::setAnimationStyle(AnimationStyle style)
         return;
     }
 
-    // 停止当前动画
     if (d_ptr->animationStyle == AnimationStyle::CustomMovie && d_ptr->moviePtr) {
         d_ptr->moviePtr->stop();
     } else {
@@ -408,7 +454,6 @@ void LoadingIndicator::setAnimationStyle(AnimationStyle style)
 
     d_ptr->animationStyle = style;
 
-    // 启动新动画
     if (isVisible()) {
         if (d_ptr->animationStyle == AnimationStyle::CustomMovie && d_ptr->moviePtr) {
             d_ptr->moviePtr->start();
@@ -428,7 +473,7 @@ void LoadingIndicator::setMovie(QMovie *movie)
         return;
     }
 
-    connect(d_ptr->moviePtr.data(), &QMovie::frameChanged, this, [this](int frameNumber) {
+    connect(d_ptr->moviePtr.get(), &QMovie::frameChanged, this, [this](int frameNumber) {
         Q_UNUSED(frameNumber)
         if (d_ptr->animationStyle == AnimationStyle::CustomMovie) {
             update();
@@ -442,7 +487,7 @@ void LoadingIndicator::setMovie(QMovie *movie)
 
 void LoadingIndicator::setMovie(const QString &fileName)
 {
-    std::unique_ptr<QMovie> movie(new QMovie(fileName, QByteArray()));
+    auto movie = std::make_unique<QMovie>(fileName, QByteArray());
     if (!movie->isValid()) {
         qWarning() << "Failed to load movie:" << fileName;
         return;
@@ -452,17 +497,23 @@ void LoadingIndicator::setMovie(const QString &fileName)
     setAnimationStyle(AnimationStyle::CustomMovie);
 }
 
+auto LoadingIndicator::dotCount() const -> int
+{ return d_ptr->dotCount; }
+
 void LoadingIndicator::setDotCount(int count)
 {
     if (d_ptr->dotCount == count) {
         return;
     }
 
-    d_ptr->dotCount = qMax(3, count);
+    d_ptr->dotCount = qMax(d_ptr->MIN_DOT_COUNT, count);
     if (d_ptr->animationStyle == AnimationStyle::RotatingDots) {
         update();
     }
 }
+
+auto LoadingIndicator::dotRadius() const -> int
+{ return d_ptr->dotRadius; }
 
 void LoadingIndicator::setDotRadius(int radius)
 {
@@ -470,11 +521,15 @@ void LoadingIndicator::setDotRadius(int radius)
         return;
     }
 
-    d_ptr->dotRadius = qMax(2, radius);
-    if (d_ptr->animationStyle == AnimationStyle::RotatingDots) {
+    d_ptr->dotRadius = qMax(d_ptr->MIN_DOT_RADIUS, radius);
+    if (d_ptr->animationStyle == AnimationStyle::RotatingDots
+        || d_ptr->animationStyle == AnimationStyle::PulsingCircle) {
         update();
     }
 }
+
+auto LoadingIndicator::barCount() const -> int
+{ return d_ptr->barCount; }
 
 void LoadingIndicator::setBarCount(int count)
 {
@@ -482,11 +537,14 @@ void LoadingIndicator::setBarCount(int count)
         return;
     }
 
-    d_ptr->barCount = qMax(2, count);
+    d_ptr->barCount = qMax(d_ptr->MIN_BAR_COUNT, count);
     if (d_ptr->animationStyle == AnimationStyle::BouncingBars) {
         update();
     }
 }
+
+auto LoadingIndicator::barWidth() const -> int
+{ return d_ptr->barWidth; }
 
 void LoadingIndicator::setBarWidth(int width)
 {
@@ -494,7 +552,7 @@ void LoadingIndicator::setBarWidth(int width)
         return;
     }
 
-    d_ptr->barWidth = qMax(2, width);
+    d_ptr->barWidth = qMax(d_ptr->MIN_BAR_WIDTH, width);
     if (d_ptr->animationStyle == AnimationStyle::BouncingBars) {
         update();
     }
