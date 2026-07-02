@@ -2,6 +2,8 @@
 
 #include <QWidget>
 
+#include <memory>
+
 class NavigationProgressBar : public QWidget
 {
     Q_OBJECT
@@ -23,40 +25,45 @@ public:
     explicit NavigationProgressBar(QWidget *parent = nullptr);
     ~NavigationProgressBar() override;
 
-    QSize minimumSizeHint() const override;
+    NavigationProgressBar(const NavigationProgressBar &) = delete;
+    auto operator=(const NavigationProgressBar &) -> NavigationProgressBar & = delete;
+    NavigationProgressBar(NavigationProgressBar &&) = delete;
+    auto operator=(NavigationProgressBar &&) -> NavigationProgressBar & = delete;
 
-    void setMessageList(const QStringList &list);
-    QStringList messageList() const;
+    [[nodiscard]] auto minimumSizeHint() const -> QSize override;
 
-    void setStep(int step);
-    int step() const;
-    int maxStep() const;
+    auto setMessageList(const QStringList &list) -> void;
+    [[nodiscard]] auto messageList() const -> QStringList;
 
-    void setBackgroundColor(const QColor &color);
-    QColor backgroundColor() const;
+    auto setStep(int step) -> void;
+    [[nodiscard]] auto step() const -> int;
+    [[nodiscard]] auto maxStep() const -> int;
 
-    void setCurrentBackgroundColor(const QColor &color);
-    QColor currentBackgroundColor() const;
+    auto setBackgroundColor(const QColor &color) -> void;
+    [[nodiscard]] auto backgroundColor() const -> QColor;
 
-    void setForegroundColor(const QColor &color);
-    QColor foregroundColor() const;
+    auto setCurrentBackgroundColor(const QColor &color) -> void;
+    [[nodiscard]] auto currentBackgroundColor() const -> QColor;
 
-    void setTextFont(const QFont &font);
-    QFont textFont() const;
+    auto setForegroundColor(const QColor &color) -> void;
+    [[nodiscard]] auto foregroundColor() const -> QColor;
 
-    void setDateFont(const QFont &font);
-    QFont dateFont() const;
+    auto setTextFont(const QFont &font) -> void;
+    [[nodiscard]] auto textFont() const -> QFont;
 
-    void setSpacing(int spacing);
-    int spacing() const;
+    auto setDateFont(const QFont &font) -> void;
+    [[nodiscard]] auto dateFont() const -> QFont;
 
-    QString dateAt(int step) const;
-    void setDateAt(int step, const QString &date);
+    auto setSpacing(int spacing) -> void;
+    [[nodiscard]] auto spacing() const -> int;
+
+    [[nodiscard]] auto dateAt(int step) const -> QString;
+    auto setDateAt(int step, const QString &date) -> void;
 
 public slots:
-    void reset();
-    void next();
-    void previous();
+    auto reset() -> void;
+    auto next() -> void;
+    auto previous() -> void;
 
 signals:
     void stepChanged(int step);
@@ -71,17 +78,15 @@ signals:
     void spacingChanged(int spacing);
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
-    void resizeEvent(QResizeEvent *event) override;
+    auto paintEvent(QPaintEvent *event) -> void override;
+    auto resizeEvent(QResizeEvent *event) -> void override;
 
 private:
-    void drawCompleteProgress(QPainter &painter);
-    void drawBackground(QPainter &painter, bool completed);
-    void drawText(QPainter &painter, bool completed);
-    void rebuildDateList();
-    void invalidateCache();
-    void rebuildCache();
+    auto drawCompleteProgress(QPainter &painter) -> void;
+    auto rebuildDateList() -> void;
+    auto invalidateCache() -> void;
+    auto rebuildCache() -> void;
 
     class NavigationProgressBarPrivate;
-    QScopedPointer<NavigationProgressBarPrivate> d_ptr;
+    std::unique_ptr<NavigationProgressBarPrivate> d_ptr;
 };

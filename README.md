@@ -164,10 +164,6 @@
 
 ![导航进度条截图](src/NavigationProgressBar/images/navigation_progress.png)
 
-### [NavigationProgressBarQuick](src/NavigationProgressBarQuick/) - 导航进度条控件(QtQuick 版本)
-
-![导航进度条截图](src/NavigationProgressBarQuick/images/navigation_progress.png)
-
 ### [PasswordInputQuick](src/PasswordInputQuick/) - 密码输入框控件(QtQuick 版本)
 
 ![密码输入框截图](src/PasswordInputQuick/images/password_input.png)
