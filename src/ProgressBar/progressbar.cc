@@ -36,7 +36,8 @@ public:
     static constexpr double FONT_SIZE_RATIO = 0.8;
 };
 
-ProgressBar::ProgressBar(QWidget *parent) : QWidget(parent), d_ptr(new ProgressBarPrivate(this))
+ProgressBar::ProgressBar(QWidget *parent)
+    : QWidget(parent), d_ptr(std::make_unique<ProgressBarPrivate>(this))
 {
     initAnimations();
 
@@ -66,8 +67,9 @@ void ProgressBar::setValue(double value)
 {
     value = qBound(d_ptr->minValue, value, d_ptr->maxValue);
 
-    if (qFuzzyCompare(value, d_ptr->value))
+    if (qFuzzyCompare(value, d_ptr->value)) {
         return;
+    }
 
     const double oldValue = d_ptr->value;
     d_ptr->value = value;
@@ -88,8 +90,9 @@ void ProgressBar::setValueAnimated(double value)
 {
     value = qBound(d_ptr->minValue, value, d_ptr->maxValue);
 
-    if (qFuzzyCompare(value, d_ptr->value))
+    if (qFuzzyCompare(value, d_ptr->value)) {
         return;
+    }
 
     d_ptr->targetValue = value;
     emit animationStarted(d_ptr->value, value);
@@ -99,8 +102,9 @@ void ProgressBar::setValueAnimated(double value)
 // Min value
 void ProgressBar::setMinValue(double min)
 {
-    if (qFuzzyCompare(d_ptr->minValue, min))
+    if (qFuzzyCompare(d_ptr->minValue, min)) {
         return;
+    }
 
     d_ptr->minValue = min;
     if (d_ptr->value < min) {
@@ -116,8 +120,9 @@ auto ProgressBar::minValue() const -> double
 // Max value
 void ProgressBar::setMaxValue(double max)
 {
-    if (qFuzzyCompare(d_ptr->maxValue, max))
+    if (qFuzzyCompare(d_ptr->maxValue, max)) {
         return;
+    }
 
     d_ptr->maxValue = max;
     if (d_ptr->value > max) {
@@ -133,11 +138,13 @@ auto ProgressBar::maxValue() const -> double
 // Radius
 void ProgressBar::setRadius(double radius)
 {
-    if (qFuzzyCompare(d_ptr->radius, radius))
+    if (qFuzzyCompare(d_ptr->radius, radius)) {
         return;
+    }
 
     d_ptr->radius = radius;
     update();
+    emit radiusChanged(radius);
 }
 
 auto ProgressBar::radius() const -> double
@@ -146,11 +153,13 @@ auto ProgressBar::radius() const -> double
 // Auto radius
 void ProgressBar::setAutoRadius(bool autoRadius)
 {
-    if (d_ptr->autoRadius == autoRadius)
+    if (d_ptr->autoRadius == autoRadius) {
         return;
+    }
 
     d_ptr->autoRadius = autoRadius;
     update();
+    emit autoRadiusChanged(autoRadius);
 }
 
 auto ProgressBar::autoRadius() const -> bool
@@ -159,8 +168,9 @@ auto ProgressBar::autoRadius() const -> bool
 // Show percent
 void ProgressBar::setShowPercent(bool percent)
 {
-    if (d_ptr->showPercent == percent)
+    if (d_ptr->showPercent == percent) {
         return;
+    }
 
     d_ptr->showPercent = percent;
     update();
@@ -173,8 +183,9 @@ auto ProgressBar::showPercent() const -> bool
 // Chunk color
 void ProgressBar::setChunkColor(const QColor &color)
 {
-    if (d_ptr->chunkColor == color)
+    if (d_ptr->chunkColor == color) {
         return;
+    }
 
     d_ptr->chunkColor = color;
     update();
@@ -187,8 +198,9 @@ auto ProgressBar::chunkColor() const -> QColor
 // Text color
 void ProgressBar::setTextColor(const QColor &color)
 {
-    if (d_ptr->textColor == color)
+    if (d_ptr->textColor == color) {
         return;
+    }
 
     d_ptr->textColor = color;
     update();
@@ -201,11 +213,13 @@ auto ProgressBar::textColor() const -> QColor
 // Base color
 void ProgressBar::setBaseColor(const QColor &color)
 {
-    if (d_ptr->baseColor == color)
+    if (d_ptr->baseColor == color) {
         return;
+    }
 
     d_ptr->baseColor = color;
     update();
+    emit baseColorChanged(color);
 }
 
 auto ProgressBar::baseColor() const -> QColor
@@ -214,11 +228,13 @@ auto ProgressBar::baseColor() const -> QColor
 // Background color
 void ProgressBar::setBackgroundColor(const QColor &color)
 {
-    if (d_ptr->backgroundColor == color)
+    if (d_ptr->backgroundColor == color) {
         return;
+    }
 
     d_ptr->backgroundColor = color;
     update();
+    emit backgroundColorChanged(color);
 }
 
 auto ProgressBar::backgroundColor() const -> QColor
@@ -227,8 +243,9 @@ auto ProgressBar::backgroundColor() const -> QColor
 // Animation duration
 void ProgressBar::setAnimationDuration(int duration)
 {
-    if (duration < 0 || d_ptr->animationDuration == duration)
+    if (duration < 0 || d_ptr->animationDuration == duration) {
         return;
+    }
 
     d_ptr->animationDuration = duration;
     d_ptr->animation->setDuration(duration);
@@ -239,38 +256,43 @@ auto ProgressBar::animationDuration() const -> int
 { return d_ptr->animationDuration; }
 
 // Animation state
-bool ProgressBar::isAnimating() const
+auto ProgressBar::isAnimating() const -> bool
 { return d_ptr->animation && d_ptr->animation->state() == QPropertyAnimation::Running; }
 
 // Public slots implementation
 void ProgressBar::increaseValue(double increment)
 {
-    if (increment <= 0.0)
+    if (increment <= 0.0) {
         return;
+    }
 
     const double newValue = qMin(d_ptr->maxValue, d_ptr->value + increment);
-    if (qFuzzyCompare(newValue, d_ptr->value))
+    if (qFuzzyCompare(newValue, d_ptr->value)) {
         return;
+    }
 
     setValueAnimated(newValue);
 }
 
 void ProgressBar::decreaseValue(double decrement)
 {
-    if (decrement <= 0.0)
+    if (decrement <= 0.0) {
         return;
+    }
 
     const double newValue = qMax(d_ptr->minValue, d_ptr->value - decrement);
-    if (qFuzzyCompare(newValue, d_ptr->value))
+    if (qFuzzyCompare(newValue, d_ptr->value)) {
         return;
+    }
 
     setValueAnimated(newValue);
 }
 
 void ProgressBar::reset()
 {
-    if (qFuzzyCompare(d_ptr->value, d_ptr->minValue))
+    if (qFuzzyCompare(d_ptr->value, d_ptr->minValue)) {
         return;
+    }
 
     setValueAnimated(d_ptr->minValue);
     emit valueReset();
@@ -294,8 +316,9 @@ void ProgressBar::paintEvent(QPaintEvent *event)
 
 void ProgressBar::startAnimation(double targetValue)
 {
-    if (qFuzzyCompare(targetValue, d_ptr->value) || !d_ptr->animation)
+    if (qFuzzyCompare(targetValue, d_ptr->value) || !d_ptr->animation) {
         return;
+    }
 
     if (d_ptr->animation->state() == QPropertyAnimation::Running) {
         d_ptr->animation->stop();
@@ -354,8 +377,9 @@ void ProgressBar::drawProgressChunk(QPainter &painter,
                                     double progressWidth,
                                     double baseRadius)
 {
-    if (progressWidth <= 0)
+    if (progressWidth <= 0) {
         return;
+    }
 
     const double height = baseRect.height();
 

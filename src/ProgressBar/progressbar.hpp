@@ -2,6 +2,8 @@
 
 #include <QWidget>
 
+#include <memory>
+
 class ProgressBar : public QWidget
 {
     Q_OBJECT
@@ -64,7 +66,7 @@ public:
     void setAnimationDuration(int duration);
     [[nodiscard]] auto animationDuration() const -> int;
 
-    [[nodiscard]] bool isAnimating() const;
+    [[nodiscard]] auto isAnimating() const -> bool;
 
 public slots:
     void increaseValue(double increment = 1.0);
@@ -108,5 +110,5 @@ private:
     void setupFont(QPainter &painter);
 
     class ProgressBarPrivate;
-    QScopedPointer<ProgressBarPrivate> d_ptr;
+    std::unique_ptr<ProgressBarPrivate> d_ptr;
 };
