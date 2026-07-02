@@ -51,7 +51,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // 右侧：控制面板
     auto *controlPanel = new QWidget(this);
     auto *controlLayout = new QVBoxLayout(controlPanel);
-    controlLayout->setAlignment(Qt::AlignTop);
 
     // 颜色控制布局
     auto *colorGroup = new QGroupBox(tr("Color settings"), this);

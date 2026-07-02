@@ -80,7 +80,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     QHBoxLayout *buttonLayout = new QHBoxLayout();
     QPushButton *refreshButton = new QPushButton(u"Refresh Status"_s, this);
     buttonLayout->addWidget(refreshButton);
-    buttonLayout->addStretch();
 
     QPushButton *aboutButton = new QPushButton(u"About"_s, this);
     buttonLayout->addWidget(aboutButton);
@@ -96,8 +95,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     infoLabel->setStyleSheet(u"color: #666; font-size: 12px; margin-top: 20px;"_s);
     infoLabel->setWordWrap(true);
     mainLayout->addWidget(infoLabel);
-
-    mainLayout->addStretch();
 
     setWindowTitle(u"Auto-start Example"_s);
     resize(550, 250);

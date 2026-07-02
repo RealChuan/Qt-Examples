@@ -3,187 +3,167 @@
 
 #include <QtWidgets>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+using namespace Qt::StringLiterals;
+
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
-    // 创建主窗口部件
-    auto *centralWidget = new QWidget(this);
-    setCentralWidget(centralWidget);
+    // === 创建密码输入控件 ===
+    auto *basicPasswordEdit = new PasswordLineEdit(this);
+    basicPasswordEdit->setPlaceholderText(tr("Enter your password here"));
 
-    // 创建主布局
-    auto *mainLayout = new QVBoxLayout(centralWidget);
-
-    // 创建多个密码输入框演示不同功能
-    auto createPasswordField = [this](const QString &labelText,
-                                      const QString &placeholder = "") -> auto * {
-        auto *group = new QGroupBox(labelText, this);
-        auto *layout = new QVBoxLayout(group);
-
-        auto *passwordEdit = new PasswordLineEdit(this);
-        if (!placeholder.isEmpty()) {
-            passwordEdit->setPlaceholderText(placeholder);
-        }
-
-        layout->addWidget(passwordEdit);
-        return group;
-    };
-
-    // 基本密码输入框
-    mainLayout->addWidget(createPasswordField("Basic Password Field", "Enter your password here"));
-
-    // 带自定义提示的密码框
-    auto *customPlaceholderGroup = new QGroupBox("Password Field with Custom Placeholder", this);
-    auto *customLayout = new QVBoxLayout(customPlaceholderGroup);
     auto *customPasswordEdit = new PasswordLineEdit(this);
-    customPasswordEdit->setPlaceholderText("Minimum 8 characters with special symbols");
-    customLayout->addWidget(customPasswordEdit);
-    mainLayout->addWidget(customPlaceholderGroup);
+    customPasswordEdit->setPlaceholderText(tr("Minimum 8 characters with special symbols"));
 
-    // 禁用CapsLock警告的密码框
-    auto *noCapsLockGroup = new QGroupBox("Password Field without CapsLock Warning", this);
-    auto *noCapsLayout = new QVBoxLayout(noCapsLockGroup);
-    auto *noCapsPasswordEdit = new PasswordLineEdit(this);
-    noCapsPasswordEdit->setCapsLockWarningEnabled(false);
-    noCapsPasswordEdit->setPlaceholderText("CapsLock warning disabled for this field");
-    noCapsLayout->addWidget(noCapsPasswordEdit);
-    mainLayout->addWidget(noCapsLockGroup);
-
-    // 控制面板
-    auto *controlGroup = new QGroupBox("Controls", this);
-    auto *controlLayout = new QGridLayout(controlGroup);
-
-    // CapsLock警告开关
-    auto *capsLockCheckbox = new QCheckBox("Enable CapsLock Warning", this);
+    // === 创建控件 ===
+    auto *capsLockCheckbox = new QCheckBox(tr("Enable CapsLock Warning"), this);
     capsLockCheckbox->setChecked(true);
-    controlLayout->addWidget(capsLockCheckbox, 0, 0);
 
-    // 显示所有密码按钮
-    auto *showAllButton = new QPushButton("Show All Passwords", this);
-    controlLayout->addWidget(showAllButton, 0, 1);
+    auto *showAllButton = new QPushButton(tr("Show All"), this);
+    auto *hideAllButton = new QPushButton(tr("Hide All"), this);
+    auto *clearAllButton = new QPushButton(tr("Clear All"), this);
+    auto *validateButton = new QPushButton(tr("Validate"), this);
+    auto *resetButton = new QPushButton(tr("Reset"), this);
 
-    // 隐藏所有密码按钮
-    auto *hideAllButton = new QPushButton("Hide All Passwords", this);
-    controlLayout->addWidget(hideAllButton, 0, 2);
+    // === 状态显示 ===
+    auto *statusLabel = new QLabel(tr("Ready"), this);
+    statusLabel->setAlignment(Qt::AlignCenter);
+    statusLabel->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
 
-    // 清除所有密码按钮
-    auto *clearAllButton = new QPushButton("Clear All Passwords", this);
-    controlLayout->addWidget(clearAllButton, 1, 0);
+    auto *infoLabel = new QLabel(this);
+    infoLabel->setAlignment(Qt::AlignCenter);
 
-    // 验证按钮
-    auto *validateButton = new QPushButton("Validate Passwords", this);
-    controlLayout->addWidget(validateButton, 1, 1);
+    // === 布局设置 ===
+    auto *mainWidget = new QWidget(this);
+    auto *mainLayout = new QHBoxLayout(mainWidget);
 
-    // 工具提示时长设置
-    auto *tooltipDurationSlider = new QSlider(Qt::Horizontal, this);
-    tooltipDurationSlider->setRange(1000, 10000);
-    tooltipDurationSlider->setValue(3000);
-    auto *durationLabel = new QLabel("Tooltip Duration: 3000ms", this);
-    controlLayout->addWidget(new QLabel("Tooltip Duration:", this), 2, 0);
-    controlLayout->addWidget(tooltipDurationSlider, 2, 1);
-    controlLayout->addWidget(durationLabel, 2, 2);
+    // 左侧：密码输入演示区域
+    auto *displayLayout = new QVBoxLayout();
 
-    mainLayout->addWidget(controlGroup);
+    auto *basicGroup = new QGroupBox(tr("Basic Password Field"), this);
+    auto *basicLayout = new QVBoxLayout(basicGroup);
+    basicLayout->addWidget(basicPasswordEdit);
+    displayLayout->addWidget(basicGroup);
+
+    auto *customGroup = new QGroupBox(tr("Password Field with Custom Placeholder"), this);
+    auto *customLayout = new QVBoxLayout(customGroup);
+    customLayout->addWidget(customPasswordEdit);
+    displayLayout->addWidget(customGroup);
+    displayLayout->addWidget(infoLabel);
+
+    // 右侧：控制面板
+    auto *controlPanel = new QWidget(this);
+    auto *controlLayout = new QVBoxLayout(controlPanel);
+
+    // 显示设置组
+    auto *displaySettingsGroup = new QGroupBox(tr("Display Settings"), this);
+    auto *displaySettingsLayout = new QVBoxLayout(displaySettingsGroup);
+    displaySettingsLayout->addWidget(capsLockCheckbox);
+    controlLayout->addWidget(displaySettingsGroup);
+
+    // 操作按钮组
+    auto *actionsGroup = new QGroupBox(tr("Actions"), this);
+    auto *actionsLayout = new QGridLayout(actionsGroup);
+    actionsLayout->addWidget(showAllButton, 0, 0);
+    actionsLayout->addWidget(hideAllButton, 0, 1);
+    actionsLayout->addWidget(clearAllButton, 1, 0);
+    actionsLayout->addWidget(validateButton, 1, 1);
+    actionsLayout->addWidget(resetButton, 2, 0, 1, 2);
+    controlLayout->addWidget(actionsGroup);
 
     // 状态显示
-    auto *statusGroup = new QGroupBox("Status", this);
-    auto *statusLayout = new QVBoxLayout(statusGroup);
-    auto *statusLabel = new QLabel("Ready", this);
-    statusLabel->setAlignment(Qt::AlignCenter);
-    statusLayout->addWidget(statusLabel);
-    mainLayout->addWidget(statusGroup);
+    controlLayout->addWidget(statusLabel);
 
-    // 收集所有密码输入框
-    QList<PasswordLineEdit *> passwordEdits;
-    passwordEdits << customPasswordEdit << noCapsPasswordEdit;
+    // 主布局
+    mainLayout->addLayout(displayLayout, 2);
+    mainLayout->addWidget(controlPanel, 1);
 
-    // 动态查找所有PasswordLineEdit实例
-    auto findAllPasswordEdits = [this]() {
-        QList<PasswordLineEdit *> edits;
-        for (auto *child : findChildren<PasswordLineEdit *>()) {
-            edits.append(child);
-        }
-        return edits;
+    setCentralWidget(mainWidget);
+    setWindowTitle(tr("Password Line Edit Example"));
+
+    // === 收集所有密码输入框 ===
+    QList<PasswordLineEdit *> passwordEdits = {basicPasswordEdit, customPasswordEdit};
+
+    // === 更新信息标签 ===
+    auto updateInfoLabel = [infoLabel, basicPasswordEdit, customPasswordEdit]() {
+        infoLabel->setText(
+            tr("Basic: %1 | Length: %2\nCustom: %3 | Length: %4")
+                .arg(basicPasswordEdit->passwordVisible() ? tr("Visible") : tr("Hidden"))
+                .arg(basicPasswordEdit->text().length())
+                .arg(customPasswordEdit->passwordVisible() ? tr("Visible") : tr("Hidden"))
+                .arg(customPasswordEdit->text().length()));
     };
 
-    // 信号连接
+    // === 信号连接 ===
 
-    // CapsLock警告开关
-    connect(capsLockCheckbox, &QCheckBox::toggled, this, [findAllPasswordEdits](bool enabled) {
-        for (auto *edit : findAllPasswordEdits()) {
+    // CapsLock 警告开关
+    connect(capsLockCheckbox, &QCheckBox::toggled, this, [passwordEdits](bool enabled) {
+        for (auto *edit : passwordEdits) {
             edit->setCapsLockWarningEnabled(enabled);
         }
     });
 
     // 显示所有密码
-    connect(showAllButton, &QPushButton::clicked, this, [findAllPasswordEdits]() {
-        for (auto *edit : findAllPasswordEdits()) {
-            edit->setEchoMode(QLineEdit::Normal);
-            // 由于原代码没有提供直接设置显示状态的方法，我们通过模拟按钮点击来实现
-            // 在实际使用中，如果PasswordLineEdit提供了togglePasswordVisibility()方法，应该使用它
+    connect(showAllButton, &QPushButton::clicked, this, [passwordEdits]() {
+        for (auto *edit : passwordEdits) {
+            edit->setPasswordVisible(true);
         }
     });
 
     // 隐藏所有密码
-    connect(hideAllButton, &QPushButton::clicked, this, [findAllPasswordEdits]() {
-        for (auto *edit : findAllPasswordEdits()) {
-            edit->setEchoMode(QLineEdit::Password);
+    connect(hideAllButton, &QPushButton::clicked, this, [passwordEdits]() {
+        for (auto *edit : passwordEdits) {
+            edit->setPasswordVisible(false);
         }
     });
 
     // 清除所有密码
-    connect(clearAllButton, &QPushButton::clicked, this, [findAllPasswordEdits]() {
-        for (auto *edit : findAllPasswordEdits()) {
+    connect(clearAllButton, &QPushButton::clicked, this, [passwordEdits]() {
+        for (auto *edit : passwordEdits) {
             edit->clear();
         }
     });
 
     // 验证密码
-    connect(validateButton, &QPushButton::clicked, this, [findAllPasswordEdits, statusLabel]() {
+    connect(validateButton, &QPushButton::clicked, this, [passwordEdits, statusLabel]() {
         bool allValid = true;
         QStringList messages;
 
-        for (auto *edit : findAllPasswordEdits()) {
-            if (!edit->text().isEmpty()) {
-                if (edit->text().length() < 6) {
-                    messages.append(QString("'%1' is too short (min 6 characters)")
-                                        .arg(edit->placeholderText().left(20)));
-                    allValid = false;
-                }
+        for (auto *edit : passwordEdits) {
+            if (!edit->text().isEmpty() && edit->text().length() < 6) {
+                messages.append(tr("'%1' is too short (min 6 characters)")
+                                    .arg(edit->placeholderText().left(20)));
+                allValid = false;
             }
         }
 
         if (allValid && messages.isEmpty()) {
-            statusLabel->setText("✓ All passwords are valid");
+            statusLabel->setText(u"✓ "_s + tr("All passwords are valid"));
         } else if (messages.isEmpty()) {
-            statusLabel->setText("ℹ No passwords to validate");
+            statusLabel->setText(u"ℹ "_s + tr("No passwords to validate"));
         } else {
-            statusLabel->setText("✗ " + messages.join("; "));
+            statusLabel->setText(u"✗ "_s + messages.join(u"; "_s));
         }
     });
 
-    // 工具提示时长设置
-    connect(tooltipDurationSlider,
-            &QSlider::valueChanged,
-            this,
-            [durationLabel, findAllPasswordEdits](int value) {
-                durationLabel->setText(QString("Tooltip Duration: %1ms").arg(value));
-                for (auto *edit : findAllPasswordEdits()) {
-                    edit->setToolTipDuration(value);
-                }
-            });
+    // 重置
+    connect(
+        resetButton, &QPushButton::clicked, this, [passwordEdits, capsLockCheckbox, statusLabel]() {
+            for (auto *edit : passwordEdits) {
+                edit->clear();
+                edit->setPasswordVisible(false);
+                edit->setCapsLockWarningEnabled(true);
+            }
+            capsLockCheckbox->setChecked(true);
+            statusLabel->setText(tr("Reset complete"));
+        });
 
-    // 密码输入框文本变化连接
-    auto updateStatusOnTextChange = [statusLabel]() {
-        statusLabel->setText("Password field updated");
-    };
-
-    for (auto *edit : findAllPasswordEdits()) {
-        connect(edit, &QLineEdit::textChanged, this, updateStatusOnTextChange);
+    // 密码可见性变化 → 更新信息标签
+    for (auto *edit : passwordEdits) {
+        connect(edit, &PasswordLineEdit::passwordVisibleChanged, this, updateInfoLabel);
+        connect(edit, &QLineEdit::textChanged, this, updateInfoLabel);
     }
 
-    // 窗口设置
-    setWindowTitle("PasswordLineEdit Demonstration");
-    resize(600, 450);
+    // 初始化
+    updateInfoLabel();
+    resize(600, 240);
 }
-
-MainWindow::~MainWindow() {}

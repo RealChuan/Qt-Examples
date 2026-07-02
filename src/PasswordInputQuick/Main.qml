@@ -1,264 +1,191 @@
 import QtQuick
-import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Controls
 import QtQuick.Controls.Fusion
 
 ApplicationWindow {
     id: mainWindow
-    width: 600
-    height: 500
+    width: 620
+    height: 280
     visible: true
     title: qsTr("Password Input Quick Example")
 
-    ColumnLayout {
+    RowLayout {
         anchors.fill: parent
         anchors.margins: 10
+        spacing: 20
 
-        // 基本密码输入框
-        GroupBox {
-            title: qsTr("Basic Password Input")
+        // === 左侧：密码输入演示区域 ===
+        ColumnLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 10
 
-            ColumnLayout {
-                width: parent.width
+            GroupBox {
+                title: qsTr("Basic Password Field")
+                Layout.fillWidth: true
 
                 PasswordInput {
                     id: basicPasswordInput
                     Layout.fillWidth: true
                     Layout.preferredHeight: 50
                     placeholderText: qsTr("Enter your password here")
-
-                    onTextChanged: {
-                        mainWindow.updateStatus(qsTr("Basic password input updated"));
-                    }
                 }
             }
-        }
 
-        // 带自定义提示的密码框
-        GroupBox {
-            title: qsTr("Password Input with Custom Placeholder")
-            Layout.fillWidth: true
-
-            ColumnLayout {
-                width: parent.width
+            GroupBox {
+                title: qsTr("Password Field with Custom Placeholder")
+                Layout.fillWidth: true
 
                 PasswordInput {
                     id: customPasswordInput
                     Layout.fillWidth: true
                     Layout.preferredHeight: 50
                     placeholderText: qsTr("Minimum 8 characters with special symbols")
-
-                    onTextChanged: {
-                        mainWindow.updateStatus(qsTr("Custom password input updated"));
-                    }
                 }
+            }
+
+            // 密码信息显示
+            Label {
+                id: infoLabel
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                text: qsTr("Basic: %1 | Length: %2\nCustom: %3 | Length: %4").arg(basicPasswordInput.passwordVisible ? qsTr("Visible") : qsTr("Hidden")).arg(basicPasswordInput.text.length).arg(customPasswordInput.passwordVisible ? qsTr("Visible") : qsTr("Hidden")).arg(customPasswordInput.text.length)
+                font.pixelSize: 12
+            }
+
+            Item {
+                Layout.fillHeight: true
             }
         }
 
-        // 控制面板
-        GroupBox {
-            title: qsTr("Controls")
+        // === 右侧：控制面板 ===
+        ColumnLayout {
             Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 10
 
-            GridLayout {
-                columns: 3
-                width: parent.width
+            // 显示设置
+            GroupBox {
+                title: qsTr("Display Settings")
+                Layout.fillWidth: true
 
-                // 显示所有密码按钮
-                Button {
-                    text: qsTr("Show All Passwords")
-                    Layout.fillWidth: true
-                    onClicked: {
-                        mainWindow.showAllPasswords();
-                        mainWindow.updateStatus(qsTr("All passwords are now visible"));
-                    }
-                }
-
-                // 隐藏所有密码按钮
-                Button {
-                    text: qsTr("Hide All Passwords")
-                    Layout.fillWidth: true
-                    onClicked: {
-                        mainWindow.hideAllPasswords();
-                        mainWindow.updateStatus(qsTr("All passwords are now hidden"));
-                    }
-                }
-
-                // 清除所有密码按钮
-                Button {
-                    text: qsTr("Clear All Passwords")
-                    Layout.fillWidth: true
-                    onClicked: {
-                        mainWindow.clearAllPasswords();
-                        mainWindow.updateStatus(qsTr("All passwords cleared"));
-                    }
-                }
-
-                // 验证按钮
-                Button {
-                    text: qsTr("Validate Passwords")
-                    Layout.columnSpan: 3
-                    Layout.fillWidth: true
-                    onClicked: {
-                        mainWindow.validatePasswords();
+                CheckBox {
+                    id: capsLockCheckbox
+                    text: qsTr("Enable CapsLock Warning")
+                    checked: true
+                    onToggled: {
+                        basicPasswordInput.capsLockWarningEnabled = checked;
+                        customPasswordInput.capsLockWarningEnabled = checked;
                     }
                 }
             }
-        }
 
-        // 自定义图标设置
-        GroupBox {
-            title: qsTr("Custom Icon Settings")
-            Layout.fillWidth: true
+            // 操作按钮
+            GroupBox {
+                title: qsTr("Actions")
+                Layout.fillWidth: true
 
-            RowLayout {
-                width: parent.width
+                GridLayout {
+                    columns: 2
+                    anchors.fill: parent
 
-                TextField {
-                    id: visibleIconInput
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("Visible icon (text or emoji)")
-                    text: "👁️"
-                }
+                    Button {
+                        text: qsTr("Show All")
+                        Layout.fillWidth: true
+                        onClicked: {
+                            basicPasswordInput.setPasswordVisible(true);
+                            customPasswordInput.setPasswordVisible(true);
+                        }
+                    }
 
-                TextField {
-                    id: hiddenIconInput
-                    Layout.fillWidth: true
-                    placeholderText: qsTr("Hidden icon (text or emoji)")
-                    text: "🔒"
-                }
+                    Button {
+                        text: qsTr("Hide All")
+                        Layout.fillWidth: true
+                        onClicked: {
+                            basicPasswordInput.setPasswordVisible(false);
+                            customPasswordInput.setPasswordVisible(false);
+                        }
+                    }
 
-                Button {
-                    text: qsTr("Apply Icons")
-                    onClicked: {
-                        mainWindow.applyCustomIcons();
-                        mainWindow.updateStatus(qsTr("Custom icons applied"));
+                    Button {
+                        text: qsTr("Clear All")
+                        Layout.fillWidth: true
+                        onClicked: {
+                            basicPasswordInput.clear();
+                            customPasswordInput.clear();
+                        }
+                    }
+
+                    Button {
+                        text: qsTr("Validate")
+                        Layout.fillWidth: true
+                        onClicked: mainWindow.validatePasswords()
+                    }
+
+                    Button {
+                        text: qsTr("Reset")
+                        Layout.columnSpan: 2
+                        Layout.fillWidth: true
+                        onClicked: mainWindow.resetAll()
                     }
                 }
             }
-        }
 
-        // 状态显示
-        GroupBox {
-            title: qsTr("Status")
-            Layout.fillWidth: true
-
-            Rectangle {
-                width: parent.width
-                radius: 4
-
-                Text {
-                    id: statusLabel
-                    anchors.centerIn: parent
-                    text: qsTr("Ready")
-                    font.pixelSize: 14
-                    horizontalAlignment: Text.AlignHCenter
+            // 状态显示
+            Label {
+                id: statusLabel
+                Layout.fillWidth: truep
+                text: qsTr("Ready")
+                font.pixelSize: 12
+                horizontalAlignment: Text.AlignHCenter
+                padding: 4
+                background: Rectangle {
+                    anchors.fill: parent
+                    color: "#f2f2f7"
+                    border.color: "#d1d1d6"
+                    border.width: 1
+                    radius: 4
                 }
             }
-        }
 
-        // 密码信息显示
-        GroupBox {
-            title: qsTr("Password Information")
-            Layout.fillWidth: true
-
-            ColumnLayout {
-                width: parent.width
-                spacing: 5
-
-                Text {
-                    text: qsTr("Basic Input: ") + (basicPasswordInput.passwordVisible ? qsTr("Visible") : qsTr("Hidden")) + " | " + qsTr("Length: ") + basicPasswordInput.text.length
-                    font.pixelSize: 12
-                }
-
-                Text {
-                    text: qsTr("Custom Input: ") + (customPasswordInput.passwordVisible ? qsTr("Visible") : qsTr("Hidden")) + " | " + qsTr("Length: ") + customPasswordInput.text.length
-                    font.pixelSize: 12
-                }
+            Item {
+                Layout.fillHeight: true
             }
         }
     }
 
-    // 收集所有密码输入框
-    function getAllPasswordInputs() {
-        return [basicPasswordInput, customPasswordInput];
-    }
+    // === 工具函数 ===
 
-    // 显示所有密码
-    function showAllPasswords() {
-        var inputs = getAllPasswordInputs();
-        for (var i = 0; i < inputs.length; i++) {
-            if (!inputs[i].passwordVisible) {
-                inputs[i].togglePasswordVisibility();
-            }
-        }
-    }
+    function validatePasswords(): void {
+        const inputs = [basicPasswordInput, customPasswordInput];
+        let allValid = true;
+        const messages = [];
 
-    // 隐藏所有密码
-    function hideAllPasswords() {
-        var inputs = getAllPasswordInputs();
-        for (var i = 0; i < inputs.length; i++) {
-            if (inputs[i].passwordVisible) {
-                inputs[i].togglePasswordVisibility();
-            }
-        }
-    }
-
-    // 清除所有密码
-    function clearAllPasswords() {
-        var inputs = getAllPasswordInputs();
-        for (var i = 0; i < inputs.length; i++) {
-            inputs[i].clear();
-        }
-    }
-
-    // 验证密码
-    function validatePasswords() {
-        var inputs = getAllPasswordInputs();
-        var allValid = true;
-        var messages = [];
-
-        for (var i = 0; i < inputs.length; i++) {
-            var input = inputs[i];
-            if (input.text.length > 0) {
-                if (input.text.length < 6) {
-                    var inputName = input === basicPasswordInput ? qsTr("Basic input") : qsTr("Custom input");
-                    messages.push(qsTr("%1 is too short (minimum 6 characters)").arg(inputName));
-                    allValid = false;
-                }
+        for (const input of inputs) {
+            if (input.text.length > 0 && input.text.length < 6) {
+                messages.push(qsTr("'%1' is too short (min 6 characters)").arg(input.placeholderText.substring(0, 20)));
+                allValid = false;
             }
         }
 
         if (allValid && messages.length === 0) {
-            updateStatus("✓ " + qsTr("All passwords are valid"));
+            statusLabel.text = "✓ " + qsTr("All passwords are valid");
         } else if (messages.length === 0) {
-            updateStatus("ℹ " + qsTr("No passwords to validate"));
+            statusLabel.text = "ℹ " + qsTr("No passwords to validate");
         } else {
-            updateStatus("✗ " + messages.join("; "));
+            statusLabel.text = "✗ " + messages.join("; ");
         }
     }
 
-    // 应用自定义图标
-    function applyCustomIcons() {
-        var inputs = getAllPasswordInputs();
-        var visibleIcon = visibleIconInput.text.trim();
-        var hiddenIcon = hiddenIconInput.text.trim();
-
-        if (visibleIcon !== "" && hiddenIcon !== "") {
-            for (var i = 0; i < inputs.length; i++) {
-                inputs[i].setToggleIcons(visibleIcon, hiddenIcon);
-            }
-        }
-    }
-
-    // 更新状态
-    function updateStatus(message) {
-        statusLabel.text = message;
-    }
-
-    // 组件加载完成后的初始化
-    Component.onCompleted: {
-        updateStatus(qsTr("Application started successfully"));
+    function resetAll(): void {
+        basicPasswordInput.clear();
+        customPasswordInput.clear();
+        basicPasswordInput.setPasswordVisible(false);
+        customPasswordInput.setPasswordVisible(false);
+        basicPasswordInput.capsLockWarningEnabled = true;
+        customPasswordInput.capsLockWarningEnabled = true;
+        capsLockCheckbox.checked = true;
+        statusLabel.text = qsTr("Reset complete");
     }
 }

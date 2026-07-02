@@ -100,7 +100,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     // 右侧: 控制面板
     auto *controlPanel = new QWidget(this);
     auto *controlLayout = new QVBoxLayout(controlPanel);
-    controlLayout->setAlignment(Qt::AlignTop);
 
     // 动画设置组
     auto *animationGroup = new QGroupBox(tr("Animation settings"), this);
@@ -128,7 +127,6 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
     auto *autoHideRow = new QHBoxLayout();
     autoHideRow->addWidget(autoHideCheckbox);
     autoHideRow->addWidget(durationSpinBox);
-    autoHideRow->addStretch();
     textGroupLayout->addLayout(autoHideRow);
 
     controlLayout->addWidget(textGroup);
