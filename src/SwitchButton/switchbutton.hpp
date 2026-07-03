@@ -2,10 +2,12 @@
 
 #include <QAbstractButton>
 
+#include <memory>
+
 class SwitchButton : public QAbstractButton
 {
     Q_OBJECT
-    Q_PROPERTY(int offset READ offset WRITE setOffset NOTIFY offsetChanged)
+    Q_PROPERTY(double offset READ offset WRITE setOffset NOTIFY offsetChanged)
     Q_PROPERTY(
         QColor checkedColor READ checkedColor WRITE setCheckedColor NOTIFY checkedColorChanged)
     Q_PROPERTY(QColor uncheckedColor READ uncheckedColor WRITE setUncheckedColor NOTIFY
@@ -21,8 +23,9 @@ public:
     ~SwitchButton() override;
 
     [[nodiscard]] auto minimumSizeHint() const -> QSize override;
+    [[nodiscard]] auto sizeHint() const -> QSize override;
 
-    // 颜色设置
+    // Color properties
     void setCheckedColor(const QColor &color);
     [[nodiscard]] auto checkedColor() const -> QColor;
 
@@ -35,13 +38,13 @@ public:
     void setThumbBorderColor(const QColor &color);
     [[nodiscard]] auto thumbBorderColor() const -> QColor;
 
-    // 动画设置
+    // Animation
     void setAnimationDuration(int duration);
     [[nodiscard]] auto animationDuration() const -> int;
     [[nodiscard]] bool isAnimating() const;
 
 signals:
-    void offsetChanged(int offset);
+    void offsetChanged(double offset);
     void checkedColorChanged(const QColor &color);
     void uncheckedColorChanged(const QColor &color);
     void thumbColorChanged(const QColor &color);
@@ -58,21 +61,20 @@ protected:
 
 private slots:
     void onToggled(bool checked);
-    void onAnimationFinished();
-    [[nodiscard]] auto offset() const -> int;
-    void setOffset(int offset);
 
 private:
+    [[nodiscard]] auto offset() const -> double;
+    void setOffset(double offset);
     void updateThumbPosition();
     void startAnimation(bool checked);
     void drawBackground(QPainter &painter, const QRectF &rect);
     void drawThumb(QPainter &painter, const QRectF &rect);
-    [[nodiscard]] inline auto widthMargin() const -> double;
-    [[nodiscard]] inline auto heightMargin() const -> double;
-    [[nodiscard]] inline auto thumbSize() const -> double;
-    [[nodiscard]] inline auto slotRect() const -> QRectF;
-    [[nodiscard]] inline auto thumbRect() const -> QRectF;
+    [[nodiscard]] auto widthMargin() const -> double;
+    [[nodiscard]] auto heightMargin() const -> double;
+    [[nodiscard]] auto thumbSize() const -> double;
+    [[nodiscard]] auto slotRect() const -> QRectF;
+    [[nodiscard]] auto thumbRect() const -> QRectF;
 
     class SwitchButtonPrivate;
-    QScopedPointer<SwitchButtonPrivate> d_ptr;
+    std::unique_ptr<SwitchButtonPrivate> d_ptr;
 };

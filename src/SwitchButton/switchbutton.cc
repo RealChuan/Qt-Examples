@@ -5,6 +5,8 @@
 #include <QPropertyAnimation>
 #include <QStyleOption>
 
+using namespace Qt::StringLiterals;
+
 class SwitchButton::SwitchButtonPrivate
 {
 public:
@@ -12,42 +14,43 @@ public:
 
     SwitchButton *q_ptr;
 
-    // 可配置属性
-    QColor checkedColor = QColor(77, 161, 255);
-    QColor uncheckedColor = QColor(220, 220, 220);
-    QColor thumbColor = Qt::white;
-    QColor thumbBorderColor = QColor(180, 180, 180);
+    // Configurable properties
+    QColor checkedColor{77, 161, 255};
+    QColor uncheckedColor{220, 220, 220};
+    QColor thumbColor{Qt::white};
+    QColor thumbBorderColor{180, 180, 180};
     int animationDuration = 120;
 
-    // 状态标志
+    // State
     bool hover = false;
     bool animating = false;
 
-    // 动画
+    // Animation
     QPropertyAnimation *animation = nullptr;
-    int offset = 0;
+    double offset = 0.0;
 
-    // 常量定义
+    // Constants
     static constexpr double WIDTH_MARGIN_RATIO = 1.0 / 22.0;
     static constexpr double HEIGHT_MARGIN_RATIO = 1.0 / 22.0;
+    static constexpr double THUMB_BORDER_WIDTH = 2.0;
 };
 
 SwitchButton::SwitchButton(QWidget *parent)
-    : QAbstractButton(parent), d_ptr(new SwitchButtonPrivate(this))
+    : QAbstractButton(parent), d_ptr(std::make_unique<SwitchButtonPrivate>(this))
 {
     d_ptr->animation = new QPropertyAnimation(this, "offset", this);
     d_ptr->animation->setDuration(d_ptr->animationDuration);
     d_ptr->animation->setEasingCurve(QEasingCurve::InOutQuad);
 
     setCheckable(true);
-    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
 
-    // 连接信号
     connect(this, &SwitchButton::toggled, this, &SwitchButton::onToggled);
-    connect(
-        d_ptr->animation, &QPropertyAnimation::finished, this, &SwitchButton::onAnimationFinished);
+    connect(d_ptr->animation, &QPropertyAnimation::finished, this, [this]() {
+        d_ptr->animating = false;
+        emit animationFinished(isChecked());
+    });
 
-    // 初始位置设置
     updateThumbPosition();
 }
 
@@ -56,7 +59,11 @@ SwitchButton::~SwitchButton() = default;
 auto SwitchButton::minimumSizeHint() const -> QSize
 { return {50, 30}; }
 
-// Checked color
+auto SwitchButton::sizeHint() const -> QSize
+{ return {60, 30}; }
+
+// --- Color properties ---
+
 void SwitchButton::setCheckedColor(const QColor &color)
 {
     if (d_ptr->checkedColor == color)
@@ -69,7 +76,6 @@ void SwitchButton::setCheckedColor(const QColor &color)
 auto SwitchButton::checkedColor() const -> QColor
 { return d_ptr->checkedColor; }
 
-// Unchecked color
 void SwitchButton::setUncheckedColor(const QColor &color)
 {
     if (d_ptr->uncheckedColor == color)
@@ -82,7 +88,6 @@ void SwitchButton::setUncheckedColor(const QColor &color)
 auto SwitchButton::uncheckedColor() const -> QColor
 { return d_ptr->uncheckedColor; }
 
-// Thumb color
 void SwitchButton::setThumbColor(const QColor &color)
 {
     if (d_ptr->thumbColor == color)
@@ -95,20 +100,20 @@ void SwitchButton::setThumbColor(const QColor &color)
 auto SwitchButton::thumbColor() const -> QColor
 { return d_ptr->thumbColor; }
 
-// Thumb border color
 void SwitchButton::setThumbBorderColor(const QColor &color)
 {
-    if (d_ptr->thumbBorderColor != color) {
-        d_ptr->thumbBorderColor = color;
-        update();
-        emit thumbBorderColorChanged(color);
-    }
+    if (d_ptr->thumbBorderColor == color)
+        return;
+    d_ptr->thumbBorderColor = color;
+    update();
+    emit thumbBorderColorChanged(color);
 }
 
 auto SwitchButton::thumbBorderColor() const -> QColor
 { return d_ptr->thumbBorderColor; }
 
-// Animation duration
+// --- Animation ---
+
 void SwitchButton::setAnimationDuration(int duration)
 {
     if (duration < 0 || d_ptr->animationDuration == duration)
@@ -124,33 +129,37 @@ auto SwitchButton::animationDuration() const -> int
 bool SwitchButton::isAnimating() const
 { return d_ptr->animating; }
 
-// Offset property
-auto SwitchButton::offset() const -> int
+// --- Offset property (for QPropertyAnimation) ---
+
+auto SwitchButton::offset() const -> double
 { return d_ptr->offset; }
 
-void SwitchButton::setOffset(int offset)
+void SwitchButton::setOffset(double offset)
 {
-    if (d_ptr->offset == offset)
+    if (qFuzzyCompare(d_ptr->offset, offset))
         return;
     d_ptr->offset = offset;
     update();
     emit offsetChanged(offset);
 }
 
-// Painting
+// --- Events ---
+
 void SwitchButton::paintEvent(QPaintEvent *event)
 {
+    Q_UNUSED(event)
+
     QPainter painter(this);
     painter.setPen(Qt::NoPen);
     painter.setRenderHint(QPainter::Antialiasing);
 
-    // 绘制背景
+    // Draw background
     drawBackground(painter, slotRect());
 
-    // 绘制滑块
+    // Draw thumb
     drawThumb(painter, thumbRect());
 
-    // 绘制焦点指示器
+    // Draw focus indicator
     if (hasFocus()) {
         QStyleOptionFocusRect option;
         option.initFrom(this);
@@ -179,22 +188,16 @@ void SwitchButton::resizeEvent(QResizeEvent *event)
     updateThumbPosition();
 }
 
-// Private slots
+// --- Private methods ---
+
 void SwitchButton::onToggled(bool checked)
 { startAnimation(checked); }
 
-void SwitchButton::onAnimationFinished()
-{
-    d_ptr->animating = false;
-    emit animationFinished(isChecked());
-}
-
-// Private methods
 void SwitchButton::updateThumbPosition()
 {
     if (!d_ptr->animating) {
         const double pos = isChecked() ? (width() - widthMargin() - thumbSize()) : widthMargin();
-        setOffset(static_cast<int>(pos));
+        setOffset(pos);
     }
 }
 
@@ -204,15 +207,14 @@ void SwitchButton::startAnimation(bool checked)
         d_ptr->animation->stop();
     }
 
-    // 预计算常用值
     const double widthMarginValue = widthMargin();
     const double thumbSizeValue = thumbSize();
 
     const double start = d_ptr->offset;
     const double end = checked ? (width() - widthMarginValue - thumbSizeValue) : widthMarginValue;
 
-    d_ptr->animation->setStartValue(static_cast<int>(start));
-    d_ptr->animation->setEndValue(static_cast<int>(end));
+    d_ptr->animation->setStartValue(start);
+    d_ptr->animation->setEndValue(end);
 
     d_ptr->animating = true;
     emit animationStarted(checked);
@@ -222,64 +224,64 @@ void SwitchButton::startAnimation(bool checked)
 
 void SwitchButton::drawBackground(QPainter &painter, const QRectF &rect)
 {
-    const double roundness = rect.height() / 2;
+    const double roundness = rect.height() / 2.0;
 
-    // 预计算常用值
-    const double thumbSizeValue = thumbSize();
+    // Draw unchecked background (full rounded rect)
+    painter.setBrush(d_ptr->uncheckedColor);
+    painter.drawRoundedRect(rect, roundness, roundness);
+
+    // Calculate fill ratio based on thumb position
     const double widthMarginValue = widthMargin();
-
-    // 计算滑块中心位置相对于整个滑动范围的比例
+    const double thumbSizeValue = thumbSize();
     const double minPos = widthMarginValue;
     const double maxPos = width() - widthMarginValue - thumbSizeValue;
-    double fillRatio = 0.0;
 
+    double fillRatio = 0.0;
     if (maxPos > minPos) {
         fillRatio = (d_ptr->offset - minPos) / (maxPos - minPos);
         fillRatio = qBound(0.0, fillRatio, 1.0);
     }
 
-    // 如果不在动画中，根据checked状态确定填充比例
+    // When not animating, snap to checked state
     if (!d_ptr->animating) {
         fillRatio = isChecked() ? 1.0 : 0.0;
     }
 
-    // 绘制未选中状态的背景
-    painter.setBrush(d_ptr->uncheckedColor);
-    painter.drawRoundedRect(rect, roundness, roundness);
-
-    // 绘制选中状态的填充
-    if (fillRatio > 0) {
-        // 计算填充宽度，最小为thumbSize，最大为整个背景宽度
+    // Draw checked fill using clipping for clean rounded edges
+    if (fillRatio > 0.0) {
         const double minFillWidth = thumbSizeValue;
         const double maxFillWidth = rect.width();
         const double fillWidth = minFillWidth + fillRatio * (maxFillWidth - minFillWidth);
 
-        QRectF fillRect = rect;
-        fillRect.setWidth(fillWidth);
-
+        painter.save();
+        painter.setClipRect(rect.x(), rect.y(), fillWidth, rect.height());
         painter.setBrush(d_ptr->checkedColor);
-        painter.drawRoundedRect(fillRect, roundness, roundness);
+        painter.drawRoundedRect(rect, roundness, roundness);
+        painter.restore();
     }
 }
 
 void SwitchButton::drawThumb(QPainter &painter, const QRectF &rect)
 {
-    // 绘制滑块边框
+    // Determine border color based on hover state
     QColor borderColor = d_ptr->thumbBorderColor;
     if (d_ptr->hover) {
         borderColor = isChecked() ? d_ptr->checkedColor : d_ptr->thumbBorderColor.darker(120);
     }
 
+    // Draw thumb border (outer ellipse)
     painter.setBrush(borderColor);
     painter.drawEllipse(rect);
 
-    // 绘制滑块主体
-    QRectF innerRect = rect.adjusted(2, 2, -2, -2);
+    // Draw thumb body (inner ellipse)
+    const double border = SwitchButtonPrivate::THUMB_BORDER_WIDTH;
+    const QRectF innerRect = rect.adjusted(border, border, -border, -border);
     painter.setBrush(d_ptr->thumbColor);
     painter.drawEllipse(innerRect);
 }
 
-// Geometry calculations
+// --- Geometry calculations ---
+
 auto SwitchButton::widthMargin() const -> double
 { return width() * SwitchButtonPrivate::WIDTH_MARGIN_RATIO; }
 
@@ -291,16 +293,13 @@ auto SwitchButton::thumbSize() const -> double
 
 auto SwitchButton::slotRect() const -> QRectF
 {
-    const double widthMarginValue = widthMargin();
-    const double heightMarginValue = heightMargin();
-
-    const double w = width() - 2 * widthMarginValue;
-    const double h = height() - 2 * heightMarginValue;
-    return QRectF(widthMarginValue, heightMarginValue, w, h);
+    const double wm = widthMargin();
+    const double hm = heightMargin();
+    return {wm, hm, width() - 2 * wm, height() - 2 * hm};
 }
 
 auto SwitchButton::thumbRect() const -> QRectF
 {
     const double size = thumbSize();
-    return QRectF(d_ptr->offset, heightMargin(), size, size);
+    return {d_ptr->offset, heightMargin(), size, size};
 }

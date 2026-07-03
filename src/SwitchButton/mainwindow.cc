@@ -3,15 +3,22 @@
 
 #include <QtWidgets>
 
-MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent)
+using namespace Qt::StringLiterals;
+
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent)
 {
     // 创建开关按钮控件
     auto *switchButton = new SwitchButton(this);
+    switchButton->setFixedSize(80, 40);
+
+    // 创建状态显示标签
+    auto *statusLabel = new QLabel(tr("Unchecked"), this);
+    statusLabel->setAlignment(Qt::AlignCenter);
+    statusLabel->setFrameStyle(QFrame::StyledPanel | QFrame::Sunken);
+    statusLabel->setMinimumHeight(30);
 
     // 创建状态控制
-    auto *stateCheckbox = new QCheckBox(tr("Checked State"), this);
-    stateCheckbox->setChecked(false);
+    auto *stateCheckbox = new QCheckBox(tr("Checked"), this);
 
     // 创建颜色选择控件
     auto *checkedColorButton = new QPushButton(this);
@@ -21,66 +28,68 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 创建动画控制
     auto *animationDurationSlider = new QSlider(Qt::Horizontal, this);
-    animationDurationSlider->setRange(50, 1000);
-    animationDurationSlider->setValue(120);
-    auto *durationLabel = new QLabel(tr("Animation duration: 120ms"), this);
+    animationDurationSlider->setRange(0, 1000);
+    animationDurationSlider->setValue(switchButton->animationDuration());
+    auto *durationLabel
+        = new QLabel(tr("Animation duration: %1ms").arg(switchButton->animationDuration()));
 
-    // 创建状态显示标签
-    auto *statusLabel = new QLabel(tr("Status: Unchecked"), this);
-    statusLabel->setAlignment(Qt::AlignCenter);
-    statusLabel->setFrameStyle(QFrame::Box);
-    statusLabel->setMinimumHeight(30);
+    // ========== 布局设置 ==========
 
-    // 布局设置
     auto *mainWidget = new QWidget(this);
-    auto *mainLayout = new QVBoxLayout(mainWidget);
+    auto *mainLayout = new QHBoxLayout(mainWidget);
 
-    // 控制面板区域
+    // 左侧：展示区域
+    auto *displayLayout = new QVBoxLayout();
+    displayLayout->addStretch();
+    displayLayout->addWidget(switchButton, 0, Qt::AlignCenter);
+    displayLayout->addSpacing(10);
+    displayLayout->addWidget(statusLabel);
+    displayLayout->addStretch();
+
+    // 右侧：控制面板
     auto *controlPanel = new QWidget(this);
-    auto *controlLayout = new QGridLayout(controlPanel);
+    auto *controlLayout = new QVBoxLayout(controlPanel);
 
-    // 第一行：状态控制
-    int row = 0;
-    controlLayout->addWidget(new QLabel(tr("Button state:"), this), row, 0);
-    controlLayout->addWidget(stateCheckbox, row, 1);
+    // 状态控制布局
+    auto *stateGroup = new QGroupBox(tr("State"), this);
+    auto *stateLayout = new QVBoxLayout(stateGroup);
+    stateLayout->addWidget(stateCheckbox);
 
-    // 第二行：颜色控制 - 选中颜色
-    row++;
-    controlLayout->addWidget(new QLabel(tr("Checked color:"), this), row, 0);
-    controlLayout->addWidget(checkedColorButton, row, 1);
+    // 颜色控制布局
+    auto *colorGroup = new QGroupBox(tr("Color settings"), this);
+    auto *colorLayout = new QGridLayout(colorGroup);
 
-    // 第三行：颜色控制 - 未选中颜色
-    row++;
-    controlLayout->addWidget(new QLabel(tr("Unchecked color:"), this), row, 0);
-    controlLayout->addWidget(uncheckedColorButton, row, 1);
+    colorLayout->addWidget(new QLabel(tr("Checked color:"), this), 0, 0);
+    colorLayout->addWidget(checkedColorButton, 0, 1);
+    colorLayout->addWidget(new QLabel(tr("Unchecked color:"), this), 1, 0);
+    colorLayout->addWidget(uncheckedColorButton, 1, 1);
+    colorLayout->addWidget(new QLabel(tr("Thumb color:"), this), 2, 0);
+    colorLayout->addWidget(thumbColorButton, 2, 1);
+    colorLayout->addWidget(new QLabel(tr("Thumb border:"), this), 3, 0);
+    colorLayout->addWidget(thumbBorderColorButton, 3, 1);
 
-    // 第四行：颜色控制 - 滑块颜色
-    row++;
-    controlLayout->addWidget(new QLabel(tr("Thumb color:"), this), row, 0);
-    controlLayout->addWidget(thumbColorButton, row, 1);
+    // 动画控制布局
+    auto *animationGroup = new QGroupBox(tr("Animation settings"), this);
+    auto *animationLayout = new QVBoxLayout(animationGroup);
+    animationLayout->addWidget(durationLabel);
+    animationLayout->addWidget(animationDurationSlider);
 
-    // 第五行：颜色控制 - 滑块边框颜色
-    row++;
-    controlLayout->addWidget(new QLabel(tr("Thumb border color:"), this), row, 0);
-    controlLayout->addWidget(thumbBorderColorButton, row, 1);
+    // 组装控制面板
+    controlLayout->addWidget(stateGroup);
+    controlLayout->addWidget(colorGroup);
+    controlLayout->addWidget(animationGroup);
+    controlLayout->addStretch();
 
-    // 第六行：动画控制
-    row++;
-    controlLayout->addWidget(durationLabel, row, 0);
-    controlLayout->addWidget(animationDurationSlider, row, 1);
-
-    // 主布局组装
-    mainLayout->addWidget(switchButton);
+    // 主布局
+    mainLayout->addLayout(displayLayout, 2);
     mainLayout->addWidget(controlPanel);
-    mainLayout->addWidget(statusLabel);
 
     setCentralWidget(mainWidget);
-    resize(300, 500);
+    resize(600, 350);
     setWindowTitle(tr("Switch Button Example"));
 
-    // ========== 颜色设置部分 ==========
+    // ========== 颜色按钮更新 ==========
 
-    // 统一的颜色按钮更新函数
     auto updateColorButton = [](QPushButton *button, const QColor &color) {
         auto colorName = color.name(QColor::HexArgb).toUpper();
 
@@ -94,12 +103,10 @@ MainWindow::MainWindow(QWidget *parent)
         };
 
         double luminance = getRelativeLuminance(color.red(), color.green(), color.blue());
-
-        // 根据WCAG标准选择对比度足够的文字颜色
-        QString textColor = luminance > 0.179 ? "black" : "white";
+        QString textColor = luminance > 0.179 ? u"black"_s : u"white"_s;
 
         button->setStyleSheet(
-            QString("background-color: %1; color: %2; border: 1px solid gray; padding: 5px;")
+            u"background-color: %1; color: %2; border: 1px solid gray; padding: 5px;"_s
                 .arg(colorName)
                 .arg(textColor));
         button->setText(colorName);
@@ -115,7 +122,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // 状态控制
     connect(stateCheckbox, &QCheckBox::toggled, this, [switchButton, stateCheckbox](bool checked) {
-        // 阻塞信号避免循环
         stateCheckbox->blockSignals(true);
         switchButton->setChecked(checked);
         stateCheckbox->blockSignals(false);
@@ -126,9 +132,8 @@ MainWindow::MainWindow(QWidget *parent)
             &QPushButton::clicked,
             this,
             [this, switchButton, checkedColorButton, updateColorButton]() {
-                QColor color = QColorDialog::getColor(switchButton->checkedColor(),
-                                                      this,
-                                                      tr("Select Checked Color"));
+                QColor color = QColorDialog::getColor(
+                    switchButton->checkedColor(), this, tr("Select Checked Color"));
                 if (color.isValid()) {
                     switchButton->setCheckedColor(color);
                     updateColorButton(checkedColorButton, color);
@@ -139,9 +144,8 @@ MainWindow::MainWindow(QWidget *parent)
             &QPushButton::clicked,
             this,
             [this, switchButton, uncheckedColorButton, updateColorButton]() {
-                QColor color = QColorDialog::getColor(switchButton->uncheckedColor(),
-                                                      this,
-                                                      tr("Select Unchecked Color"));
+                QColor color = QColorDialog::getColor(
+                    switchButton->uncheckedColor(), this, tr("Select Unchecked Color"));
                 if (color.isValid()) {
                     switchButton->setUncheckedColor(color);
                     updateColorButton(uncheckedColorButton, color);
@@ -152,9 +156,8 @@ MainWindow::MainWindow(QWidget *parent)
             &QPushButton::clicked,
             this,
             [this, switchButton, thumbColorButton, updateColorButton]() {
-                QColor color = QColorDialog::getColor(switchButton->thumbColor(),
-                                                      this,
-                                                      tr("Select Thumb Color"));
+                QColor color = QColorDialog::getColor(
+                    switchButton->thumbColor(), this, tr("Select Thumb Color"));
                 if (color.isValid()) {
                     switchButton->setThumbColor(color);
                     updateColorButton(thumbColorButton, color);
@@ -165,9 +168,8 @@ MainWindow::MainWindow(QWidget *parent)
             &QPushButton::clicked,
             this,
             [this, switchButton, thumbBorderColorButton, updateColorButton]() {
-                QColor color = QColorDialog::getColor(switchButton->thumbBorderColor(),
-                                                      this,
-                                                      tr("Select Thumb Border Color"));
+                QColor color = QColorDialog::getColor(
+                    switchButton->thumbBorderColor(), this, tr("Select Thumb Border Color"));
                 if (color.isValid()) {
                     switchButton->setThumbBorderColor(color);
                     updateColorButton(thumbBorderColorButton, color);
@@ -183,7 +185,7 @@ MainWindow::MainWindow(QWidget *parent)
                 durationLabel->setText(tr("Animation duration: %1ms").arg(value));
             });
 
-    // 开关按钮信号连接 - 更新UI状态
+    // 开关按钮信号
     connect(switchButton, &SwitchButton::toggled, this, [stateCheckbox, statusLabel](bool checked) {
         // 更新状态复选框
         stateCheckbox->blockSignals(true);
@@ -192,28 +194,23 @@ MainWindow::MainWindow(QWidget *parent)
 
         // 更新状态标签
         if (checked) {
-            statusLabel->setText(tr("Status: Checked"));
-            statusLabel->setStyleSheet("color: green;");
+            statusLabel->setText(tr("Checked"));
+            statusLabel->setStyleSheet(u"color: green;"_s);
         } else {
-            statusLabel->setText(tr("Status: Unchecked"));
-            statusLabel->setStyleSheet("");
+            statusLabel->setText(tr("Unchecked"));
+            statusLabel->setStyleSheet(QString{});
         }
     });
 
     connect(switchButton, &SwitchButton::animationStarted, this, [statusLabel](bool checked) {
-        QString state = checked ? "Checked" : "Unchecked";
+        QString state = checked ? tr("Checked") : tr("Unchecked");
         statusLabel->setText(tr("Animating to: %1").arg(state));
-        statusLabel->setStyleSheet("color: orange;");
+        statusLabel->setStyleSheet(u"color: orange;"_s);
     });
 
     connect(switchButton, &SwitchButton::animationFinished, this, [statusLabel](bool checked) {
-        QString state = checked ? "Checked" : "Unchecked";
-        statusLabel->setText(tr("Animation finished: %1").arg(state));
-        statusLabel->setStyleSheet(checked ? "color: green;" : "");
+        QString state = checked ? tr("Checked") : tr("Unchecked");
+        statusLabel->setText(tr("Finished: %1").arg(state));
+        statusLabel->setStyleSheet(checked ? u"color: green;"_s : QString{});
     });
-
-    // 初始化状态
-    switchButton->setChecked(false);
 }
-
-MainWindow::~MainWindow() {}
