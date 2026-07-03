@@ -1,5 +1,5 @@
 set(PROJECT_SOURCES sqlitetest.cc sqlitetest.hpp sqliteutils.cc sqliteutils.hpp
-                    main.cc)
+                    sqlitewal_unittest.cc)
 
-qt_add_executable(SqliteWAL ${PROJECT_SOURCES})
-target_link_libraries(SqliteWAL PRIVATE Qt::Core Qt::Sql)
+qt_add_executable(sqlitewal_unittest ${PROJECT_SOURCES})
+target_link_libraries(sqlitewal_unittest PRIVATE Qt::Core Qt::Sql Qt::Test)

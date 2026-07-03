@@ -305,7 +305,6 @@ auto NavigationProgressBar::drawCompleteProgress(QPainter &painter) -> void
         }
 
         const bool segmentCompleted = (i < d_ptr->step - 1) || (i == d_ptr->step - 1);
-        const bool segmentActive = (i == d_ptr->step - 1);
 
         if (segmentCompleted) {
             // 已完成连接线 - 实线，粗
@@ -331,7 +330,6 @@ auto NavigationProgressBar::drawCompleteProgress(QPainter &painter) -> void
     for (int i = 0; i < d_ptr->maxStep; i++) {
         const double cx = d_ptr->spacing + w * i + w / 2.0;
         const bool isCompleted = i < d_ptr->step;
-        const bool isCurrent = i == d_ptr->step - 1 || (i == 0 && d_ptr->step == 0 && i == 0);
 
         if (isCompleted) {
             // 已完成步骤 - 实心圆 + 对勾

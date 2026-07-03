@@ -20,8 +20,4 @@ void removeDatabase(const SqliteConnection &dataBaseConnection);
 
 QString getDatabaseConnectionName();
 
-#define CHECK_DATABASE_VALIDITY(database) \
-    if (!(database).isValid()) { \
-        qWarning() << (database).lastError().text(); \
-        return false; \
-    }
+[[nodiscard]] bool checkDatabaseValidity(const QSqlDatabase &db);

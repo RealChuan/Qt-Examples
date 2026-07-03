@@ -7,6 +7,8 @@
 
 #include <mutex>
 
+using namespace Qt::StringLiterals;
+
 namespace {
 
 void logSQLiteRuntimeInfo(const QSqlDatabase &db)
@@ -65,34 +67,28 @@ void executeOptions(QSqlQuery &query, const QStringList &options)
     }
 }
 
-QString canonicalPath(const QString &path)
-{
-    return QFileInfo(path).canonicalFilePath();
-}
+QString absolutePath(const QString &path)
+{ return QFileInfo(path).absoluteFilePath(); }
 
-namespace {
-
-static QMap<QString, int> connectionCount;
-
-}
+// --- 连接计数（线程安全） ---
+std::mutex connectionCountMutex;
+QMap<QString, int> connectionCount;
 
 void incConnectionCount(const QString &dataBasePath)
 {
-    auto path = canonicalPath(dataBasePath);
-    if (connectionCount.contains(path)) {
-        connectionCount[path]++;
-    } else {
-        connectionCount[path] = 1;
-    }
+    auto path = absolutePath(dataBasePath);
+    std::lock_guard<std::mutex> locker(connectionCountMutex);
+    connectionCount[path]++;
 }
 
 bool decConnectionCount(const QString &dataBasePath)
 {
-    auto path = canonicalPath(dataBasePath);
+    auto path = absolutePath(dataBasePath);
+    std::lock_guard<std::mutex> locker(connectionCountMutex);
     if (connectionCount.contains(path)) {
         if (--connectionCount[path] == 0) {
             connectionCount.remove(path);
-            return true; // 连接计数归零，表示可以删除
+            return true; // 连接计数归零，表示可以清理
         }
     }
     return false;
@@ -137,7 +133,6 @@ QSqlDatabase getDatabase(const SqliteConnection &dataBaseConnection)
     if (!db.isOpen()) {
         if (!db.open()) {
             qCritical() << "Failed to open database:" << db.lastError().text();
-            // 尝试删除数据库文件并重新创建
             QFile(dataBaseConnection.dataBasePath).remove();
             db.open();
         }
@@ -169,4 +164,13 @@ QString getDatabaseConnectionName()
 {
     static std::atomic_llong id = 1;
     return QString("SQLITE_CONNECTION_%1").arg(id.fetch_add(1));
+}
+
+bool checkDatabaseValidity(const QSqlDatabase &db)
+{
+    if (!db.isValid()) {
+        qWarning() << db.lastError().text();
+        return false;
+    }
+    return true;
 }

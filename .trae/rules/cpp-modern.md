@@ -5,7 +5,6 @@
 - 用 `concepts` 约束模板，替代 SFINAE
 - 用 `std::format` 替代 printf/iostream 格式化
 - 优先用 `std::ranges` 算法替代手写循环
-- 用 `std::jthread` 替代 `std::thread`（自动 join）
 - 禁止裸 `new`/`delete`；用 `std::make_unique`/`std::make_shared`
 - 适当标记 `[[nodiscard]]`、`[[deprecated]]`
 - 用结构化绑定处理多返回值

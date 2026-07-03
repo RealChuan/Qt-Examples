@@ -1,13 +1,13 @@
 include(../../qmake/ProjectSettings.pri)
 
-QT += core sql
+QT += core sql testlib
 
 CONFIG += cmdline
 
 SOURCES += \
-        main.cc \
         sqlitetest.cc \
-        sqliteutils.cc
+        sqliteutils.cc \
+        sqlitewal_unittest.cc 
 
 HEADERS += \
     sqlitetest.hpp \

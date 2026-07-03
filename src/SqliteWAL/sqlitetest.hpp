@@ -2,17 +2,19 @@
 
 #include <QObject>
 
+#include <memory>
+
 class SqliteTest : public QObject
 {
     Q_OBJECT
 public:
-    explicit SqliteTest(QObject *parent = nullptr);
-    ~SqliteTest();
+    explicit SqliteTest(const QString &dbPath = {}, QObject *parent = nullptr);
+    ~SqliteTest() override;
 
     bool insert(const QString &brand, int num);
     bool readLastRecord();
 
 private:
     class SqliteTestPrivate;
-    QScopedPointer<SqliteTestPrivate> d_ptr;
+    std::unique_ptr<SqliteTestPrivate> d_ptr;
 };

@@ -7,18 +7,19 @@
 #include <QSqlQuery>
 #include <QThread>
 
-#include <mutex>
+using namespace Qt::StringLiterals;
 
 class SqliteTest::SqliteTestPrivate
 {
 public:
-    explicit SqliteTestPrivate(SqliteTest *q)
-        : q_ptr(q)
+    explicit SqliteTestPrivate(SqliteTest *q, const QString &dbPath) : q_ptr(q)
     {
-        dataBaseConnection.dataBasePath = QString("%1/%2").arg(QDir::tempPath()).arg("test.db");
+        dataBaseConnection.dataBasePath
+            = dbPath.isEmpty() ? QDir::tempPath() + u"/test.db"_s : dbPath;
 
         static std::once_flag onceFlag;
-        std::call_once(onceFlag, [this]() { QFile::remove(this->dataBaseConnection.dataBasePath); });
+        std::call_once(onceFlag,
+                       [this]() { QFile::remove(this->dataBaseConnection.dataBasePath); });
 
         dataBaseConnection.connectionName = getDatabaseConnectionName();
 
@@ -42,7 +43,7 @@ public:
                   " [id] INTEGER NOT NULL ON CONFLICT REPLACE UNIQUE ON CONFLICT "
                   "REPLACE COLLATE BINARY, "
                   " [brand] TEXT, "
-                  " [num] TEXT, "
+                  " [num] INTEGER, "
                   " [create_time] TIMESTAMP DEFAULT CURRENT_TIMESTAMP, "
                   " [local_time] TEXT DEFAULT (strftime('%Y-%m-%d %H:%M:%f', 'now', 'localtime')), "
                   " PRIMARY KEY([id] COLLATE [BINARY] ASC) ON CONFLICT REPLACE)")
@@ -50,7 +51,8 @@ public:
 
         QMutexLocker locker(&mutex);
         auto db = getDatabase(dataBaseConnection);
-        CHECK_DATABASE_VALIDITY(db)
+        if (!checkDatabaseValidity(db))
+            return false;
 
         QSqlQuery query(db);
         if (!query.exec(createTable)) {
@@ -63,29 +65,30 @@ public:
     SqliteTest *q_ptr;
 
     SqliteConnection dataBaseConnection;
-    const QString tableName = "phone";
+    const QString tableName = u"phone"_s;
 
     static QMutex mutex;
 };
 
 QMutex SqliteTest::SqliteTestPrivate::mutex;
 
-SqliteTest::SqliteTest(QObject *parent)
-    : QObject{parent}
-    , d_ptr(new SqliteTestPrivate(this))
+SqliteTest::SqliteTest(const QString &dbPath, QObject *parent)
+    : QObject{parent}, d_ptr(std::make_unique<SqliteTestPrivate>(this, dbPath))
 {}
 
-SqliteTest::~SqliteTest() {}
+SqliteTest::~SqliteTest() = default;
 
 bool SqliteTest::insert(const QString &brand, int num)
 {
     auto db = getDatabase(d_ptr->dataBaseConnection);
-    CHECK_DATABASE_VALIDITY(db)
+    if (!checkDatabaseValidity(db))
+        return false;
+
     QSqlQuery query(db);
     query.prepare(
         QString("INSERT INTO %1 (brand, num) VALUES (:brand, :num)").arg(d_ptr->tableName));
-    query.bindValue(":brand", brand);
-    query.bindValue(":num", num);
+    query.bindValue(u":brand"_s, brand);
+    query.bindValue(u":num"_s, num);
 
     QMutexLocker locker(&d_ptr->mutex);
     if (!query.exec()) {
@@ -99,7 +102,8 @@ bool SqliteTest::insert(const QString &brand, int num)
 bool SqliteTest::readLastRecord()
 {
     auto db = getDatabase(d_ptr->dataBaseConnection);
-    CHECK_DATABASE_VALIDITY(db)
+    if (!checkDatabaseValidity(db))
+        return false;
 
     QSqlQuery query(db);
     if (!query.exec(QString("SELECT id, brand, num, create_time, local_time "
@@ -112,13 +116,13 @@ bool SqliteTest::readLastRecord()
         qWarning() << "No records found.";
         return false;
     }
-    auto text = QString(
-                    "Last Record - ID: %1, Brand: %2\t, Num: %3\t, Created At: %4, Local Time: %5")
-                    .arg(QString::number(query.value("id").toInt()),
-                         query.value("brand").toString(),
-                         QString::number(query.value("num").toInt()),
-                         query.value("create_time").toString(),
-                         query.value("local_time").toString());
+    auto text
+        = QString("Last Record - ID: %1, Brand: %2\t, Num: %3\t, Created At: %4, Local Time: %5")
+              .arg(QString::number(query.value(u"id"_s).toInt()),
+                   query.value(u"brand"_s).toString(),
+                   QString::number(query.value(u"num"_s).toInt()),
+                   query.value(u"create_time"_s).toString(),
+                   query.value(u"local_time"_s).toString());
     qDebug().noquote() << text;
     return true;
 }
