@@ -4,6 +4,8 @@
 
 #include <QObject>
 
+#include <memory>
+
 class ReactorServer : public QObject
 {
     Q_OBJECT
@@ -15,7 +17,7 @@ public:
 
     void start();
     void stop();
-    bool isRunning() const;
+    [[nodiscard]] bool isRunning() const;
 
 signals:
     void message(const QString &msg);
@@ -24,5 +26,5 @@ signals:
 
 private:
     class ReactorServerPrivate;
-    QScopedPointer<ReactorServerPrivate> d_ptr;
+    std::unique_ptr<ReactorServerPrivate> d_ptr;
 };

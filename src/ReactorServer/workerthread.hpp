@@ -8,6 +8,7 @@
 #include <vector>
 
 class SubReactor;
+
 class WorkerThread : public QThread
 {
     Q_OBJECT
@@ -16,7 +17,7 @@ public:
     ~WorkerThread();
 
     void handleConnection(qintptr socketDescriptor);
-    int clientCount() const;
+    [[nodiscard]] int clientCount() const;
 
 signals:
     void message(const QString &msg);
@@ -28,7 +29,7 @@ protected:
 
 private:
     class WorkerThreadPrivate;
-    QScopedPointer<WorkerThreadPrivate> d_ptr;
+    std::unique_ptr<WorkerThreadPrivate> d_ptr;
 };
 
 using WorkerThreadPtr = std::unique_ptr<WorkerThread>;

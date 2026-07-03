@@ -4,7 +4,10 @@
 
 #include <QObject>
 
+#include <memory>
+
 class WorkerThread;
+
 class ThreadPool : public QObject
 {
     Q_OBJECT
@@ -15,7 +18,7 @@ public:
     ~ThreadPool();
 
     void dispatchConnection(qintptr socketDescriptor);
-    int activeThreadCount() const;
+    [[nodiscard]] int activeThreadCount() const;
 
 signals:
     void message(const QString &msg);
@@ -24,5 +27,5 @@ signals:
 
 private:
     class ThreadPoolPrivate;
-    QScopedPointer<ThreadPoolPrivate> d_ptr;
+    std::unique_ptr<ThreadPoolPrivate> d_ptr;
 };

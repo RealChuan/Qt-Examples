@@ -4,7 +4,10 @@
 
 #include <QTcpServer>
 
+#include <memory>
+
 class ThreadPool;
+
 class TcpServer : public QTcpServer
 {
     Q_OBJECT
@@ -24,5 +27,5 @@ protected:
 
 private:
     class TcpServerPrivate;
-    QScopedPointer<TcpServerPrivate> d_ptr;
+    std::unique_ptr<TcpServerPrivate> d_ptr;
 };

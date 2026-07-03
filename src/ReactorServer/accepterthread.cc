@@ -3,12 +3,14 @@
 
 #include <QDebug>
 
+#include <memory>
+
+using namespace Qt::StringLiterals;
+
 class AccepterThread::AccepterThreadPrivate
 {
 public:
-    explicit AccepterThreadPrivate(AccepterThread *q)
-        : q_ptr(q)
-    {}
+    explicit AccepterThreadPrivate(AccepterThread *q) : q_ptr(q) {}
 
     AccepterThread *q_ptr;
 
@@ -18,8 +20,7 @@ public:
 };
 
 AccepterThread::AccepterThread(quint16 port, int threadCount, QObject *parent)
-    : QThread(parent)
-    , d_ptr(new AccepterThreadPrivate(this))
+    : QThread(parent), d_ptr(new AccepterThreadPrivate(this))
 {
     d_ptr->port = port;
     d_ptr->threadCount = threadCount;
@@ -34,26 +35,22 @@ AccepterThread::~AccepterThread()
 }
 
 void AccepterThread::setCallbacks(const ConnectionCallbacks &callbacks)
-{
-    d_ptr->callbacks = callbacks;
-}
+{ d_ptr->callbacks = callbacks; }
 
 void AccepterThread::run()
 {
-    QScopedPointer<TcpServer> tcpServerPtr(new TcpServer(d_ptr->threadCount, d_ptr->callbacks));
+    const auto tcpServer = std::make_unique<TcpServer>(d_ptr->threadCount, d_ptr->callbacks);
 
-    connect(tcpServerPtr.data(), &TcpServer::message, this, &AccepterThread::message);
-    connect(tcpServerPtr.data(),
-            &TcpServer::clientCountChanged,
-            this,
-            &AccepterThread::clientCountChanged);
-    connect(tcpServerPtr.data(), &TcpServer::maxClientCount, this, &AccepterThread::maxClientCount);
+    connect(tcpServer.get(), &TcpServer::message, this, &AccepterThread::message);
+    connect(
+        tcpServer.get(), &TcpServer::clientCountChanged, this, &AccepterThread::clientCountChanged);
+    connect(tcpServer.get(), &TcpServer::maxClientCount, this, &AccepterThread::maxClientCount);
 
-    if (!tcpServerPtr->listen(QHostAddress::Any, d_ptr->port)) {
-        emit message("Failed to start server: " + tcpServerPtr->errorString());
+    if (!tcpServer->listen(QHostAddress::Any, d_ptr->port)) {
+        qCritical() << u"Failed to start server:"_s << tcpServer->errorString();
         return;
     }
 
-    emit message(QString("Server started on port %1").arg(d_ptr->port));
+    emit message(u"Server started on port %1"_s.arg(d_ptr->port));
     exec();
 }

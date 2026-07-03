@@ -3,22 +3,17 @@
 
 #include <QDebug>
 
+using namespace Qt::StringLiterals;
+
 class SubReactor::SubReactorPrivate
 {
 public:
-    explicit SubReactorPrivate(SubReactor *q)
-        : q_ptr(q)
-    {}
+    explicit SubReactorPrivate(SubReactor *q) : q_ptr(q) {}
 
-    ~SubReactorPrivate()
-    {
-        if (connections.isEmpty()) {
-            return;
-        }
-
-        qDeleteAll(connections);
-        connections.clear();
-    }
+    // No manual deletion needed:
+    // - Normally closed connections are removed by onConnectionClosed() → deleteLater()
+    // - Remaining connections are QObjects; Qt parent ownership handles cleanup
+    // - qDeleteAll here would double-free connections already queued for deleteLater()
 
     SubReactor *q_ptr;
 
@@ -28,24 +23,22 @@ public:
 };
 
 SubReactor::SubReactor(const ConnectionCallbacks &callbacks, QObject *parent)
-    : QObject(parent)
-    , d_ptr(new SubReactorPrivate(this))
-{
-    d_ptr->callbacks = callbacks;
-}
+    : QObject(parent), d_ptr(std::make_unique<SubReactorPrivate>(this))
+{ d_ptr->callbacks = callbacks; }
 
 SubReactor::~SubReactor() {}
 
 void SubReactor::addConnection(qintptr socketDescriptor)
 {
-    auto connectionPtr = std::make_unique<TcpConnection>(socketDescriptor, d_ptr->callbacks);
+    auto result = TcpConnection::create(socketDescriptor, d_ptr->callbacks);
 
-    if (!connectionPtr->isValid()) {
-        emit message(tr("Failed to create connection: %1").arg(connectionPtr->errorString()));
+    if (!result.has_value()) {
+        qCritical() << u"Failed to create connection:"_s << result.error();
         return;
     }
 
-    auto *connection = connectionPtr.release();
+    // Transfer ownership from unique_ptr to Qt event loop (deleteLater)
+    auto *connection = result->release();
     connect(connection, &TcpConnection::handleDisconnected, this, &SubReactor::onConnectionClosed);
 
     d_ptr->connections.append(connection);
@@ -56,9 +49,7 @@ void SubReactor::addConnection(qintptr socketDescriptor)
 }
 
 int SubReactor::clientCount() const
-{
-    return d_ptr->connectionCount;
-}
+{ return d_ptr->connectionCount; }
 
 void SubReactor::onConnectionClosed()
 {

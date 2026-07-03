@@ -1,7 +1,6 @@
 set(PROJECT_SOURCES
     accepterthread.cc
     accepterthread.hpp
-    connectioncallbacks.cc
     connectioncallbacks.hpp
     main.cc
     reactorserver.cc

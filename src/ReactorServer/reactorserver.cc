@@ -6,9 +6,7 @@
 class ReactorServer::ReactorServerPrivate
 {
 public:
-    explicit ReactorServerPrivate(ReactorServer *q)
-        : q_ptr(q)
-    {}
+    explicit ReactorServerPrivate(ReactorServer *q) : q_ptr(q) {}
 
     ReactorServer *q_ptr;
 
@@ -16,9 +14,9 @@ public:
 };
 
 ReactorServer::ReactorServer(quint16 port, int threadCount, QObject *parent)
-    : QObject(parent)
-    , d_ptr(new ReactorServerPrivate(this))
+    : QObject(parent), d_ptr(std::make_unique<ReactorServerPrivate>(this))
 {
+    // NOLINTNEXTLINE(cppcoreguidelines-owning-memory) — Qt parent ownership (this)
     d_ptr->accepter = new AccepterThread(port, threadCount, this);
     connect(d_ptr->accepter, &AccepterThread::message, this, &ReactorServer::message);
     connect(d_ptr->accepter,
@@ -29,14 +27,10 @@ ReactorServer::ReactorServer(quint16 port, int threadCount, QObject *parent)
 }
 
 ReactorServer::~ReactorServer()
-{
-    stop();
-}
+{ stop(); }
 
 void ReactorServer::setCallbacks(const ConnectionCallbacks &callbacks)
-{
-    d_ptr->accepter->setCallbacks(callbacks);
-}
+{ d_ptr->accepter->setCallbacks(callbacks); }
 
 void ReactorServer::start()
 {
@@ -60,6 +54,4 @@ void ReactorServer::stop()
 }
 
 bool ReactorServer::isRunning() const
-{
-    return d_ptr->accepter->isRunning();
-}
+{ return d_ptr->accepter->isRunning(); }

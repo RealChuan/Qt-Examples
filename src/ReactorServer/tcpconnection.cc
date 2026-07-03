@@ -2,39 +2,58 @@
 
 #include <QDebug>
 
+using namespace Qt::StringLiterals;
+
 class TcpConnection::TcpConnectionPrivate
 {
 public:
-    explicit TcpConnectionPrivate(TcpConnection *q)
-        : q_ptr(q)
-    {}
+    explicit TcpConnectionPrivate(TcpConnection *q) : q_ptr(q) {}
 
     TcpConnection *q_ptr;
 
-    bool valid = false;
     ConnectionCallbacks callbacks;
 };
+
+auto TcpConnection::create(qintptr socketDescriptor,
+                           const ConnectionCallbacks &callbacks,
+                           QObject *parent)
+    -> std::expected<std::unique_ptr<TcpConnection>, QString>
+{
+    // Cannot use make_unique with private constructor; use new then wrap.
+    auto *raw = new TcpConnection(socketDescriptor, callbacks, parent);
+
+    if (!raw->setSocketDescriptor(socketDescriptor)) {
+        auto error = raw->errorString();
+        delete raw;
+        return std::unexpected(error);
+    }
+
+    // Wire up signals only after socket descriptor is valid
+    connect(raw, &TcpConnection::readyRead, raw, &TcpConnection::onReadyRead);
+    connect(raw, &TcpConnection::errorOccurred, raw, &TcpConnection::onErrorOccurred);
+    connect(raw, &TcpConnection::disconnected, raw, &TcpConnection::onDisconnected);
+
+    raw->d_ptr->callbacks = callbacks;
+
+    // Wrap in unique_ptr BEFORE invoking callback — ensures RAII protection
+    // if the callback triggers a signal chain that could destroy the object
+    auto ptr = std::unique_ptr<TcpConnection>(raw);
+
+    if (ptr->d_ptr->callbacks.onConnected) {
+        ptr->d_ptr->callbacks.onConnected(ptr.get());
+    }
+
+    return ptr;
+}
 
 TcpConnection::TcpConnection(qintptr socketDescriptor,
                              const ConnectionCallbacks &callbacks,
                              QObject *parent)
-    : QTcpSocket(parent)
-    , d_ptr(new TcpConnectionPrivate(this))
+    : QTcpSocket(parent), d_ptr(std::make_unique<TcpConnectionPrivate>(this))
 {
-    if (!setSocketDescriptor(socketDescriptor)) {
-        d_ptr->valid = false;
-        return;
-    }
-
-    d_ptr->valid = true;
-    d_ptr->callbacks = callbacks;
-    connect(this, &TcpConnection::readyRead, this, &TcpConnection::onReadyRead);
-    connect(this, &TcpConnection::errorOccurred, this, &TcpConnection::onErrorOccurred);
-    connect(this, &TcpConnection::disconnected, this, &TcpConnection::onDisconnected);
-
-    if (d_ptr->callbacks.onConnected) {
-        d_ptr->callbacks.onConnected(this);
-    }
+    Q_UNUSED(socketDescriptor)
+    Q_UNUSED(callbacks)
+    // Socket descriptor and callbacks are set in create() after validation
 }
 
 TcpConnection::~TcpConnection()
@@ -42,18 +61,10 @@ TcpConnection::~TcpConnection()
     if (state() != QAbstractSocket::UnconnectedState) {
         disconnectFromHost();
     }
-    qDebug() << "~TcpConnection";
-}
-
-bool TcpConnection::isValid() const
-{
-    return d_ptr->valid;
 }
 
 QString TcpConnection::clientInfo() const
-{
-    return QString("%1:%2").arg(peerAddress().toString(), QString::number(peerPort()));
-}
+{ return u"%1:%2"_s.arg(peerAddress().toString(), QString::number(peerPort())); }
 
 void TcpConnection::onReadyRead()
 {
@@ -73,9 +84,11 @@ void TcpConnection::onErrorOccurred(QAbstractSocket::SocketError socketError)
 
 void TcpConnection::onDisconnected()
 {
+    // Emit handleDisconnected FIRST so SubReactor decrements its count
+    // before the user callback runs — ensures consistent state in callback
+    emit handleDisconnected();
+
     if (d_ptr->callbacks.onDisconnected) {
         d_ptr->callbacks.onDisconnected(this);
     }
-
-    emit handleDisconnected();
 }

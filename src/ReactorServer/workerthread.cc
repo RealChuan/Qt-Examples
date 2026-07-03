@@ -6,9 +6,7 @@
 class WorkerThread::WorkerThreadPrivate
 {
 public:
-    explicit WorkerThreadPrivate(WorkerThread *q)
-        : q_ptr(q)
-    {}
+    explicit WorkerThreadPrivate(WorkerThread *q) : q_ptr(q) {}
 
     WorkerThread *q_ptr;
 
@@ -17,11 +15,8 @@ public:
 };
 
 WorkerThread::WorkerThread(const ConnectionCallbacks &callbacks, QObject *parent)
-    : QThread(parent)
-    , d_ptr(new WorkerThreadPrivate(this))
-{
-    d_ptr->callbacks = callbacks;
-}
+    : QThread(parent), d_ptr(std::make_unique<WorkerThreadPrivate>(this))
+{ d_ptr->callbacks = callbacks; }
 
 WorkerThread::~WorkerThread()
 {
@@ -33,19 +28,14 @@ WorkerThread::~WorkerThread()
 
 void WorkerThread::run()
 {
-    QScopedPointer<SubReactor> subReactorPtr(new SubReactor(d_ptr->callbacks));
+    const auto subReactor = std::make_unique<SubReactor>(d_ptr->callbacks);
 
-    d_ptr->subReactorPtr = subReactorPtr.data();
+    d_ptr->subReactorPtr = subReactor.get();
 
-    connect(subReactorPtr.data(), &SubReactor::message, this, &WorkerThread::message);
-    connect(subReactorPtr.data(),
-            &SubReactor::clientConnected,
-            this,
-            &WorkerThread::clientConnected);
-    connect(subReactorPtr.data(),
-            &SubReactor::clientDisconnected,
-            this,
-            &WorkerThread::clientDisconnected);
+    connect(subReactor.get(), &SubReactor::message, this, &WorkerThread::message);
+    connect(subReactor.get(), &SubReactor::clientConnected, this, &WorkerThread::clientConnected);
+    connect(
+        subReactor.get(), &SubReactor::clientDisconnected, this, &WorkerThread::clientDisconnected);
 
     exec();
 }
@@ -61,6 +51,4 @@ void WorkerThread::handleConnection(qintptr socketDescriptor)
 }
 
 int WorkerThread::clientCount() const
-{
-    return d_ptr->subReactorPtr ? d_ptr->subReactorPtr->clientCount() : 0;
-}
+{ return d_ptr->subReactorPtr ? d_ptr->subReactorPtr->clientCount() : 0; }

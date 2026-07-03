@@ -4,6 +4,8 @@
 
 #include <QObject>
 
+#include <memory>
+
 class SubReactor : public QObject
 {
     Q_OBJECT
@@ -12,7 +14,7 @@ public:
     ~SubReactor();
 
     void addConnection(qintptr socketDescriptor);
-    int clientCount() const;
+    [[nodiscard]] int clientCount() const;
 
 signals:
     void message(const QString &msg);
@@ -24,5 +26,5 @@ private slots:
 
 private:
     class SubReactorPrivate;
-    QScopedPointer<SubReactorPrivate> d_ptr;
+    std::unique_ptr<SubReactorPrivate> d_ptr;
 };

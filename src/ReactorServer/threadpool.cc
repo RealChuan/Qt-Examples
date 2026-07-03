@@ -6,9 +6,7 @@
 class ThreadPool::ThreadPoolPrivate
 {
 public:
-    explicit ThreadPoolPrivate(ThreadPool *q)
-        : q_ptr(q)
-    {}
+    explicit ThreadPoolPrivate(ThreadPool *q) : q_ptr(q) {}
 
     ~ThreadPoolPrivate()
     {
@@ -46,29 +44,28 @@ public:
     ThreadPool *q_ptr;
 
     WorkerThreadList threads;
-    int currentIndex = 0;
+    std::atomic<int> currentIndex{0};
     std::atomic<qint32> totalClientCount{0};
     std::atomic<qint32> maxClientCount{0};
     std::atomic<qint32> totalConnectedClients{0};
 };
 
 ThreadPool::ThreadPool(int count, const ConnectionCallbacks &callbacks, QObject *parent)
-    : QObject(parent)
-    , d_ptr(new ThreadPoolPrivate(this))
+    : QObject(parent), d_ptr(std::make_unique<ThreadPoolPrivate>(this))
 {
     for (int i = 0; i < count; ++i) {
-        auto *thread = new WorkerThread(callbacks);
+        auto thread = std::make_unique<WorkerThread>(callbacks);
 
-        connect(thread, &WorkerThread::message, this, &ThreadPool::message);
-        connect(thread, &WorkerThread::clientConnected, this, [this]() {
+        connect(thread.get(), &WorkerThread::message, this, &ThreadPool::message);
+        connect(thread.get(), &WorkerThread::clientConnected, this, [this]() {
             d_ptr->updateClientCount(1);
         });
-        connect(thread, &WorkerThread::clientDisconnected, this, [this]() {
+        connect(thread.get(), &WorkerThread::clientDisconnected, this, [this]() {
             d_ptr->updateClientCount(-1);
         });
 
         thread->start();
-        d_ptr->threads.emplace_back(thread);
+        d_ptr->threads.push_back(std::move(thread));
     }
 }
 
@@ -79,14 +76,10 @@ void ThreadPool::dispatchConnection(qintptr socketDescriptor)
     if (d_ptr->threads.empty())
         return;
 
-    // Simple round-robin load balancing
-    auto &thread = d_ptr->threads[d_ptr->currentIndex];
-    d_ptr->currentIndex = (d_ptr->currentIndex + 1) % d_ptr->threads.size();
-
-    thread->handleConnection(socketDescriptor);
+    // Atomic round-robin: fetch_add is lock-free and thread-safe
+    auto index = d_ptr->currentIndex.fetch_add(1) % static_cast<int>(d_ptr->threads.size());
+    d_ptr->threads[index]->handleConnection(socketDescriptor);
 }
 
 int ThreadPool::activeThreadCount() const
-{
-    return static_cast<int>(d_ptr->threads.size());
-}
+{ return static_cast<int>(d_ptr->threads.size()); }
