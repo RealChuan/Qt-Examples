@@ -108,11 +108,7 @@
 - 自动检测 CapsLock 状态并显示警告提示
 - 可自定义图标、提示时长和警告功能
 
-![密码输入框截图](src/PasswordLineEdit/images/password_line_edit.png)
-
 > **QtQuick 版本**：[PasswordInputQuick](src/PasswordInputQuick/) - 密码输入框控件 (QtQuick 版本)
->
-> ![密码输入框截图](src/PasswordInputQuick/images/password_input.png)
 
 ### [ProgressBar](src/ProgressBar/) - 线性进度条控件
 
@@ -180,8 +176,6 @@
 - **macOS**：`~/Library/LaunchAgents/com.{appname}.plist`
 - **Linux**：`~/.config/autostart/{appname}.desktop`
 
-![开机自启动](src/AutoStartManager/images/auto_start.png)
-
 ### [LifecycleCallback](src/LifecycleCallback/) - 生命周期感知的回调包装器
 
 - 自动检测对象销毁，避免悬空回调
@@ -198,8 +192,6 @@
 
 - **Windows**：注册表 `HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{GUID}` 和 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{GUID}`
 - **功能**：将应用程序图标添加到 Windows"此电脑"中，与磁盘驱动器并列显示
-
-![此电脑集成](src/WindowsIntegration/images/windows_integration.png)
 
 ## 网络与数据库
 
