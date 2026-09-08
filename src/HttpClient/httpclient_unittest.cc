@@ -1,15 +1,15 @@
 #include "httpclient.hpp"
 
-#include <QCoreApplication>
 #include <QFile>
 #include <QJsonArray>
-#include <QJsonObject>
-#include <QMutex>
+#include <QJsonValue>
 #include <QTemporaryDir>
 #include <QTest>
-#include <QThread>
-#include <QTimer>
 
+using namespace Qt::StringLiterals;
+
+// Integration tests: require the Flask test server (unittests/test_server.py)
+// running on http://127.0.0.1:8000. All tests are skipped when it is unreachable.
 class HttpClientTest : public QObject
 {
     Q_OBJECT
@@ -18,76 +18,96 @@ private slots:
     void initTestCase();
     void cleanupTestCase();
     void init();
-    void cleanup();
 
-    // 基础功能测试
-    void testGetRequest();
-    void testPostRequest();
-    void testPutRequest();
-    void testDeleteRequest();
-    void testPostRequestWithVariousData();
+    // JSON requests
+    void testSyncGet();
+    void testSyncPostJson();
+    void testSyncPutJson();
+    void testSyncDelete();
+    void testJsonValueRoundTrip_data();
+    void testJsonValueRoundTrip();
+    void testPatchViaGenericRequest();
+    void testCustomHeaders();
+    void testSpecialCharacterHeaders();
+    void testBearerAuth();
+    void testBasicAuth();
+    void testQueryParameters();
+    void testQueryUrlEncoding();
+    void testEmptyJsonPostSendsNoBody();
+    void testNonJsonResponse();
+    void testResponseHeaderLookup();
+    void testServerErrorStatus_data();
+    void testServerErrorStatus();
 
-    // 文件传输测试
+    // Async behavior
+    void testAsyncFinishedCallback();
+    void testSyncTimeout();
+    void testCancelRunningRequest();
+    void testConcurrentRequests();
+    void testProgressReachesTotal();
+
+    // Download
     void testDownload();
     void testDownloadProgress();
+    void testDownloadResume();
+    void testDownloadResumeProgress();
+    void testDownloadNoRangeRestartsFromScratch();
+    void testDownloadOverwritesExistingFile();
+    void testDownloadHttpErrorDiscardsTemp();
+    void testDownloadRenameFailureProducesFileError();
+
+    // SSL（自签 HTTPS 实例）
+    void testSelfSignedSslFailsByDefault();
+    void testIgnoreSslErrorsSucceeds();
+
+    // Upload
     void testUploadPutFile();
     void testUploadPutData();
-    void testUploadPostFile();
-    void testUploadPostData();
+    void testUploadMultipartFile();
+    void testUploadMultipartData();
+    void testUploadEmptyData();
     void testUploadProgress();
-
-    // 错误和边界情况测试
-    void testTimeout();
-    void testNetworkErrorScenarios();
-    void testCancelMechanism();
-    void testBoundaryConditions();
-    void testDownloadEdgeCases();
-
-    // 功能特性测试
-    void testSyncRequest();
-    void testCustomHeaders();
-    void testMultipleRequests();
-    void testConcurrentRequests();
-    void testHttpClientStateManagement();
+    void testLargeBodyRoundTrip();
 
 private:
-    // 测试辅助方法
-    bool isTestServerAvailable();
-    QNetworkReply *createBasicGetRequest();
-    void verifySuccessfulResponse(const QJsonObject &response);
-    void createFile(const QString &filename, const QByteArray &data);
-    void removeFile(const QString &filename);
-    QJsonObject waitForReply(QNetworkReply *reply);
-    void cleanupReply(QNetworkReply *reply);
+    [[nodiscard]] static bool isServerAvailable();
 
-    HttpClient *m_httpClient;
+    HttpClient *m_client = nullptr;
     QString m_baseUrl;
     QTemporaryDir m_tempDir;
-    bool m_serverAvailable;
+    bool m_serverAvailable = false;
+    bool m_httpsAvailable = false;
 };
 
 void HttpClientTest::initTestCase()
 {
-    m_httpClient = new HttpClient(this);
-    m_baseUrl = "http://127.0.0.1:8000/api";
+    m_client = new HttpClient(this);
+    m_baseUrl = u"http://127.0.0.1:8000"_s;
     QVERIFY(m_tempDir.isValid());
-
-    qDebug() << "HttpClient Unit Tests Starting";
-    qDebug() << "Base URL:" << m_baseUrl;
-    qDebug() << "Temp Dir:" << m_tempDir.path();
-
-    m_serverAvailable = isTestServerAvailable();
-
+    m_serverAvailable = isServerAvailable();
     if (!m_serverAvailable) {
-        qWarning() << "Test server not available at" << m_baseUrl;
-        qWarning() << "Some tests will be skipped";
+        qWarning() << "Test server not available at" << m_baseUrl << "- skipping integration tests";
+        return;
     }
+    // HTTPS 实例为可选能力（服务器缺 pyOpenSSL 时仅 HTTP）
+    HttpClient probe;
+    m_httpsAvailable = probe.get(QUrl(u"https://127.0.0.1:8443/api/health"_s))
+                           .ignoreSslErrors()
+                           .timeout(std::chrono::seconds(5))
+                           .sync()
+                           .success();
 }
 
 void HttpClientTest::cleanupTestCase()
 {
-    delete m_httpClient;
-    qDebug() << "HttpClient Unit Tests Finished";
+    // 通知服务器清空上传目录，避免跨运行残留；尽力而为，不校验结果
+    if (m_serverAvailable) {
+        const auto cleanup = m_client->post(QUrl(m_baseUrl + u"/api/cleanup"_s))
+                                 .timeout(std::chrono::seconds(5))
+                                 .sync();
+        Q_UNUSED(cleanup);
+    }
+    // m_client is owned by the Qt parent-child tree
 }
 
 void HttpClientTest::init()
@@ -97,683 +117,608 @@ void HttpClientTest::init()
     }
 }
 
-void HttpClientTest::cleanup()
+bool HttpClientTest::isServerAvailable()
 {
-    // 每个测试后的小延迟，确保资源清理
-    QTest::qWait(100);
+    HttpClient probe;
+    const auto result = probe.get(QUrl(u"http://127.0.0.1:8000/api/health"_s))
+                            .timeout(std::chrono::seconds(3))
+                            .sync();
+    return result.success();
 }
 
-bool HttpClientTest::isTestServerAvailable()
+void HttpClientTest::testSyncGet()
 {
-    QNetworkAccessManager nam;
-    QNetworkRequest request(QUrl("http://127.0.0.1:8000/api/health"));
-    QNetworkReply *reply = nam.get(request);
-
-    QEventLoop loop;
-    QTimer timeoutTimer;
-    timeoutTimer.setSingleShot(true);
-
-    connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
-    connect(&timeoutTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
-
-    timeoutTimer.start(3000);
-    loop.exec();
-
-    bool available = (reply->error() == QNetworkReply::NoError);
-
-    if (available) {
-        QByteArray response = reply->readAll();
-        qDebug() << "Server health check response:" << response;
-    }
-
-    reply->deleteLater();
-    return available;
+    const auto result
+        = m_client->get(QUrl(m_baseUrl + u"/api/test"_s)).timeout(std::chrono::seconds(10)).sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.status, 200);
+    QVERIFY(!result.json.isNull());
+    QCOMPARE(result.json.object().value(u"method"_s).toString(), u"GET"_s);
 }
 
-QNetworkReply *HttpClientTest::createBasicGetRequest()
-{ return m_httpClient->sendRequest(HttpClient::Method::GET, m_baseUrl + "/test", {}, {}); }
-
-void HttpClientTest::verifySuccessfulResponse(const QJsonObject &response)
+void HttpClientTest::testSyncPostJson()
 {
-    QVERIFY(!response.isEmpty());
-    QVERIFY(!response.contains("error"));
+    QJsonObject body;
+    body[u"name"_s] = u"foo"_s;
+    body[u"count"_s] = 42;
 
-    // 根据API响应结构验证基本字段
-    if (response.contains("method")) {
-        QString method = response["method"].toString();
-        QVERIFY(!method.isEmpty());
-    }
-
-    if (response.contains("message")) {
-        QString message = response["message"].toString();
-        QVERIFY(!message.isEmpty());
-    }
+    const auto result = m_client->post(QUrl(m_baseUrl + u"/api/echo"_s), body)
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto parsed = result.json.object().value(u"parsed_json"_s).toObject();
+    QCOMPARE(parsed.value(u"name"_s).toString(), u"foo"_s);
+    QCOMPARE(parsed.value(u"count"_s).toInt(), 42);
 }
 
-void HttpClientTest::createFile(const QString &filename, const QByteArray &data)
+void HttpClientTest::testSyncPutJson()
 {
-    QString filepath = m_tempDir.filePath(filename);
-    QDir().mkpath(QFileInfo(filepath).absoluteDir().path());
+    QJsonObject body;
+    body[u"item"_s] = u"widget"_s;
+    body[u"quantity"_s] = 7;
 
-    QFile file(filepath);
-    QVERIFY(file.open(QIODevice::WriteOnly));
-    file.write(data);
-    file.close();
+    const auto result = m_client->put(QUrl(m_baseUrl + u"/api/echo"_s), body)
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto parsed = result.json.object().value(u"parsed_json"_s).toObject();
+    QCOMPARE(parsed.value(u"item"_s).toString(), u"widget"_s);
+    QCOMPARE(parsed.value(u"quantity"_s).toInt(), 7);
 }
 
-void HttpClientTest::removeFile(const QString &filename)
+void HttpClientTest::testSyncDelete()
 {
-    QString filepath = m_tempDir.filePath(filename);
-    QFile file(filepath);
-    if (file.exists()) {
-        file.remove();
-    }
+    const auto result
+        = m_client->del(QUrl(m_baseUrl + u"/api/test"_s)).timeout(std::chrono::seconds(10)).sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.status, 200);
+    QCOMPARE(result.json.object().value(u"method"_s).toString(), u"DELETE"_s);
 }
 
-QJsonObject HttpClientTest::waitForReply(QNetworkReply *reply)
+void HttpClientTest::testJsonValueRoundTrip_data()
 {
-    QEventLoop loop;
-    QJsonObject result;
-    bool finished = false;
+    QTest::addColumn<QJsonValue>("value");
 
-    // 连接ready信号
-    connect(m_httpClient,
-            &HttpClient::ready,
-            &loop,
-            [&](QNetworkReply *readyReply, const QJsonObject &json) {
-                if (readyReply == reply) {
-                    result = json;
-                    finished = true;
-                    loop.quit();
-                }
-            });
-
-    // 设置超时
-    QTimer::singleShot(10000, &loop, [&]() {
-        if (!finished) {
-            qWarning() << "Request timeout in waitForReply for URL:" << reply->url().toString();
-            loop.quit();
-        }
-    });
-
-    loop.exec();
-    return result;
+    QTest::newRow("string") << QJsonValue(u"value"_s);
+    QTest::newRow("number") << QJsonValue(42);
+    QTest::newRow("float") << QJsonValue(3.14);
+    QTest::newRow("bool-true") << QJsonValue(true);
+    QTest::newRow("bool-false") << QJsonValue(false);
+    QTest::newRow("null") << QJsonValue(QJsonValue::Null);
+    QTest::newRow("array") << QJsonValue(QJsonArray{1, 2, 3});
+    QTest::newRow("nested-object") << QJsonValue(QJsonObject{{u"key"_s, u"value"_s}});
 }
 
-void HttpClientTest::cleanupReply(QNetworkReply *reply)
+void HttpClientTest::testJsonValueRoundTrip()
 {
-    if (reply) {
-        reply->deleteLater();
-    }
+    QFETCH(QJsonValue, value);
+
+    QJsonObject body;
+    body[u"field"_s] = value;
+
+    const auto result = m_client->post(QUrl(m_baseUrl + u"/api/echo"_s), body)
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto parsed = result.json.object().value(u"parsed_json"_s).toObject();
+    QCOMPARE(parsed.value(u"field"_s), value);
 }
 
-// 基础功能测试
-void HttpClientTest::testGetRequest()
+void HttpClientTest::testPatchViaGenericRequest()
 {
-    auto *reply = createBasicGetRequest();
-    QVERIFY(reply != nullptr);
-
-    QJsonObject response = waitForReply(reply);
-    verifySuccessfulResponse(response);
-    QCOMPARE(response["method"].toString(), QString("GET"));
-
-    QVERIFY(reply->isFinished());
-    QCOMPARE(reply->error(), QNetworkReply::NoError);
-
-    cleanupReply(reply);
-}
-
-void HttpClientTest::testPostRequest()
-{
-    QJsonObject requestBody;
-    requestBody["test_key"] = "test_value";
-    requestBody["number"] = 42;
-
-    auto *reply
-        = m_httpClient->sendRequest(HttpClient::Method::POST, m_baseUrl + "/echo", {}, requestBody);
-
-    QJsonObject response = waitForReply(reply);
-    verifySuccessfulResponse(response);
-
-    // 验证回显数据
-    QVERIFY(response.contains("echo_data"));
-
-    cleanupReply(reply);
-}
-
-void HttpClientTest::testPutRequest()
-{
-    auto *reply = m_httpClient->upload_put(m_baseUrl + "/echo", QByteArray("test put data"));
-
-    QJsonObject response = waitForReply(reply);
-    verifySuccessfulResponse(response);
-
-    cleanupReply(reply);
-}
-
-void HttpClientTest::testDeleteRequest()
-{
-    auto *reply
-        = m_httpClient->sendRequest(HttpClient::Method::DELETE, m_baseUrl + "/test", {}, {});
-
-    QJsonObject response = waitForReply(reply);
-    verifySuccessfulResponse(response);
-    QCOMPARE(response["method"].toString(), QString("DELETE"));
-
-    cleanupReply(reply);
-}
-
-void HttpClientTest::testPostRequestWithVariousData()
-{
-    struct TestCase
-    {
-        QJsonObject requestBody;
-        QString description;
-    };
-
-    QVector<TestCase> testCases
-        = {{QJsonObject{{"string", "value"}}, "Simple string"},
-           {QJsonObject{{"number", 42}, {"float", 3.14}}, "Numbers"},
-           {QJsonObject{{"bool_true", true}, {"bool_false", false}}, "Booleans"},
-           {QJsonObject{{"array", QJsonArray{1, 2, 3}}}, "Array"},
-           {QJsonObject{{"nested", QJsonObject{{"key", "value"}}}}, "Nested object"},
-           {QJsonObject{}, "Empty object"}};
-
-    for (const auto &testCase : testCases) {
-        qDebug() << "Testing POST with:" << testCase.description;
-
-        auto *reply = m_httpClient->sendRequest(
-            HttpClient::Method::POST, m_baseUrl + "/echo", {}, testCase.requestBody);
-
-        QJsonObject response = waitForReply(reply);
-        QVERIFY(!response.isEmpty());
-        QVERIFY(response.contains("echo_data"));
-
-        cleanupReply(reply);
-    }
-}
-
-// 文件传输测试
-void HttpClientTest::testDownload()
-{
-    QString downloadPath = m_tempDir.filePath("test_download.txt");
-
-    auto *reply = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"), downloadPath);
-
-    QJsonObject response = waitForReply(reply);
-
-    // 验证下载完成
-    QVERIFY(QFile::exists(downloadPath));
-
-    QFile file(downloadPath);
-    QVERIFY(file.open(QIODevice::ReadOnly));
-    QByteArray content = file.readAll();
-    file.close();
-
-    QVERIFY(content.contains("test file content"));
-
-    cleanupReply(reply);
-}
-
-void HttpClientTest::testDownloadProgress()
-{
-    QString downloadPath = m_tempDir.filePath("progress_test.txt");
-
-    QVector<qint64> progressValues;
-    QMutex progressMutex;
-    bool progressCalled = false;
-
-    HttpRequestOptions::ProgressCallback progressCallback
-        = [&](qint64 bytesReceived, qint64 bytesTotal) {
-              QMutexLocker locker(&progressMutex);
-              progressCalled = true;
-              progressValues.append(bytesReceived);
-
-              qDebug() << "Download progress:" << bytesReceived << "/" << bytesTotal;
-
-              QVERIFY(bytesReceived >= 0);
-              QVERIFY(bytesTotal >= 0);
-              if (bytesTotal > 0) {
-                  QVERIFY(bytesReceived <= bytesTotal);
-              }
-          };
-
-    auto *reply = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"),
-                                         downloadPath,
-                                         {.progressCallback = progressCallback});
-
-    QJsonObject response = waitForReply(reply);
-
-    // 验证进度回调被调用
-    QVERIFY(progressCalled);
-    QVERIFY(progressValues.size() > 0);
-
-    // 验证文件下载完成
-    QVERIFY(QFile::exists(downloadPath));
-
-    cleanupReply(reply);
-}
-
-void HttpClientTest::testUploadPutFile()
-{
-    QString filename = "test_upload_put.txt";
-    QByteArray fileData = "This is test content for PUT file upload";
-
-    createFile(filename, fileData);
-
-    auto *reply = m_httpClient->upload_put(m_baseUrl + "/echo", m_tempDir.filePath(filename));
-
-    QJsonObject response = waitForReply(reply);
-    verifySuccessfulResponse(response);
-
-    cleanupReply(reply);
-    removeFile(filename);
-}
-
-void HttpClientTest::testUploadPutData()
-{
-    QByteArray data = "This is test data for PUT upload";
-
-    auto *reply = m_httpClient->upload_put(m_baseUrl + "/echo", data);
-
-    QJsonObject response = waitForReply(reply);
-    verifySuccessfulResponse(response);
-
-    cleanupReply(reply);
-}
-
-void HttpClientTest::testUploadPostFile()
-{
-    QString filename = "test_upload_post.txt";
-    QByteArray fileData = "This is test content for POST file upload";
-
-    createFile(filename, fileData);
-
-    auto *reply = m_httpClient->upload_post(m_baseUrl + "/echo", m_tempDir.filePath(filename));
-
-    QJsonObject response = waitForReply(reply);
-    verifySuccessfulResponse(response);
-
-    cleanupReply(reply);
-    removeFile(filename);
-}
-
-void HttpClientTest::testUploadPostData()
-{
-    QByteArray data = "This is test data for POST upload";
-
-    auto *reply = m_httpClient->upload_post(m_baseUrl + "/echo", "test_file.txt", data);
-
-    QJsonObject response = waitForReply(reply);
-    verifySuccessfulResponse(response);
-
-    cleanupReply(reply);
-}
-
-void HttpClientTest::testUploadProgress()
-{
-    QByteArray data(1024, 'X'); // 1KB 数据，足够触发进度回调
-
-    QVector<qint64> progressValues;
-    QMutex progressMutex;
-    bool progressCalled = false;
-
-    HttpRequestOptions::ProgressCallback progressCallback
-        = [&](qint64 bytesSent, qint64 bytesTotal) {
-              QMutexLocker locker(&progressMutex);
-              progressCalled = true;
-              progressValues.append(bytesSent);
-
-              qDebug() << "Upload progress:" << bytesSent << "/" << bytesTotal;
-
-              QVERIFY(bytesSent >= 0);
-              QVERIFY(bytesTotal >= 0);
-              if (bytesTotal > 0) {
-                  QVERIFY(bytesSent <= bytesTotal);
-              }
-          };
-
-    auto *reply = m_httpClient->upload_put(
-        m_baseUrl + "/echo", data, {.progressCallback = progressCallback});
-
-    QJsonObject response = waitForReply(reply);
-    verifySuccessfulResponse(response);
-
-    // 验证进度回调被调用（小数据量可能只触发一次）
-    QVERIFY(progressCalled);
-
-    cleanupReply(reply);
-}
-
-// 错误和边界情况测试
-void HttpClientTest::testTimeout()
-{
-    bool timeoutReceived = false;
-    bool callbackCalled = false;
-
-    connect(m_httpClient, &HttpClient::timeOut, this, [&timeoutReceived]() {
-        timeoutReceived = true;
-        qDebug() << "Timeout signal received";
-    });
-
-    HttpRequestOptions::JsonCallback callback = [&callbackCalled](const QJsonObject &json) {
-        callbackCalled = true;
-        qDebug() << "Timeout callback called with error:" << json["error"].toInt();
-    };
-
-    // 使用1秒超时，请求会超时的端点
-    auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                            QUrl("http://127.0.0.1:8000/api/timeout"),
-                                            {},
-                                            {},
-                                            {.timeout = 1, .callback = callback});
-
-    QJsonObject response = waitForReply(reply);
-
-    QVERIFY(timeoutReceived);
-    QVERIFY(callbackCalled);
-    QVERIFY(response.contains("error"));
-
-    cleanupReply(reply);
-}
-
-void HttpClientTest::testNetworkErrorScenarios()
-{
-    struct ErrorCase
-    {
-        QUrl url;
-        QString description;
-        bool expectError;
-    };
-
-    QVector<ErrorCase> errorCases
-        = {{QUrl("http://invalid-domain-that-definitely-does-not-exist-12345.xyz"),
-            "Invalid domain",
-            true},
-           {QUrl("http://192.168.255.255:9999"), "Unreachable IP", true},
-           {m_baseUrl + "/test", "Valid URL", false}};
-
-    for (const auto &errorCase : errorCases) {
-        qDebug() << "Testing error case:" << errorCase.description;
-
-        bool errorOccurred = false;
-        bool finished = false;
-
-        HttpRequestOptions::JsonCallback callback = [&](const QJsonObject &json) {
-            finished = true;
-            if (json.contains("error")) {
-                errorOccurred = true;
-                qDebug() << "Error occurred:" << json["error"].toInt();
-            }
-        };
-
-        auto *reply = m_httpClient->sendRequest(
-            HttpClient::Method::GET, errorCase.url, {}, {}, {.timeout = 3, .callback = callback});
-
-        QTRY_VERIFY_WITH_TIMEOUT(finished, 5000);
-        QCOMPARE(errorOccurred, errorCase.expectError);
-
-        if (reply) {
-            cleanupReply(reply);
-        }
-    }
-}
-
-void HttpClientTest::testCancelMechanism()
-{
-    // 测试立即取消
-    {
-        bool callbackCalled = false;
-
-        HttpRequestOptions::JsonCallback callback
-            = [&](const QJsonObject &) { callbackCalled = true; };
-
-        auto *reply = m_httpClient->sendRequest(
-            HttpClient::Method::GET, m_baseUrl + "/test", {}, {}, {.callback = callback});
-
-        // 立即取消
-        m_httpClient->cancel(reply);
-
-        QTest::qWait(100);
-        QVERIFY(!callbackCalled);
-    }
-
-    // 测试进行中取消
-    {
-        QEventLoop loop;
-        bool callbackCalled = false;
-
-        HttpRequestOptions::JsonCallback callback = [&](const QJsonObject &) {
-            callbackCalled = true;
-            loop.quit();
-        };
-
-        auto *reply = m_httpClient->sendRequest(
-            HttpClient::Method::GET, m_baseUrl + "/test", {}, {}, {.callback = callback});
-
-        QTimer::singleShot(50, [this, reply]() { m_httpClient->cancel(reply); });
-
-        QTimer::singleShot(1000, &loop, &QEventLoop::quit);
-        loop.exec();
-
-        // 主要验证不会崩溃，回调是否被调用取决于取消时机
-        QVERIFY(true);
-    }
-}
-
-void HttpClientTest::testBoundaryConditions()
-{
-    // 测试空URL
-    auto *reply1 = m_httpClient->sendRequest(HttpClient::Method::GET, QUrl(), {}, {});
-    QJsonObject response1 = waitForReply(reply1);
-    QVERIFY(response1.contains("error"));
-    cleanupReply(reply1);
-
-    // 测试自定义headers
-    HttpClient::HttpHeaders headers;
-    headers["X-Custom-Header"] = "CustomValue";
-    headers["Authorization"] = "Bearer test-token";
-
-    auto *reply2
-        = m_httpClient->sendRequest(HttpClient::Method::GET, m_baseUrl + "/headers", headers, {});
-    QJsonObject response2 = waitForReply(reply2);
-    QVERIFY(!response2.isEmpty());
-    QVERIFY(response2.contains("headers"));
-    cleanupReply(reply2);
-
-    // 测试特殊字符
-    HttpClient::HttpHeaders specialHeaders{{"X-Special", "Header with spaces and \t tabs"},
-                                           {"X-Unicode", "测试 🚀 emoji"}};
-
-    auto *reply3 = m_httpClient->sendRequest(
-        HttpClient::Method::GET, m_baseUrl + "/headers", specialHeaders, {});
-    QJsonObject response3 = waitForReply(reply3);
-    QVERIFY(!response3.isEmpty());
-    cleanupReply(reply3);
-}
-
-void HttpClientTest::testDownloadEdgeCases()
-{
-    // 测试下载到已存在的文件
-    QString existingPath = m_tempDir.filePath("existing_file.txt");
-    QFile existingFile(existingPath);
-    QVERIFY(existingFile.open(QIODevice::WriteOnly));
-    existingFile.write("Existing content");
-    existingFile.close();
-
-    auto *reply1 = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"), existingPath);
-    QJsonObject response1 = waitForReply(reply1);
-    QVERIFY(QFile::exists(existingPath));
-    cleanupReply(reply1);
-
-    // 测试无效的下载路径
-    QString invalidPath = "/invalid/path/test.txt";
-    auto *reply2 = m_httpClient->downLoad(QUrl("http://127.0.0.1:8000/download"), invalidPath);
-
-    // 对于无效路径，reply可能为nullptr或包含错误
-    if (reply2) {
-        QJsonObject response2 = waitForReply(reply2);
-        // 响应可能包含错误信息
-        QVERIFY(true); // 主要验证不会崩溃
-        cleanupReply(reply2);
-    }
-}
-
-// 功能特性测试
-void HttpClientTest::testSyncRequest()
-{
-    auto *reply = createBasicGetRequest();
-    QJsonObject response = m_httpClient->sync(reply);
-
-    verifySuccessfulResponse(response);
-    QCOMPARE(response["method"].toString(), QString("GET"));
-
-    cleanupReply(reply);
+    const auto result
+        = m_client->request(HttpClient::Method::Patch, QUrl(m_baseUrl + u"/api/test"_s))
+              .timeout(std::chrono::seconds(10))
+              .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.json.object().value(u"method"_s).toString(), u"PATCH"_s);
 }
 
 void HttpClientTest::testCustomHeaders()
 {
-    HttpClient::HttpHeaders headers;
-    headers["X-Custom-Header"] = "CustomValue";
-    headers["Authorization"] = "Bearer test-token";
-    headers["X-Test-Number"] = "12345";
-
-    auto *reply
-        = m_httpClient->sendRequest(HttpClient::Method::GET, m_baseUrl + "/headers", headers, {});
-
-    QJsonObject response = waitForReply(reply);
-    QVERIFY(!response.isEmpty());
-    QVERIFY(response.contains("headers"));
-
-    auto responseHeaders = response["headers"].toObject();
-    QVERIFY(responseHeaders.contains("X-Custom-Header"));
-    QCOMPARE(responseHeaders["X-Custom-Header"].toString(), QString("CustomValue"));
-
-    cleanupReply(reply);
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/headers"_s))
+                            .header("X-Custom-Header", "CustomValue")
+                            .header("Authorization", "Bearer test-token")
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto headers = result.json.object().value(u"headers"_s).toObject();
+    QCOMPARE(headers.value(u"X-Custom-Header"_s).toString(), u"CustomValue"_s);
+    QCOMPARE(headers.value(u"Authorization"_s).toString(), u"Bearer test-token"_s);
 }
 
-void HttpClientTest::testMultipleRequests()
+void HttpClientTest::testSpecialCharacterHeaders()
 {
-    const int totalRequests = 3;
-    QVector<QJsonObject> responses;
-    QVector<QNetworkReply *> replies;
-    QEventLoop loop;
-    std::atomic<int> completedRequests{0};
+    const auto unicodeValue = u"测试 emoji"_s;
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/headers"_s))
+                            .header("X-Special", "Header with spaces and \t tabs")
+                            .header("X-Unicode", unicodeValue.toUtf8())
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto headers = result.json.object().value(u"headers"_s).toObject();
+    QCOMPARE(headers.value(u"X-Special"_s).toString(), u"Header with spaces and \t tabs"_s);
+    // Header 值按字节传输；服务端（Werkzeug）以 latin-1 解码，
+    // 故 UTF-8 字节会呈现为 latin-1 视图，往返比对需按同一方式解码
+    QCOMPARE(headers.value(u"X-Unicode"_s).toString(), QString::fromLatin1(unicodeValue.toUtf8()));
+}
 
-    auto sharedCallback = LifecycleCallback<const QJsonObject &>([&](const QJsonObject &json) {
-        responses.append(json);
-        completedRequests++;
+void HttpClientTest::testBearerAuth()
+{
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/headers"_s))
+                            .bearer("test-token-123")
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto headers = result.json.object().value(u"headers"_s).toObject();
+    QCOMPARE(headers.value(u"Authorization"_s).toString(), u"Bearer test-token-123"_s);
+}
 
-        if (completedRequests == totalRequests) {
-            loop.quit();
-        }
-    });
+void HttpClientTest::testBasicAuth()
+{
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/headers"_s))
+                            .basicAuth(u"alice"_s, u"s3cret:_pass"_s)
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto headers = result.json.object().value(u"headers"_s).toObject();
+    // base64("alice:s3cret:_pass") 独立预计算，与实现解耦
+    QCOMPARE(headers.value(u"Authorization"_s).toString(), u"Basic YWxpY2U6czNjcmV0Ol9wYXNz"_s);
+}
 
-    for (int i = 0; i < totalRequests; ++i) {
-        auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                                m_baseUrl + "/test",
-                                                {{"X-Request-ID", QString::number(i)}},
-                                                {},
-                                                {.timeout = 30, .callback = sharedCallback});
-        QVERIFY(reply != nullptr);
-        replies.append(reply);
-    }
+void HttpClientTest::testQueryParameters()
+{
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/test"_s))
+                            .query(u"page"_s, u"2"_s)
+                            .query(u"size"_s, u"50"_s)
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto args = result.json.object().value(u"query_args"_s).toObject();
+    QCOMPARE(args.value(u"page"_s).toString(), u"2"_s);
+    QCOMPARE(args.value(u"size"_s).toString(), u"50"_s);
+}
 
-    QTimer timeoutTimer;
-    timeoutTimer.setSingleShot(true);
-    connect(&timeoutTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    timeoutTimer.start(30000);
+void HttpClientTest::testQueryUrlEncoding()
+{
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/test"_s))
+                            .query(u"q"_s, u"hello world & foo=bar"_s)
+                            .query(u"lang"_s, u"你好"_s)
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto args = result.json.object().value(u"query_args"_s).toObject();
+    QCOMPARE(args.value(u"q"_s).toString(), u"hello world & foo=bar"_s);
+    QCOMPARE(args.value(u"lang"_s).toString(), u"你好"_s);
+}
 
-    loop.exec();
+void HttpClientTest::testEmptyJsonPostSendsNoBody()
+{
+    // 空 JSON 对象是默认参数：请求不带 body 和 Content-Type
+    const auto result
+        = m_client->post(QUrl(m_baseUrl + u"/api/echo"_s)).timeout(std::chrono::seconds(10)).sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.json.object().value(u"content_length"_s).toInt(), 0);
+}
 
-    QCOMPARE(completedRequests, totalRequests);
-    QCOMPARE(responses.size(), totalRequests);
+void HttpClientTest::testNonJsonResponse()
+{
+    const auto result
+        = m_client->get(QUrl(m_baseUrl + u"/api/text"_s)).timeout(std::chrono::seconds(10)).sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.status, 200);
+    QVERIFY(result.json.isNull()); // body is not JSON, json stays null
+    QVERIFY(result.body.contains("plain text"));
+}
 
-    for (const auto &response : responses) {
-        verifySuccessfulResponse(response);
-    }
+void HttpClientTest::testResponseHeaderLookup()
+{
+    const auto result
+        = m_client->get(QUrl(m_baseUrl + u"/api/text"_s)).timeout(std::chrono::seconds(10)).sync();
+    QVERIFY(result.success());
+    QVERIFY(result.header("content-TYPE").startsWith("text/plain")); // 大小写不敏感查找
+    QVERIFY(result.header("X-Does-Not-Exist").isEmpty());
+}
 
-    for (auto *reply : replies) {
-        cleanupReply(reply);
-    }
+void HttpClientTest::testServerErrorStatus_data()
+{
+    QTest::addColumn<int>("status");
+    QTest::newRow("bad-request") << 400;
+    QTest::newRow("not-found") << 404;
+    QTest::newRow("internal-error") << 500;
+}
+
+void HttpClientTest::testServerErrorStatus()
+{
+    QFETCH(int, status);
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/error?type=%1"_s.arg(status)))
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(!result.success());
+    QCOMPARE(result.status, status);
+    // Server error status maps to a QNetworkReply error code value (< 1000)
+    QVERIFY(result.code != HttpErrorCode::NoError);
+    QVERIFY(result.code != HttpErrorCode::Timeout);
+    QVERIFY(result.code != HttpErrorCode::FileError);
+    QVERIFY(static_cast<int>(result.code) < 1000);
+    QVERIFY(!result.message.isEmpty());
+    // Error body is readable and parseable
+    QVERIFY(!result.body.isEmpty());
+    QVERIFY(!result.json.isNull());
+}
+
+void HttpClientTest::testAsyncFinishedCallback()
+{
+    int finishedCount = 0;
+    HttpResult received;
+    m_client->get(QUrl(m_baseUrl + u"/api/test"_s))
+        .timeout(std::chrono::seconds(10))
+        .onFinished([&received, &finishedCount](const HttpResult &r) {
+            received = r;
+            ++finishedCount;
+        })
+        .send();
+    QTRY_COMPARE_WITH_TIMEOUT(finishedCount, 1, 15000);
+    QVERIFY(received.success());
+    QCOMPARE(received.json.object().value(u"method"_s).toString(), u"GET"_s);
+}
+
+void HttpClientTest::testSyncTimeout()
+{
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/timeout?delay=5"_s))
+                            .timeout(std::chrono::seconds(1))
+                            .sync();
+    QCOMPARE(result.code, HttpErrorCode::Timeout);
+    QVERIFY(!result.success());
+    QVERIFY(!result.message.isEmpty());
+}
+
+void HttpClientTest::testCancelRunningRequest()
+{
+    int finishedCount = 0;
+    auto task = m_client->get(QUrl(m_baseUrl + u"/api/timeout?delay=5"_s))
+                    .onFinished([&finishedCount](const HttpResult &) { ++finishedCount; })
+                    .send();
+    QTest::qWait(200); // request is in flight now
+    task.cancel();
+    QTest::qWait(500);
+    // Cancelled requests do not emit onFinished
+    QCOMPARE(finishedCount, 0);
 }
 
 void HttpClientTest::testConcurrentRequests()
 {
-    const int concurrentCount = 5;
-    QVector<QNetworkReply *> replies;
-    QVector<QJsonObject> responses;
-    QEventLoop loop;
-    std::atomic<int> completedCount{0};
-
-    HttpRequestOptions::JsonCallback callback = [&](const QJsonObject &json) {
-        responses.append(json);
-        completedCount++;
-
-        if (completedCount == concurrentCount) {
-            loop.quit();
-        }
-    };
-
-    for (int i = 0; i < concurrentCount; ++i) {
-        auto *reply = m_httpClient->sendRequest(
-            HttpClient::Method::GET, m_baseUrl + "/test", {}, {}, {.callback = callback});
-        replies.append(reply);
+    const int total = 5;
+    int finishedCount = 0;
+    int successCount = 0;
+    for (int i = 0; i < total; ++i) {
+        m_client->get(QUrl(m_baseUrl + u"/api/concurrent"_s))
+            .timeout(std::chrono::seconds(15))
+            .onFinished([&finishedCount, &successCount](const HttpResult &r) {
+                if (r.success()) {
+                    ++successCount;
+                }
+                ++finishedCount;
+            })
+            .send();
     }
-
-    QTimer::singleShot(10000, &loop, &QEventLoop::quit);
-    loop.exec();
-
-    QCOMPARE(completedCount, concurrentCount);
-    QCOMPARE(responses.size(), concurrentCount);
-
-    for (const auto &response : responses) {
-        verifySuccessfulResponse(response);
-    }
-
-    for (auto *reply : replies) {
-        cleanupReply(reply);
-    }
+    QTRY_COMPARE_WITH_TIMEOUT(finishedCount, total, 30000);
+    QCOMPARE(successCount, total);
 }
 
-void HttpClientTest::testHttpClientStateManagement()
+void HttpClientTest::testProgressReachesTotal()
 {
-    const int requestCount = 3;
-    QVector<QNetworkReply *> replies;
-    QVector<QJsonObject> responses;
-    QMutex mutex;
+    const auto path = m_tempDir.filePath(u"progress_total.txt"_s);
 
-    HttpRequestOptions::JsonCallback callback = [&](const QJsonObject &json) {
-        QMutexLocker locker(&mutex);
-        responses.append(json);
-    };
+    struct
+    {
+        qint64 received = 0;
+        qint64 total = -1;
+    } last;
 
-    for (int i = 0; i < requestCount; ++i) {
-        auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                                m_baseUrl + "/test",
-                                                {{"X-Request-ID", QString::number(i)}},
-                                                {},
-                                                {.callback = callback});
-        replies.append(reply);
+    int finishedCount = 0;
+    m_client->download(QUrl(m_baseUrl + u"/download"_s), path)
+        .timeout(std::chrono::seconds(15))
+        .onProgress([&last](qint64 received, qint64 total) { last = {received, total}; })
+        .onFinished([&finishedCount](const HttpResult &) { ++finishedCount; })
+        .send();
+    QTRY_COMPARE_WITH_TIMEOUT(finishedCount, 1, 15000);
+    QVERIFY(last.total > 0);             // 服务器提供 Content-Length
+    QCOMPARE(last.received, last.total); // 进度收敛于完整大小
+}
+
+void HttpClientTest::testDownload()
+{
+    const auto path = m_tempDir.filePath(u"download.txt"_s);
+    const auto result = m_client->download(QUrl(m_baseUrl + u"/download"_s), path)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QVERIFY(!QFile::exists(path + u".temp"_s)); // 成功后 .temp 已改名消失
+    QCOMPARE(result.status, 200);
+
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    const auto content = file.readAll();
+    QVERIFY(content.contains("test file content"));
+}
+
+void HttpClientTest::testDownloadProgress()
+{
+    const auto path = m_tempDir.filePath(u"progress.bin"_s);
+    int progressCount = 0;
+    m_client->download(QUrl(m_baseUrl + u"/download"_s), path)
+        .onProgress([&progressCount](qint64, qint64) { ++progressCount; })
+        .send();
+    QTRY_VERIFY_WITH_TIMEOUT(QFile::exists(path), 15000);
+    QVERIFY(progressCount > 0);
+}
+
+void HttpClientTest::testDownloadResume()
+{
+    // Full download first: gives us the expected content
+    const auto full = m_tempDir.filePath(u"resume_full.txt"_s);
+    QVERIFY(m_client->download(QUrl(m_baseUrl + u"/download"_s), full)
+                .timeout(std::chrono::seconds(15))
+                .sync()
+                .success());
+    QFile fullFile(full);
+    QVERIFY(fullFile.open(QIODevice::ReadOnly));
+    const auto expected = fullFile.readAll();
+    QVERIFY(expected.size() > 100);
+
+    // Pre-create the .temp file with the first half of the content:
+    // the next download must resume via a Range request
+    const auto path = m_tempDir.filePath(u"resume.txt"_s);
+    {
+        QFile tempFile(path + u".temp"_s);
+        QVERIFY(tempFile.open(QIODevice::WriteOnly));
+        tempFile.write(expected.left(expected.size() / 2));
     }
 
-    QTRY_VERIFY_WITH_TIMEOUT(responses.size() == requestCount, 10000);
+    const auto result = m_client->download(QUrl(m_baseUrl + u"/download"_s), path)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.status, 206); // server honored the Range request
 
-    for (const auto &response : responses) {
-        verifySuccessfulResponse(response);
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QCOMPARE(file.readAll(), expected);
+}
+
+void HttpClientTest::testDownloadResumeProgress()
+{
+    // 参考内容：先完整下载一次
+    const auto full = m_tempDir.filePath(u"resume_prog_full.txt"_s);
+    QVERIFY(m_client->download(QUrl(m_baseUrl + u"/download"_s), full)
+                .timeout(std::chrono::seconds(15))
+                .sync()
+                .success());
+    QFile fullFile(full);
+    QVERIFY(fullFile.open(QIODevice::ReadOnly));
+    const auto expected = fullFile.readAll();
+    QVERIFY(expected.size() > 100);
+
+    // 预置半份 .temp：续传进度必须把 downloadBase 计入 received/total
+    const auto path = m_tempDir.filePath(u"resume_prog.txt"_s);
+    {
+        QFile tempFile(path + u".temp"_s);
+        QVERIFY(tempFile.open(QIODevice::WriteOnly));
+        tempFile.write(expected.left(expected.size() / 2));
     }
 
-    for (auto *reply : replies) {
-        cleanupReply(reply);
+    struct
+    {
+        qint64 received = -1;
+        qint64 total = -1;
+    } last;
+
+    int finishedCount = 0;
+    m_client->download(QUrl(m_baseUrl + u"/download"_s), path)
+        .timeout(std::chrono::seconds(15))
+        .onProgress([&last](qint64 received, qint64 total) { last = {received, total}; })
+        .onFinished([&finishedCount](const HttpResult &) { ++finishedCount; })
+        .send();
+    QTRY_COMPARE_WITH_TIMEOUT(finishedCount, 1, 15000);
+    QCOMPARE(last.total, expected.size());    // total 含续传基数
+    QCOMPARE(last.received, expected.size()); // 终值收敛于完整大小
+}
+
+void HttpClientTest::testDownloadNoRangeRestartsFromScratch()
+{
+    const auto path = m_tempDir.filePath(u"no_range.txt"_s);
+    // 预置被污染的 .temp：服务器忽略 Range 返回 200 时必须截断重写而非拼接
+    {
+        QFile tempFile(path + u".temp"_s);
+        QVERIFY(tempFile.open(QIODevice::WriteOnly));
+        tempFile.write("STALE-JUNK");
+    }
+    const auto result = m_client->download(QUrl(m_baseUrl + u"/download-no-range"_s), path)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.status, 200);
+    QVERIFY(!QFile::exists(path + u".temp"_s));
+
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    const QByteArray expectedContent
+        = QByteArray("This is test file content for download verification. ").repeated(10);
+    QCOMPARE(file.readAll(), expectedContent);
+}
+
+void HttpClientTest::testDownloadOverwritesExistingFile()
+{
+    const auto path = m_tempDir.filePath(u"overwrite.txt"_s);
+    {
+        QFile stale(path);
+        QVERIFY(stale.open(QIODevice::WriteOnly));
+        stale.write("stale content that must be replaced");
+    }
+    const auto result = m_client->download(QUrl(m_baseUrl + u"/download"_s), path)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    const auto content = file.readAll();
+    QVERIFY(content.contains("test file content"));
+    QVERIFY(!content.contains("stale"));
+}
+
+void HttpClientTest::testDownloadHttpErrorDiscardsTemp()
+{
+    const auto path = m_tempDir.filePath(u"error_dl.txt"_s);
+    const auto result = m_client->download(QUrl(m_baseUrl + u"/api/error?type=500"_s), path)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(!result.success());
+    QCOMPARE(result.status, 500);
+    QVERIFY(!QFile::exists(path));              // 最终文件绝不生成
+    QVERIFY(!QFile::exists(path + u".temp"_s)); // HTTP 错误体污染的 .temp 必须丢弃
+}
+
+void HttpClientTest::testUploadPutFile()
+{
+    const auto path = m_tempDir.filePath(u"upload_put.bin"_s);
+    const QByteArray data(2048, 'X');
+    {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(data);
     }
 
-    // 验证HttpClient状态正常，可以继续使用
-    auto *newReply = createBasicGetRequest();
-    QJsonObject newResponse = waitForReply(newReply);
-    verifySuccessfulResponse(newResponse);
-    cleanupReply(newReply);
+    const auto result = m_client->upload(QUrl(m_baseUrl + u"/api/upload"_s))
+                            .putFile(path)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.json.object().value(u"content_length"_s).toInt(), data.size());
+}
+
+void HttpClientTest::testUploadPutData()
+{
+    const QByteArray data(4096, 'Y');
+    const auto result = m_client->upload(QUrl(m_baseUrl + u"/api/upload"_s))
+                            .putData(data)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.json.object().value(u"content_length"_s).toInt(), data.size());
+}
+
+void HttpClientTest::testUploadMultipartFile()
+{
+    const auto path = m_tempDir.filePath(u"upload_multipart.bin"_s);
+    const QByteArray data(1536, 'Z');
+    {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(data);
+    }
+
+    const auto result = m_client->upload(QUrl(m_baseUrl + u"/api/upload"_s))
+                            .multipartFile(path)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.json.object().value(u"filename"_s).toString(), u"upload_multipart.bin"_s);
+    QCOMPARE(result.json.object().value(u"content_length"_s).toInt(), data.size());
+}
+
+void HttpClientTest::testUploadMultipartData()
+{
+    const QByteArray data(768, 'W');
+    const auto result = m_client->upload(QUrl(m_baseUrl + u"/api/upload"_s))
+                            .multipartData(u"report.txt"_s, data)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.json.object().value(u"filename"_s).toString(), u"report.txt"_s);
+    QCOMPARE(result.json.object().value(u"content_length"_s).toInt(), data.size());
+}
+
+void HttpClientTest::testUploadEmptyData()
+{
+    const auto result = m_client->upload(QUrl(m_baseUrl + u"/api/upload"_s))
+                            .putData(QByteArray())
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.json.object().value(u"content_length"_s).toInt(), 0);
+}
+
+void HttpClientTest::testUploadProgress()
+{
+    const QByteArray data(64 * 1024, 'P');
+    int progressCount = 0;
+    int finishedCount = 0;
+    m_client->upload(QUrl(m_baseUrl + u"/api/upload"_s))
+        .putData(data)
+        .timeout(std::chrono::seconds(15))
+        .onProgress([&progressCount](qint64, qint64) { ++progressCount; })
+        .onFinished([&finishedCount](const HttpResult &) { ++finishedCount; })
+        .send();
+    QTRY_COMPARE_WITH_TIMEOUT(finishedCount, 1, 20000);
+    QVERIFY(progressCount > 0);
+}
+
+void HttpClientTest::testLargeBodyRoundTrip()
+{
+    const QByteArray data(1024 * 1024, 'L');
+    const auto result = m_client->upload(QUrl(m_baseUrl + u"/api/upload"_s))
+                            .putData(data)
+                            .timeout(std::chrono::seconds(30))
+                            .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.json.object().value(u"content_length"_s).toInt(), data.size());
+}
+
+void HttpClientTest::testDownloadRenameFailureProducesFileError()
+{
+    // 目标路径被同名目录占用：改名必败，必须报告 FileError 而非静默成功
+    const auto path = m_tempDir.filePath(u"rename_blocker"_s);
+    QVERIFY(QDir(m_tempDir.path()).mkdir(u"rename_blocker"_s));
+
+    const auto result = m_client->download(QUrl(m_baseUrl + u"/download"_s), path)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QCOMPARE(result.code, HttpErrorCode::FileError);
+    QVERIFY(!result.success());
+    QVERIFY(!result.message.isEmpty());
+    // 完整数据保留在 .temp，可手工恢复
+    QVERIFY(QFile::exists(path + u".temp"_s));
+    QVERIFY(QFile(path + u".temp"_s).size() > 100);
+}
+
+void HttpClientTest::testSelfSignedSslFailsByDefault()
+{
+    if (!m_httpsAvailable) {
+        QSKIP("HTTPS test instance not available");
+    }
+    const auto result = m_client->get(QUrl(u"https://127.0.0.1:8443/api/health"_s))
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(!result.success());
+    QCOMPARE(result.status, 0);           // 握手即失败，未到达应用层
+    QVERIFY(static_cast<int>(result.code) > 0 && static_cast<int>(result.code) < 1000);
+    QVERIFY(!result.sslErrors.isEmpty()); // 失败详情已收集进结果
+}
+
+void HttpClientTest::testIgnoreSslErrorsSucceeds()
+{
+    if (!m_httpsAvailable) {
+        QSKIP("HTTPS test instance not available");
+    }
+    const auto result = m_client->get(QUrl(u"https://127.0.0.1:8443/api/health"_s))
+                            .ignoreSslErrors()
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    QVERIFY(!result.sslErrors.isEmpty()); // 忽略的同时错误详情仍带入结果
+    QCOMPARE(result.json.object().value(u"status"_s).toString(), u"healthy"_s);
 }
 
 QTEST_MAIN(HttpClientTest)
-
 #include "httpclient_unittest.moc"
