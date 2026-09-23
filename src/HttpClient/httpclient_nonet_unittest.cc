@@ -1,15 +1,33 @@
 #include "httpclient.hpp"
 
-#include <QEventLoop>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QNetworkReply>
+#include <LifecycleCallback/lifecyclecallback_qt.hpp>
+
+#include <QFile>
+#include <QRegularExpression>
+#include <QTemporaryDir>
 #include <QTest>
-#include <QTimer>
 
 using namespace Qt::StringLiterals;
 
-// 无网络测试：不需要测试服务器，验证取消、超时、错误处理等逻辑
+// 无网络测试：不需要测试服务器。
+// 不可达地址统一使用 RFC 5737 TEST-NET-1 (192.0.2.1) 与 RFC 6761 .invalid TLD。
+
+class CallbackReceiver : public QObject
+{
+public:
+    int finishedCount = 0;
+    int progressCount = 0;
+    HttpResult lastResult;
+
+    void handleFinished(const HttpResult &result)
+    {
+        ++finishedCount;
+        lastResult = result;
+    }
+
+    void handleProgress(qint64, qint64) { ++progressCount; }
+};
+
 class HttpClientNoNetTest : public QObject
 {
     Q_OBJECT
@@ -18,237 +36,304 @@ private slots:
     void initTestCase();
     void cleanupTestCase();
 
-    // 取消机制：立即取消请求，不应崩溃
-    void testCancelImmediately();
+    // 取消语义
+    void cancelImmediatelyDoesNotEmitFinished();
+    void cancelWhileRunningDoesNotEmitFinished();
+    void cancelIsIdempotent();
 
-    // 超时机制：不可达主机 + 短超时，验证 timeout 信号和 error 字段
-    void testTimeoutWithUnreachableHost();
+    // 超时与错误
+    void timeoutProducesTimeoutError();
+    void syncTimeoutReturnsTimeoutResult();
+    void unreachableHostProducesNetworkError();
+    void emptyUrlProducesError();
 
-    // 错误回调：不可达主机触发 errorOccurred，验证回调被调用
-    void testErrorCallbackOnUnreachableHost();
+    // 句柄语义
+    void droppedTaskStillFinishes();
+    void taskCopySharesCancellation();
+    void syncIgnoresFinishedCallback();
+    void downloadTimeoutKeepsTempFile();
 
-    // resultHook：验证 resultHook 对结果的变换
-    void testResultHook();
+    // 文件错误
+    void downloadWithInvalidPathProducesFileError();
+    void uploadWithMissingFileProducesFileError();
+    void uploadWithoutPayloadProducesFileError();
 
-    // 取消后不再触发回调
-    void testNoCallbackAfterCancel();
+    // 上传中断
+    void uploadTimeoutCancelsTransfer();
 
-    // Q_ENUM 反射：Method 枚举的元对象系统能正确产生方法名字符串
-    void testMethodEnumReflection();
+    // 构建器一次性
+    void builderIsSingleUse();
 
-    // 断点续传：已有 .temp 文件时 downLoad 应设置 Range 头
-    void testDownloadResumeWithExistingTempFile();
+    // Q_ENUM 反射
+    void methodEnumReflection();
 
 private:
-    HttpClient *m_httpClient = nullptr;
+    HttpClient *m_client = nullptr;
     QTemporaryDir m_tempDir;
 };
 
 void HttpClientNoNetTest::initTestCase()
 {
-    m_httpClient = new HttpClient(this);
+    m_client = new HttpClient(this);
     QVERIFY2(m_tempDir.isValid(), "Failed to create temporary directory");
 }
 
 void HttpClientNoNetTest::cleanupTestCase()
 {
-    // 测试对象由 Qt 父子关系自动释放
+    // m_client 由 Qt 父子关系自动释放
 }
 
-void HttpClientNoNetTest::testCancelImmediately()
+void HttpClientNoNetTest::cancelImmediatelyDoesNotEmitFinished()
 {
-    // 向不可达地址发请求，立即取消
-    auto *reply
-        = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                    QUrl("http://192.0.2.1/test"), // RFC 5737 TEST-NET，保证不可达
-                                    {},
-                                    {},
-                                    {.timeout = 30});
-
-    QVERIFY(reply != nullptr);
-    m_httpClient->cancel(reply);
-
-    // cancel 后 reply 已 deleteLater，等待事件循环处理
-    QTest::qWait(50);
-    // 不崩溃即通过
+    CallbackReceiver receiver;
+    auto task = m_client->get(QUrl(u"http://192.0.2.1/test"_s))
+                    .timeout(std::chrono::seconds(30))
+                    .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+                    .send();
+    task.cancel();
+    QTest::qWait(200);
+    QCOMPARE(receiver.finishedCount, 0);
 }
 
-void HttpClientNoNetTest::testTimeoutWithUnreachableHost()
+void HttpClientNoNetTest::cancelWhileRunningDoesNotEmitFinished()
 {
-    // 1 秒超时访问不可达地址
-    bool timeoutSignalReceived = false;
-    QJsonObject callbackResult;
-
-    connect(m_httpClient, &HttpClient::timeOut, this, [&]() { timeoutSignalReceived = true; });
-
-    HttpRequestOptions::JsonCallback callback;
-    callback = [&](const QJsonObject &json) { callbackResult = json; };
-
-    auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                            QUrl("http://192.0.2.1/test"),
-                                            {},
-                                            {},
-                                            {.timeout = 1, .callback = callback});
-
-    // 等待超时触发
-    QEventLoop loop;
-    QTimer::singleShot(5000, &loop, &QEventLoop::quit);
-    connect(m_httpClient, &HttpClient::ready, this, [&](QNetworkReply *r, const QJsonObject &) {
-        if (r == reply) {
-            loop.quit();
-        }
-    });
-    loop.exec();
-
-    QVERIFY2(timeoutSignalReceived, "timeout signal should be emitted");
-    QVERIFY(callbackResult.contains("error"));
-    QCOMPARE(callbackResult["error"].toInt(), HttpRequestOptions::NETWORK_TIMEOUT_ERROR);
-
-    // 清理：queryResult 已断开信号并移除 TaskContext，但 reply 仍需手动释放
-    reply->abort();
-    reply->deleteLater();
+    CallbackReceiver receiver;
+    auto task = m_client->get(QUrl(u"http://192.0.2.1/test"_s))
+                    .timeout(std::chrono::seconds(30))
+                    .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+                    .send();
+    QTest::qWait(50); // 确保请求已在途
+    task.cancel();
+    QTest::qWait(200);
+    QCOMPARE(receiver.finishedCount, 0);
 }
 
-void HttpClientNoNetTest::testErrorCallbackOnUnreachableHost()
+void HttpClientNoNetTest::cancelIsIdempotent()
 {
-    QJsonObject callbackResult;
-    HttpRequestOptions::JsonCallback callback;
-    callback = [&](const QJsonObject &json) { callbackResult = json; };
-
-    auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                            QUrl("http://192.0.2.1/test"),
-                                            {},
-                                            {},
-                                            {.timeout = 30, .callback = callback});
-
-    // 等待错误完成
-    QEventLoop loop;
-    QTimer::singleShot(10000, &loop, &QEventLoop::quit);
-    connect(m_httpClient, &HttpClient::ready, this, [&](QNetworkReply *r, const QJsonObject &) {
-        if (r == reply) {
-            loop.quit();
-        }
-    });
-    loop.exec();
-
-    // 应收到包含 error 字段的回调
-    QVERIFY2(callbackResult.contains("error"),
-             "error callback should contain 'error' field for unreachable host");
-
-    reply->deleteLater();
+    auto task
+        = m_client->get(QUrl(u"http://192.0.2.1/test"_s)).timeout(std::chrono::seconds(30)).send();
+    task.cancel();
+    task.cancel(); // 第二次取消为安全空操作
+    QTest::qWait(100);
 }
 
-void HttpClientNoNetTest::testResultHook()
+void HttpClientNoNetTest::timeoutProducesTimeoutError()
 {
-    // resultHook 将 {"value": 1} 变换为 {"value": 1, "hooked": true}
-    QJsonObject callbackResult;
-    HttpRequestOptions::JsonCallback callback;
-    callback = [&](const QJsonObject &json) { callbackResult = json; };
-
-    HttpRequestOptions::ResultHook hook = [](const QJsonObject &input) {
-        auto result = input;
-        result["hooked"] = true;
-        return result;
-    };
-
-    auto *reply
-        = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                    QUrl("http://192.0.2.1/test"),
-                                    {},
-                                    {},
-                                    {.timeout = 1, .callback = callback, .resultHook = hook});
-
-    // 等待完成（超时触发）
-    QEventLoop loop;
-    QTimer::singleShot(5000, &loop, &QEventLoop::quit);
-    connect(m_httpClient, &HttpClient::ready, this, [&](QNetworkReply *r, const QJsonObject &) {
-        if (r == reply) {
-            loop.quit();
-        }
-    });
-    loop.exec();
-
-    // resultHook 应在 callback 之前执行，callback 收到的是 hook 处理后的结果
-    QVERIFY2(callbackResult.contains("hooked"),
-             "resultHook should add 'hooked' field before callback");
-    QCOMPARE(callbackResult["hooked"].toBool(), true);
-
-    reply->deleteLater();
+    CallbackReceiver receiver;
+    m_client->get(QUrl(u"http://192.0.2.1/test"_s))
+        .timeout(std::chrono::seconds(1))
+        .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+        .send();
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.finishedCount == 1, 10000);
+    QCOMPARE(receiver.lastResult.code, HttpErrorCode::Timeout);
+    QVERIFY(!receiver.lastResult.success());
+    QVERIFY(!receiver.lastResult.message.isEmpty());
+    QCOMPARE(receiver.lastResult.status, 0);
 }
 
-void HttpClientNoNetTest::testNoCallbackAfterCancel()
+void HttpClientNoNetTest::syncTimeoutReturnsTimeoutResult()
 {
-    bool callbackFired = false;
-    HttpRequestOptions::JsonCallback callback;
-    callback = [&](const QJsonObject &) { callbackFired = true; };
-
-    auto *reply = m_httpClient->sendRequest(HttpClient::Method::GET,
-                                            QUrl("http://192.0.2.1/test"),
-                                            {},
-                                            {},
-                                            {.timeout = 30, .callback = callback});
-
-    // 立即取消
-    m_httpClient->cancel(reply);
-
-    // 等待一段时间，确认回调不会触发
-    QTest::qWait(500);
-
-    QVERIFY2(!callbackFired, "callback should not fire after cancel");
+    const auto result
+        = m_client->get(QUrl(u"http://192.0.2.1/test"_s)).timeout(std::chrono::seconds(1)).sync();
+    QCOMPARE(result.code, HttpErrorCode::Timeout);
+    QVERIFY(!result.success());
+    QVERIFY(!result.message.isEmpty());
 }
 
-void HttpClientNoNetTest::testMethodEnumReflection()
+void HttpClientNoNetTest::unreachableHostProducesNetworkError()
 {
-    // 验证 Q_ENUM(Method) 的元对象反射能正确产生 HTTP 方法名字符串
-    const auto metaEnum = QMetaEnum::fromType<HttpClient::Method>();
-
-    QCOMPARE(metaEnum.valueToKey(static_cast<int>(HttpClient::Method::GET)), "GET");
-    QCOMPARE(metaEnum.valueToKey(static_cast<int>(HttpClient::Method::POST)), "POST");
-    QCOMPARE(metaEnum.valueToKey(static_cast<int>(HttpClient::Method::PUT)), "PUT");
-    QCOMPARE(metaEnum.valueToKey(static_cast<int>(HttpClient::Method::DELETE)), "DELETE");
-
-    // 反向查找：字符串 → 枚举值
-    bool ok = false;
-    QCOMPARE(metaEnum.keyToValue("GET", &ok), static_cast<int>(HttpClient::Method::GET));
-    QVERIFY(ok);
-    QCOMPARE(metaEnum.keyToValue("DELETE", &ok), static_cast<int>(HttpClient::Method::DELETE));
-    QVERIFY(ok);
-
-    // 枚举值数量
-    QCOMPARE(metaEnum.keyCount(), 4);
+    CallbackReceiver receiver;
+    // .invalid TLD 保证 DNS 解析立即失败，无需等待 TCP 超时
+    m_client->get(QUrl(u"http://nonexistent-host-xyz-12345.invalid"_s))
+        .timeout(std::chrono::seconds(30))
+        .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+        .send();
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.finishedCount == 1, 30000);
+    QVERIFY(!receiver.lastResult.success());
+    QVERIFY(receiver.lastResult.code != HttpErrorCode::NoError);
+    QVERIFY(receiver.lastResult.code != HttpErrorCode::Timeout);
+    QVERIFY(receiver.lastResult.code != HttpErrorCode::FileError);
+    QVERIFY(!receiver.lastResult.message.isEmpty());
 }
 
-void HttpClientNoNetTest::testDownloadResumeWithExistingTempFile()
+void HttpClientNoNetTest::emptyUrlProducesError()
 {
-    // 创建一个已有内容的 .temp 文件，模拟断点续传场景
-    const auto filePath = m_tempDir.filePath(u"resume_test.txt"_s);
-    const auto tempPath = filePath + u".temp"_s;
+    CallbackReceiver receiver;
+    m_client->get(QUrl())
+        .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+        .send();
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.finishedCount == 1, 10000);
+    QVERIFY(!receiver.lastResult.success());
+    QVERIFY(receiver.lastResult.code != HttpErrorCode::NoError);
+    QVERIFY(!receiver.lastResult.message.isEmpty());
+}
 
+void HttpClientNoNetTest::droppedTaskStillFinishes()
+{
+    CallbackReceiver receiver;
+    m_client->get(QUrl(u"http://192.0.2.1/test"_s))
+        .timeout(std::chrono::seconds(1))
+        .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+        .send(); // 句柄直接丢弃：fire-and-forget，请求照常完成
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.finishedCount == 1, 10000);
+}
+
+void HttpClientNoNetTest::downloadWithInvalidPathProducesFileError()
+{
+    // 路径穿过一个普通文件（blocker.txt/sub.txt），保证打开必败且跨平台
+    const auto blocker = m_tempDir.filePath(u"blocker.txt"_s);
     {
-        QFile tempFile(tempPath);
-        QVERIFY2(tempFile.open(QIODevice::WriteOnly), "Failed to create temp file");
-        tempFile.write("已有的部分数据");
-        tempFile.close();
+        QFile file(blocker);
+        QVERIFY(file.open(QIODevice::WriteOnly));
     }
 
-    // downLoad 应检测到 .temp 已有数据，设置 Range 头（通过请求发出不崩溃验证）
-    auto *reply
-        = m_httpClient->downLoad(QUrl("http://192.0.2.1/download"), filePath, {.timeout = 1});
+    CallbackReceiver receiver;
+    m_client->download(QUrl(u"http://192.0.2.1/file"_s), blocker + u"/sub.txt"_s)
+        .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+        .send();
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.finishedCount == 1, 5000);
+    QCOMPARE(receiver.lastResult.code, HttpErrorCode::FileError);
+    QVERIFY(!receiver.lastResult.message.isEmpty());
 
-    QVERIFY2(reply != nullptr,
-             "downLoad should return non-null reply for valid path with temp file");
+    // sync 路径同样立即返回 FileError
+    const auto syncResult
+        = m_client->download(QUrl(u"http://192.0.2.1/file"_s), blocker + u"/sub2.txt"_s).sync();
+    QCOMPARE(syncResult.code, HttpErrorCode::FileError);
+}
 
-    // 验证 Range 头已设置（.temp 文件 size > 0）
-    const auto hasRangeHeader = reply->request().hasRawHeader("Range");
-    QVERIFY2(hasRangeHeader, "Range header should be set when .temp file has existing content");
+void HttpClientNoNetTest::uploadWithMissingFileProducesFileError()
+{
+    const auto missing = m_tempDir.filePath(u"missing.bin"_s);
+    const auto result
+        = m_client->upload(QUrl(u"http://192.0.2.1/upload"_s)).putFile(missing).sync();
+    QCOMPARE(result.code, HttpErrorCode::FileError);
+    QVERIFY(!result.message.isEmpty());
 
-    // 取消请求，不需要等待完成
-    m_httpClient->cancel(reply);
-    QTest::qWait(50);
+    CallbackReceiver receiver;
+    m_client->upload(QUrl(u"http://192.0.2.1/upload"_s))
+        .multipartFile(missing)
+        .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+        .send();
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.finishedCount == 1, 5000);
+}
 
-    // 清理临时文件
-    QFile::remove(tempPath);
-    QFile::remove(filePath);
+void HttpClientNoNetTest::uploadWithoutPayloadProducesFileError()
+{
+    // 未配置载荷：统一返回 FileError；回调延迟到事件循环派发（与 send() 的异步契约一致）
+    CallbackReceiver receiver;
+    m_client->upload(QUrl(u"http://192.0.2.1/upload"_s))
+        .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+        .send();
+    // 错误回调延迟到事件循环派发：send() 返回时尚未执行
+    QCOMPARE(receiver.finishedCount, 0);
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.finishedCount == 1, 5000);
+    QCOMPARE(receiver.lastResult.code, HttpErrorCode::FileError);
+    QVERIFY(!receiver.lastResult.message.isEmpty());
+
+    const auto syncResult = m_client->upload(QUrl(u"http://192.0.2.1/upload"_s)).sync();
+    QCOMPARE(syncResult.code, HttpErrorCode::FileError);
+}
+
+void HttpClientNoNetTest::uploadTimeoutCancelsTransfer()
+{
+    // 上传源文件已打开时超时中断：覆盖 abort 时 TaskState 的清理路径
+    const auto path = m_tempDir.filePath(u"upload_timeout.bin"_s);
+    {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        file.write(QByteArray(256 * 1024, 'x'));
+    }
+    const auto result = m_client->upload(QUrl(u"http://192.0.2.1/upload"_s))
+                            .putFile(path)
+                            .timeout(std::chrono::seconds(1))
+                            .sync();
+    QCOMPARE(result.code, HttpErrorCode::Timeout);
+    QVERIFY(!result.success());
+}
+
+void HttpClientNoNetTest::methodEnumReflection()
+{
+    const auto metaEnum = QMetaEnum::fromType<HttpClient::Method>();
+
+    QCOMPARE(metaEnum.keyCount(), 5);
+    QCOMPARE(metaEnum.valueToKey(static_cast<int>(HttpClient::Method::Get)), "Get");
+    QCOMPARE(metaEnum.valueToKey(static_cast<int>(HttpClient::Method::Post)), "Post");
+    QCOMPARE(metaEnum.valueToKey(static_cast<int>(HttpClient::Method::Put)), "Put");
+    QCOMPARE(metaEnum.valueToKey(static_cast<int>(HttpClient::Method::Delete)), "Delete");
+    QCOMPARE(metaEnum.valueToKey(static_cast<int>(HttpClient::Method::Patch)), "Patch");
+
+    bool ok = false;
+    QCOMPARE(metaEnum.keyToValue("Patch", &ok), static_cast<int>(HttpClient::Method::Patch));
+    QVERIFY(ok);
+}
+
+void HttpClientNoNetTest::taskCopySharesCancellation()
+{
+    CallbackReceiver receiver;
+    const auto task
+        = m_client->get(QUrl(u"http://192.0.2.1/test"_s))
+              .timeout(std::chrono::seconds(30))
+              .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+              .send();
+    const auto copy = task; // 拷贝与原句柄指向同一在途请求
+    copy.cancel();
+    QTest::qWait(200);
+    QCOMPARE(receiver.finishedCount, 0);
+}
+
+void HttpClientNoNetTest::syncIgnoresFinishedCallback()
+{
+    CallbackReceiver receiver;
+    // sync() 的契约：结果经返回值交付，onFinished 被忽略——配置了即告警（仅此一条）；
+    // onProgress 不在忽略之列，sync 阻塞期间正常派发、不告警
+    //（派发契约由服务端套件 testSyncDownloadProgress 固化；
+    //  本例为无网黑洞环境，进度无从产生，不做断言）
+    QTest::ignoreMessage(
+        QtWarningMsg, QRegularExpression(u".*RequestBuilder::sync\\(\\): onFinished ignored.*"_s));
+    const auto result
+        = m_client->get(QUrl(u"http://192.0.2.1/test"_s))
+              .timeout(std::chrono::seconds(1))
+              .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished))
+              .onProgress(makeLifecycleCallback(&receiver, &CallbackReceiver::handleProgress))
+              .sync();
+    QCOMPARE(result.code, HttpErrorCode::Timeout);
+    QCOMPARE(receiver.finishedCount, 0); // onFinished 仍被忽略：结果只经返回值交付
+}
+
+void HttpClientNoNetTest::downloadTimeoutKeepsTempFile()
+{
+    const auto path = m_tempDir.filePath(u"timeout_dl.txt"_s);
+    const auto result = m_client->download(QUrl(u"http://192.0.2.1/file"_s), path)
+                            .timeout(std::chrono::seconds(1))
+                            .sync();
+    QCOMPARE(result.code, HttpErrorCode::Timeout);
+    QCOMPARE(result.status, 0);
+    QVERIFY(!QFile::exists(path));
+    // 网络层失败（status==0）保留 .temp 供断点续传
+    QVERIFY(QFile::exists(path + u".temp"_s));
+}
+
+void HttpClientNoNetTest::builderIsSingleUse()
+{
+    // 入口函数返回纯右值（移动构造）；链式配置返回左值引用，
+    // 故先具名接收入口产物，再在其上链式配置，避免触发已删除的拷贝构造
+    CallbackReceiver receiver;
+    auto builder = m_client->get(QUrl(u"http://192.0.2.1/test"_s));
+    builder.timeout(std::chrono::seconds(1))
+        .onFinished(makeLifecycleCallback(&receiver, &CallbackReceiver::handleFinished));
+    builder.send();
+    builder.send(); // 已消费：告警并忽略，不发起第二个请求
+    QTRY_VERIFY_WITH_TIMEOUT(receiver.finishedCount == 1, 10000); // 首个请求恰好一次回调
+    QTest::qWait(1500);                                           // 超出超时窗口后仍无第二次回调
+    QCOMPARE(receiver.finishedCount, 1);
+
+    auto syncBuilder = m_client->get(QUrl(u"http://192.0.2.1/test"_s));
+    syncBuilder.timeout(std::chrono::seconds(1));
+    (void) syncBuilder.sync(); // 首次：正常等待超时
+    const auto reused = syncBuilder.sync();
+    QCOMPARE(reused.code, HttpErrorCode::InvalidUse);
+    QVERIFY(!reused.success());
+    QVERIFY(!reused.message.isEmpty());
 }
 
 QTEST_MAIN(HttpClientNoNetTest)

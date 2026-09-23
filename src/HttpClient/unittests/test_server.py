@@ -45,7 +45,7 @@ def health_check():
     )
 
 
-@app.route("/api/test", methods=["GET", "POST", "DELETE", "PUT"])
+@app.route("/api/test", methods=["GET", "POST", "DELETE", "PUT", "PATCH"])
 def api_test():
     """通用测试端点，支持多种HTTP方法"""
     global request_counter
@@ -60,6 +60,7 @@ def api_test():
         "request_id": current_count,
         "timestamp": time.time(),
         "path": request.path,
+        "query_args": dict(request.args),
     }
 
     if request.method == "POST":
@@ -116,30 +117,111 @@ def api_error():
         return jsonify({"error": "Unknown Error"}), 500
 
 
+@app.route("/api/text")
+def text_response():
+    """Plain text endpoint for testing non-JSON responses"""
+    return (
+        "This is plain text, not JSON. " * 3,
+        200,
+        {"Content-Type": "text/plain"},
+    )
+
+
 @app.route("/download")
 def download():
-    """文件下载端点"""
+    """File download endpoint, supports Range requests for resume testing"""
     file_content = b"This is test file content for download verification. " * 10
     return send_file(
         BytesIO(file_content),
         as_attachment=True,
         download_name="test_file.txt",
         mimetype="text/plain",
+        conditional=True,
     )
 
 
-@app.route("/api/largefile")
-def large_file_download():
-    """生成可预测的大文件用于测试"""
-    file_size = 100 * 1024  # 100KB
-    # 生成可预测的内容
-    content = b"X" * file_size
+@app.route("/download-no-range")
+def download_no_range():
+    """Ignores Range headers: always full content with 200.
+
+    Exercises the client's restart-from-scratch branch (a stale .temp
+    must be truncated and rewritten, not spliced). Uses a plain response:
+    send_file() defaults to conditional=True in Werkzeug >= 2.1 and would
+    honor the Range header."""
+    file_content = b"This is test file content for download verification. " * 10
+    response = app.response_class(file_content, mimetype="text/plain")
+    response.headers.set("Content-Disposition", "attachment", filename="test_file.txt")
+    return response
+
+
+@app.route("/download-post", methods=["POST"])
+def download_post():
+    """POST + JSON action body returning a file stream (RPC-style gateway,
+    e.g. ossAPI download).
+
+    Validates the action field. Range resume is handled manually:
+    Werkzeug's conditional response support only applies to GET/HEAD
+    (per RFC 9110 a server MAY ignore Range on other methods), while the
+    real ossAPI/nginx backend honors Range on the download POST per its
+    spec. The manual handling reproduces that contract: bytes=N- is
+    served as 206 with Content-Range, N beyond the end is 416, anything
+    else is a full 200."""
+    if not request.is_json:
+        return jsonify({"error": "JSON body required"}), 400
+    json_data = request.get_json()
+    if not json_data or json_data.get("action") != "download":
+        return jsonify({"error": "Invalid action"}), 400
+
+    file_content = b"This is test file content for download verification. " * 10
+    range_header = request.headers.get("Range", "")
+    if range_header.startswith("bytes="):
+        start_str = range_header[len("bytes=") :].split("-", 1)[0]
+        try:
+            start = int(start_str)
+        except ValueError:
+            start = -1
+        if 0 <= start < len(file_content):
+            response = app.response_class(
+                file_content[start:], status=206, mimetype="text/plain"
+            )
+            response.headers["Content-Range"] = (
+                f"bytes {start}-{len(file_content) - 1}/{len(file_content)}"
+            )
+            response.headers["Accept-Ranges"] = "bytes"
+            response.headers["Content-Disposition"] = (
+                'attachment; filename="test_file.txt"'
+            )
+            return response
+        if start >= len(file_content):
+            # Range 不可满足：与真实网关一致返回 416（客户端保留 .temp 待处置）
+            response = app.response_class(status=416)
+            response.headers["Content-Range"] = f"bytes */{len(file_content)}"
+            return response
 
     return send_file(
-        BytesIO(content),
+        BytesIO(file_content),
         as_attachment=True,
-        download_name="large_file.bin",
-        mimetype="application/octet-stream",
+        download_name="test_file.txt",
+        mimetype="text/plain",
+        conditional=True,
+    )
+
+
+@app.route("/upload-raw", methods=["POST"])
+def upload_raw():
+    """Raw-body one-step upload (POST /upload/ contract): echoes the method
+    and the mapped headers (X-Dest/X-Upload-Key/X-Conflict) plus received
+    byte count."""
+    data = request.get_data()
+    return jsonify(
+        {
+            "status": "success",
+            "method": request.method,
+            "dest": request.headers.get("X-Dest"),
+            "upload_key": request.headers.get("X-Upload-Key"),
+            "conflict": request.headers.get("X-Conflict"),
+            "size": len(data),
+        }
     )
 
 
@@ -164,8 +246,9 @@ def echo():
             custom_headers[key] = value
     response_data["custom_headers"] = custom_headers
 
-    # 对于JSON请求，尝试解析
-    if request.content_type == "application/json" and data:
+    # 对于JSON请求，尝试解析（is_json 忽略 charset 等参数，
+    # 精确比较 "application/json" 会漏掉 "application/json; charset=utf-8"）
+    if request.is_json and data:
         try:
             json_data = request.get_json()
             response_data["parsed_json"] = json_data
@@ -209,14 +292,6 @@ def concurrent_test():
             "timestamp": time.time(),
             "thread": threading.current_thread().name,
         }
-    )
-
-
-@app.route("/api/status")
-def status_check():
-    """简单的状态检查端点"""
-    return jsonify(
-        {"status": "ok", "server_time": time.time(), "request_count": request_counter}
     )
 
 
@@ -297,61 +372,6 @@ def cleanup_uploads():
         return jsonify({"error": str(e)}), 500
 
 
-@app.route("/api/upload_info", methods=["GET"])
-def upload_info():
-    """获取上传目录信息"""
-    try:
-        file_count = 0
-        total_size = 0
-        if os.path.exists(app.config["UPLOAD_FOLDER"]):
-            for filename in os.listdir(app.config["UPLOAD_FOLDER"]):
-                filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-                if os.path.isfile(filepath):
-                    file_count += 1
-                    total_size += os.path.getsize(filepath)
-
-        return jsonify(
-            {
-                "upload_folder": app.config["UPLOAD_FOLDER"],
-                "file_count": file_count,
-                "total_size_bytes": total_size,
-                "exists": os.path.exists(app.config["UPLOAD_FOLDER"]),
-                "timestamp": time.time(),
-            }
-        )
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route("/api/retry_test")
-def retry_test():
-    """模拟需要重试的场景"""
-    retry_count = request.args.get("retry_count", 0, type=int)
-
-    # 前两次失败，第三次成功
-    if retry_count < 2:
-        return (
-            jsonify(
-                {
-                    "error": "Temporary failure",
-                    "retry_count": retry_count + 1,
-                    "should_retry": True,
-                    "timestamp": time.time(),
-                }
-            ),
-            503,
-        )
-    else:
-        return jsonify(
-            {
-                "message": "Success after retries",
-                "retry_count": retry_count,
-                "final_success": True,
-                "timestamp": time.time(),
-            }
-        )
-
-
 @app.errorhandler(404)
 def not_found(error):
     return jsonify({"error": "Not found", "path": request.path}), 404
@@ -386,5 +406,18 @@ if __name__ == "__main__":
     print_routes()
     print("\nPress Ctrl+C to stop the server")
 
-    # 设置为非调试模式，避免双重输出
-    app.run(host="127.0.0.1", port=8000, debug=False, threaded=True)
+    from werkzeug.serving import make_server
+
+    # HTTP 实例交给后台线程，主线程另起 HTTPS（adhoc 自签证书）实例：
+    # 覆盖 sslErrors 收集与 ignoreSslErrors 路径；缺 pyOpenSSL 时退化为仅 HTTP
+    http_server = make_server("127.0.0.1", 8000, app, threaded=True)
+    threading.Thread(target=http_server.serve_forever, daemon=True).start()
+
+    try:
+        # 设置为非调试模式，避免双重输出
+        app.run(
+            host="127.0.0.1", port=8443, ssl_context="adhoc", debug=False, threaded=True
+        )
+    except Exception as e:
+        print(f"HTTPS instance unavailable ({e}); serving HTTP only")
+        http_server.serve_forever()
