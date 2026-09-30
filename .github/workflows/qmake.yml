@@ -31,7 +31,7 @@ on:
       - "vcpkg.json"
 
 env:
-  MACOSX_DEPLOYMENT_TARGET: 13.0
+  MACOSX_DEPLOYMENT_TARGET: 14.0
   MACOSX_BUILD_ARCHS: "x86_64 arm64"
   BUILD_DIR: build
 
