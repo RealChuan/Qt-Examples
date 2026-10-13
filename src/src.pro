@@ -2,6 +2,7 @@ TEMPLATE = subdirs
 CONFIG += ordered
 
 SUBDIRS += \
+    AsyncLog \
     AutoStartManager \
     Battery \
     Bubble \

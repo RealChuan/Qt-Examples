@@ -170,6 +170,15 @@
 
 ## 工具与系统
 
+### [AsyncLog](src/AsyncLog/) - 异步日志系统
+
+- 接管 Qt 全局日志（qDebug/qInfo/qWarning/...），任意线程调用零改动；QObject 单例门面，`batchReady` 批量信号可连接做 UI 实时日志视图
+- 双缓冲 MPSC 队列 + 专用后端线程批量落盘：生产端 O(1) 入队、秒级时间戳缓存
+- 分层饱和策略：瞬时尖峰等待消化，持续过载只丢弃 DEBUG/INFO 并计数补报，WARNING 及以上绝不丢
+- 按天 + 按大小滚动，文件名含主机名与进程 ID（`<app>_<host>_<pid>_<时间>.log`），过期清理只删自身命名模式的文件
+- `QtFatalMsg` 同步落盘后交还 Qt 终止；`shutdown` 排空队列，保证不丢日志
+- 单元测试即用法示例：覆盖级别过滤、滚动、清理安全、饱和、排空、fatal、信号与吞吐基准
+
 ### [AutoStartManager](src/AutoStartManager/) - 开机自启动管理
 
 - **Windows**：用户注册表 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Run`，系统注册表 `HKEY_LOCAL_MACHINE\...\Run`
@@ -182,12 +191,6 @@
 - 支持 QObject、std::shared_ptr 和自由函数
 - 类型安全，提供便捷创建函数
 
-### [LogAsync](src/utils/logasync.h) - 异步日志记录系统
-
-- 独立线程处理日志写入，避免阻塞主线程
-- 支持控制台输出、文件记录或两者同时输出
-- 按大小和时间自动滚动日志文件，支持自动清理旧文件
-
 ### [WindowsIntegration](src/WindowsIntegration/) - Windows"此电脑"集成
 
 - **Windows**：注册表 `HKEY_CURRENT_USER\SOFTWARE\Classes\CLSID\{GUID}` 和 `HKEY_CURRENT_USER\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\MyComputer\NameSpace\{GUID}`
@@ -197,10 +200,11 @@
 
 ### [HttpClient](src/HttpClient/) - HTTP 客户端
 
-- 支持 GET/POST/PUT/DELETE 方法
-- 文件上传下载，支持断点续传和进度回调
-- JSON 请求和响应自动处理
-- 超时控制和 SSL 证书配置
+- 以 JSON 为中心的链式 API：`client.post(url, json).timeout(30s).bearer(token).send()`
+- 支持 GET/POST/PUT/DELETE/PATCH，继承 QNetworkAccessManager，连接池等原生能力可用
+- 文件下载写入 `.temp` 成功后改名，支持 Range 断点续传；上传支持原始体与 multipart
+- `send()` 异步发起（返回可取消的 `HttpTask`），`sync()` 同步阻塞返回 `HttpResult`
+- 超时控制、忽略 SSL 错误、Bearer/Basic 认证、`onFinished`/`onProgress` 回调
 
 ### [ReactorServer](src/ReactorServer/) - 多线程 Reactor 模式 TCP 服务器
 

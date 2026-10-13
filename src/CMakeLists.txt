@@ -1,3 +1,4 @@
+add_subdirectory(AsyncLog)
 add_subdirectory(AutoStartManager)
 add_subdirectory(Battery)
 add_subdirectory(BatteryQuick)
