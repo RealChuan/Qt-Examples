@@ -5,12 +5,16 @@
 #include <QFileInfo>
 #include <QHash>
 #include <QHttpMultiPart>
+#include <QLocale>
 #include <QLoggingCategory>
 #include <QPointer>
+#include <QSslConfiguration>
+#include <QStringView>
 #include <QTimer>
 #include <QUrlQuery>
 
 #include <algorithm>
+#include <array>
 #include <ranges>
 #include <unordered_map>
 #include <utility>
@@ -25,21 +29,18 @@ Q_LOGGING_CATEGORY(lcHttpClient, "httpclient")
 namespace {
 
 // 下载内存防护：QNetworkReply 读缓冲默认无上限，高速下载 + 落盘慢时无界堆积，
-// 32 位地址空间（~2 GB）下必然 OOM。两层防护：readBufferSize() 限制在途窗口
-// 实现背压；drainToFile() 分块落盘避免 readAll() 的整体分配复制。
-// 参考主流库量级：libcurl 写回调 16 KiB、.NET Stream.CopyTo 80 KiB、Node.js
-// 流高水位 16–64 KiB——同步流式消费小缓冲即可；Qt 为跨线程异步投递，窗口需
-// 覆盖"带宽 × 反馈延迟"（80 MB/s × 数 ms ≈ 1 MiB）再留磁盘抖动余量，故取 MB 级。
+// 32 位地址空间下必然 OOM。两层防护：readBufferSize() 限制在途窗口实现背压，
+// drainToFile() 分块落盘避免 readAll() 的整体分配复制。窗口取 MB 级而非流式
+// 消费的 KB 级：Qt 为跨线程异步投递，需覆盖"带宽 × 反馈延迟"再留余量。
 
-// 按指针宽度判定，能识别 64 位 CPU 上跑 32 位程序（Q_PROCESSOR_WORDSIZE 不可靠）
+// 按指针宽度判定（Q_PROCESSOR_WORDSIZE 识别不了 64 位 CPU 上的 32 位程序）
 constexpr bool kIs32BitProcess = sizeof(void *) == 4;
 
-// 在途窗口：32 位 4 MiB（地址空间紧），64 位 8 MiB。按并发数线性累加，
-// 单大文件高带宽场景可经 RequestBuilder::readBufferLimit() 按请求上调。
+// 在途窗口：32 位 4 MiB（地址空间紧），64 位 8 MiB；readBufferLimit() 可按请求覆盖
 constexpr qint64 kDownloadReadBufferLimit = kIs32BitProcess ? 4 * 1024 * 1024 : 8 * 1024 * 1024;
 
-// 落盘块：1 MiB。drainToFile() 在 readyRead 槽内同步写，过大会拉长事件循环
-// 阻塞；1 MiB 已明显摊薄 write() 次数，再大收益递减。
+// 落盘块：1 MiB。readyRead 槽内同步写，过大会拉长事件循环阻塞，
+// 1 MiB 已摊薄 write() 次数，再大收益递减
 constexpr qint64 kDownloadChunkSize = 1024 * 1024;
 
 // 凭证类头部只打印占位，避免 token/会话泄漏到日志
@@ -50,16 +51,55 @@ bool isSensitiveHeader(QByteArrayView name)
            || name.compare("set-cookie", Qt::CaseInsensitive) == 0;
 }
 
-// URL userinfo 中的密码同样属于凭证，且 qCInfo/warning 默认输出（不受 debug
-// 开关控制），任何 URL 入日志都必须经此脱敏：密码替换为占位符（与敏感头的
-// *** 约定一致），用户名保留以便排查认证问题
+// query 中的凭证类键（预签名 URL、OAuth token 等）：子串匹配覆盖键名变体
+//（access_token、X-Amz-Signature 等），X-Amz-Date 等非凭证参数不命中
+bool isSensitiveQueryKey(const QString &key)
+{
+    static const std::array<QStringView, 8> sensitiveSubstrings{
+        u"token",
+        u"secret",
+        u"signature",
+        u"credential",
+        u"password",
+        u"passwd",
+        u"api_key",
+        u"apikey",
+    };
+    return std::ranges::any_of(sensitiveSubstrings, [&key](const auto &substring) {
+        return key.contains(substring, Qt::CaseInsensitive);
+    });
+}
+
+// URL 入日志的唯一通道：userinfo 密码与 query 凭证值替换为占位符（与敏感头
+// 的 *** 约定一致），用户名与非敏感参数保留。qCInfo/warning 默认输出、
+// 不受 debug 开关控制，故必须在输出前脱敏
 QString redactedUrl(const QUrl &url)
 {
-    if (url.password().isEmpty()) {
+    const bool hasPassword = !url.password().isEmpty();
+    bool hasSensitiveQuery = false;
+    if (url.hasQuery()) {
+        const QUrlQuery query(url);
+        hasSensitiveQuery = std::ranges::any_of(
+            query.queryItems(), [](const auto &item) { return isSensitiveQueryKey(item.first); });
+    }
+    if (!hasPassword && !hasSensitiveQuery) {
         return url.toString();
     }
     auto copy = url;
-    copy.setPassword(u"***"_s);
+    if (hasPassword) {
+        copy.setPassword(u"***"_s);
+    }
+    if (hasSensitiveQuery) {
+        QUrlQuery query(copy);
+        auto items = query.queryItems();
+        for (auto &[key, value] : items) {
+            if (isSensitiveQueryKey(key)) {
+                value = u"***"_s;
+            }
+        }
+        query.setQueryItems(items);
+        copy.setQuery(query);
+    }
     return copy.toString();
 }
 
@@ -120,6 +160,11 @@ BodyEncoding encodeJsonBody(const QJsonObject &json)
             QByteArrayLiteral("application/json; charset=utf-8")};
 }
 
+// HTTP-date（IMF-fixdate）："Sun, 06 Nov 1994 08:49:37 GMT"。
+// QLocale::c() 保证英文日/月名（系统 locale 无关），toUTC() 统一为 GMT
+QByteArray httpDate(const QDateTime &dateTime)
+{ return QLocale::c().toString(dateTime.toUTC(), u"ddd, dd MMM yyyy HH:mm:ss 'GMT'"_s).toLatin1(); }
+
 } // namespace
 
 // 本地错误码的可读消息；网络错误不经过此函数，消息直接取 QNetworkReply::errorString()
@@ -152,15 +197,11 @@ public:
     RequestBuilder::Kind kind = RequestBuilder::Kind::Json;
     HttpClient::Method method = HttpClient::Method::Get;
 
-    // ── body 三态 ──
-    // nullopt         ：未设置 body（get()/del()/post(url) 等无 body 入口、download 默认）
-    // 有值 + 空字节   ：已设置 body，体为空（如 body("", "text/plain")）
-    // 有值 + 非空字节 ：已设置 body，体为该字节（如 json({}) -> "{}"）
+    // body 三态：nullopt = 未设置；有值 = 已设置（空字节即空体；
+    // json({}) 序列化为 "{}"，与"无 body"严格区分）
     std::optional<QByteArray> bodyData;
 
-    // ── 动词覆盖 ──
-    // method(QByteArrayView) 设置、method(Method) 清除；effectiveVerb() 决议最终动词
-    QByteArray verbOverride;
+    QByteArray verbOverride; // 字符串动词覆盖；effectiveVerb() 决议
 
     QUrl url;
     QString downloadPath;
@@ -174,6 +215,8 @@ public:
     QList<QPair<QString, QString>> queries;
     std::chrono::milliseconds timeout{0};
     bool ignoreSslErrors = false;
+    QSslCertificate clientCert; // mTLS 客户端证书（isNull = 未设置）
+    QSslKey clientKey;
     qint64 readBufferLimit = 0; // 下载在途窗口覆盖值；0 = 使用默认 kDownloadReadBufferLimit
     bool consumed = false;      // send()/sync() 一次性守卫
     HttpFinishedCallback onFinished;
@@ -202,16 +245,17 @@ public:
         HttpFinishedCallback onFinished;
         HttpProgressCallback onProgress;
         std::unique_ptr<QFile> file;          // 上传：源文件；下载：目标 .temp
-        std::unique_ptr<QTimer> timeoutTimer; // 总时长超时，随析构自动停止
+        std::unique_ptr<QTimer> timeoutTimer; // 总时长超时定时器
         QString downloadPath;                 // 仅下载：最终路径
         qint64 downloadBase = 0;              // 仅下载：断点续传偏移
         bool ignoreSsl = false;
         bool rangeChecked = false;            // 仅下载：首个 readyRead 已处理 200/206 分支
         QString fileError;                    // 仅下载：写入/保存失败原因；非空即失败
-        // QNetworkReply 未提供 sslErrors() getter（至少 Qt 6.11 确认无），
-        // sslErrors 信号是唯一来源：槽中收集，buildResult 时带入结果
+        // QNetworkReply 无 sslErrors() getter，信号是唯一来源：槽中收集，buildResult 时带入
         QList<QSslError> sslErrors;
-        QByteArray method; // 请求动词，仅用于日志关联（QNetworkReply 无对应 getter）
+        QByteArray method;     // 请求动词（QNetworkReply 无对应 getter）
+        bool timedOut = false; // 超时定时器已触发：buildResult 据此区分 Timeout 与 QNAM 内部取消
+        QByteArray ioChunk;    // drainToFile 复用的落盘缓冲：跨多次 readyRead 避免重复分配 1 MiB
     };
 
     // prepare 的产出：reply 为空表示请求未发起（文件打开失败等），error 携带原因
@@ -286,10 +330,16 @@ public:
                 << "request header:" << name
                 << (isSensitiveHeader(name) ? QByteArray("***") : value);
         }
+        if (!config.clientCert.isNull()) {
+            // 在请求当前 SSL 配置之上叠加证书与私钥，自定义 CA 等既有字段保留
+            auto sslConfiguration = request.sslConfiguration();
+            sslConfiguration.setLocalCertificateChain({config.clientCert});
+            sslConfiguration.setPrivateKey(config.clientKey);
+            request.setSslConfiguration(sslConfiguration);
+        }
         return request;
     }
 
-    // 构建 TaskState：回调与超时定时器统一在此装配，各请求路径共享
     std::unique_ptr<TaskState> buildTaskState(const RequestBuilder::RequestBuilderPrivate &config)
     {
         auto state = std::make_unique<TaskState>();
@@ -307,12 +357,14 @@ public:
         return state;
     }
 
-    // 分块排空 reply 并写入下载文件（readAll() 整体分配复制在 32 位下会 OOM）。
-    // 返回空串表示成功；非空为写入失败原因（磁盘满等）
-    static QString drainToFile(QNetworkReply *reply, QFile *file)
+    // 分块排空 reply 并写入下载文件（readAll() 整体分配复制在 32 位下会 OOM）；
+    // chunk 由 TaskState 持有、跨多次 readyRead 复用。返回空串表示成功，
+    // 非空为写入失败原因（磁盘满等）
+    static QString drainToFile(QNetworkReply *reply, QFile *file, QByteArray &chunk)
     {
-        QByteArray chunk;
-        chunk.resize(int(kDownloadChunkSize));
+        if (chunk.size() != int(kDownloadChunkSize)) {
+            chunk.resize(int(kDownloadChunkSize));
+        }
         while (reply->bytesAvailable() > 0) {
             const qint64 read = reply->read(chunk.data(), chunk.size());
             if (read <= 0) {
@@ -390,7 +442,6 @@ public:
         prepared.state = buildTaskState(config);
         auto &state = prepared.state;
 
-        // 动词决议：字符串覆盖优先于枚举（method() 两个重载最后一次调用生效）
         const auto verb = effectiveVerb(config);
 
         switch (config.kind) {
@@ -413,17 +464,13 @@ public:
                 return Prepared::fail(fileError(config.url, tempPath, file->errorString()),
                                       std::move(prepared.state));
             }
-            // Range 由 download() 独占：用户经 header() 设置的 Range 一律忽略
-            //（含无 .temp 的首次下载），仅按 .temp 偏移自动续传
             auto request = buildRequest(config, "Range");
             state->downloadBase = file->size();
             if (state->downloadBase > 0) {
                 request.setRawHeader(
                     "Range", "bytes="_ba + QByteArray::number(state->downloadBase) + "-"_ba);
             }
-            // 自定义动词条件：有 body、有字符串动词覆盖、或枚举动词非 GET
-            //（method(Post) 表达 POST 无 body 下载；body()/json() 表达动作体下载，
-            // 如 RPC 风格网关；Range/落盘/续传/改名机制与 GET 下载完全一致）
+            // 纯 GET 走原生 get() 快路径；改动词或带动作体经自定义动词发送
             const bool needCustomVerb = config.bodyData.has_value()
                                         || !config.verbOverride.isEmpty()
                                         || config.method != HttpClient::Method::Get;
@@ -455,8 +502,6 @@ public:
             break;
         }
         case RequestBuilder::Kind::Upload: {
-            // 载荷由 putFile/putData/multipart* 独占：body()/json() 属 API 误用，
-            // 明确报错而非静默忽略
             if (config.bodyData.has_value()) {
                 return Prepared::fail(
                     invalidUse(config.url,
@@ -465,8 +510,6 @@ public:
                     std::move(prepared.state));
             }
             auto request = buildRequest(config);
-            // multipart 恒为 POST（QNAM 无自定义动词的 multipart 重载）：
-            // 改写动词无法生效，明确告警而非静默忽略
             const bool isMultipart
                 = config.payloadKind == RequestBuilder::PayloadKind::MultipartFile
                   || config.payloadKind == RequestBuilder::PayloadKind::MultipartData;
@@ -482,8 +525,7 @@ public:
                         fileError(config.url, config.filePath, file->errorString()),
                         std::move(prepared.state));
                 }
-                // 默认 PUT 走原生 put()；method() 改写动词（如一步上传 / 分块
-                // 的 POST + 原始体）经自定义动词发送，流式/进度/取消机制不变
+                // 默认 PUT 走原生 put() 流式快路径；改写动词经自定义动词发送
                 prepared.reply = verb == "PUT"
                                      ? q_ptr->put(request, file.get())
                                      : q_ptr->sendCustomRequest(request, verb, file.get());
@@ -532,6 +574,7 @@ public:
     {
         HttpResult result;
         result.url = reply->url();
+        result.method = state.method;
         result.status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
         result.headers = reply->rawHeaderPairs();
         result.sslErrors = state.sslErrors;
@@ -539,10 +582,17 @@ public:
         if (error == QNetworkReply::NoError) {
             result.code = HttpErrorCode::NoError;
         } else if (error == QNetworkReply::OperationCanceledError) {
-            // 取消路径会先 disconnect 再 abort，不会进入槽；
-            // 未被取消的 OperationCanceledError 只能来自超时定时器的 abort
-            result.code = HttpErrorCode::Timeout;
-            result.message = httpErrorMessage(HttpErrorCode::Timeout);
+            // 用户取消路径会先 disconnect 再 abort，不会进入槽。到达此处的
+            // OperationCanceledError 有两个来源，须按 timedOut 归因：
+            //  - 超时定时器的 abort -> Timeout
+            //  - QNAM 内部取消（HTTP/2 RST_STREAM、代理取消等）-> Canceled
+            if (state.timedOut) {
+                result.code = HttpErrorCode::Timeout;
+                result.message = httpErrorMessage(HttpErrorCode::Timeout);
+            } else {
+                result.code = HttpErrorCode::Canceled;
+                result.message = reply->errorString();
+            }
         } else {
             // 网络层失败与服务器错误状态（QNAM 映射码），消息直接用 errorString()
             result.code = static_cast<HttpErrorCode>(error);
@@ -552,6 +602,11 @@ public:
     }
 
     HttpClient *q_ptr;
+    // 生命周期契约：tasks 的键是非拥有的 reply 视图（reply 由 deleteLater 释放）。
+    // 任何终止路径（onReplyFinished/onDownloadFinished/cancelInternal）必须先 erase
+    // 再 reply->deleteLater()——reply 若在仍被键入时析构，地址一旦被新 reply 复用，
+    // 陈旧条目会被误命中，TaskState 张冠李戴。cancelInternal 还须先 disconnect 再
+    // abort（abort 会同步触发 finished，未断开将重入槽访问已移除的状态）
     std::unordered_map<QNetworkReply *, std::unique_ptr<TaskState>> tasks;
 
     // BasicCredentials 嵌套于此而非匿名 namespace：外部链接类的成员使用
@@ -575,6 +630,8 @@ HttpClient::HttpClient(QObject *parent)
 }
 
 HttpClient::~HttpClient() = default;
+
+void HttpClient::resultReady(const HttpResult &) {}
 
 // ── 请求工厂（无 body 版）──
 RequestBuilder HttpClient::get(QUrl url)
@@ -667,11 +724,17 @@ HttpTask HttpClient::execute(RequestBuilder &builder)
     auto prepared = d_ptr->prepare(*builder.d_ptr);
     if (!prepared.ok()) {
         // 请求未发起（文件打开失败等）：与异步契约一致延迟到事件循环派发，
-        // 避免回调在 send() 调用栈内同步执行
+        // 避免回调在 send() 调用栈内同步执行；扩展点与回调同批派发
         auto callback = std::move(prepared.state->onFinished);
-        const auto error = prepared.error;
+        auto error = prepared.error;
+        error.method = prepared.state->method;
         QMetaObject::invokeMethod(
-            this, [callback, error] { callback(error); }, Qt::QueuedConnection);
+            this,
+            [this, callback, error] {
+                resultReady(error);
+                callback(error);
+            },
+            Qt::QueuedConnection);
         return {};
     }
     d_ptr->tasks.emplace(prepared.reply, std::move(prepared.state));
@@ -682,6 +745,8 @@ HttpResult HttpClient::executeSync(RequestBuilder &builder)
 {
     auto prepared = d_ptr->prepare(*builder.d_ptr);
     if (!prepared.ok()) {
+        prepared.error.method = prepared.state->method;
+        resultReady(prepared.error);
         return prepared.error;
     }
 
@@ -757,6 +822,9 @@ void HttpClient::onTimeout()
     qCWarning(lcHttpClient).noquote()
         << it->second->method << redactedUrl(it->first->url()) << "timed out after"
         << it->second->timeoutTimer->interval() << "ms";
+    // 先置位再 abort：buildResult 据此把 OperationCanceledError 归因为超时，
+    // 与 QNAM 内部取消（HTTP/2 RST_STREAM、代理取消等）区分
+    it->second->timedOut = true;
     // abort 触发 finished，统一走结果装配路径，映射为 Timeout
     it->first->abort();
 }
@@ -815,6 +883,7 @@ void HttpClient::onReplyFinished()
         // 完整输出：超长行/换行的清洗策略统一放在 messageHandler 层
         qCDebug(lcHttpClient).noquote() << "response body:" << result.body;
     }
+    resultReady(result);
     state->onFinished(result);
 }
 
@@ -853,7 +922,8 @@ void HttpClient::onDownloadReadyRead()
             }
         }
     }
-    const auto writeError = HttpClientPrivate::drainToFile(reply, state->file.get());
+    const auto writeError
+        = HttpClientPrivate::drainToFile(reply, state->file.get(), state->ioChunk);
     if (!writeError.isEmpty()) {
         // 磁盘满等写入失败：停用流式写入，排队 abort 交由 onDownloadFinished 派发 FileError
         state->fileError = writeError;
@@ -894,7 +964,8 @@ void HttpClient::onDownloadFinished()
     if (state->file) {
         if (state->fileError.isEmpty() && result.success() && reply->isOpen()) {
             // 末尾残余数据同样分块落盘（内存防护原因见 drainToFile）
-            state->fileError = HttpClientPrivate::drainToFile(reply, state->file.get());
+            state->fileError
+                = HttpClientPrivate::drainToFile(reply, state->file.get(), state->ioChunk);
         }
         const auto tempPath = state->file->fileName();
         state->file->close();
@@ -904,11 +975,24 @@ void HttpClient::onDownloadFinished()
             result.message = state->fileError;
             qCWarning(lcHttpClient).noquote() << "download file error:" << result.message;
         } else if (result.success()) {
-            if (QFile::exists(state->downloadPath) && !QFile::remove(state->downloadPath)) {
-                qCWarning(lcHttpClient)
-                    << u"Failed to remove existing file:"_s << state->downloadPath;
+            // 目标已存在：先移除再改名（QFile::rename 不覆盖既有文件）。
+            // remove 失败时（Windows 上目标被占用、目标实为目录等）rename 必然
+            // 随之失败——直接以 remove 失败报告 FileError，错误消息指向真实
+            // 根因；完整数据保留在 .temp 可手工恢复
+            if (QFile::exists(state->downloadPath)) {
+                QFile target(state->downloadPath);
+                if (!target.remove()) {
+                    auto error = target.errorString();
+                    if (error.isEmpty()) {
+                        error = u"remove failed"_s;
+                    }
+                    result.code = HttpErrorCode::FileError;
+                    result.message
+                        = u"Cannot remove existing file %1: %2"_s.arg(state->downloadPath, error);
+                    qCWarning(lcHttpClient).noquote() << result.message;
+                }
             }
-            if (!state->file->rename(state->downloadPath)) {
+            if (result.success() && !state->file->rename(state->downloadPath)) {
                 // 改名失败（目标被占用等）：完整数据保留在 .temp，报告 FileError 而非静默成功
                 result.code = HttpErrorCode::FileError;
                 result.message = u"Cannot save file %1: %2"_s.arg(state->downloadPath,
@@ -930,6 +1014,7 @@ void HttpClient::onDownloadFinished()
         << state->method << redactedUrl(result.url) << "finished"
         << "| status:" << result.status << "| code:" << qToUnderlying(result.code)
         << "| file:" << state->downloadPath;
+    resultReady(result);
     state->onFinished(result);
 }
 
@@ -1002,6 +1087,20 @@ RequestBuilder &RequestBuilder::query(const QString &key, const QString &value)
     return *this;
 }
 
+// ── 条件请求便利层：各自只是一次 header() 封装，覆盖语义与其一致 ──
+
+RequestBuilder &RequestBuilder::ifNoneMatch(QByteArray etag)
+{ return header("If-None-Match", std::move(etag)); }
+
+RequestBuilder &RequestBuilder::ifMatch(QByteArray etag)
+{ return header("If-Match", std::move(etag)); }
+
+RequestBuilder &RequestBuilder::ifModifiedSince(const QDateTime &lastModified)
+{ return header("If-Modified-Since", httpDate(lastModified)); }
+
+RequestBuilder &RequestBuilder::ifUnmodifiedSince(const QDateTime &lastModified)
+{ return header("If-Unmodified-Since", httpDate(lastModified)); }
+
 RequestBuilder &RequestBuilder::method(HttpClient::Method method)
 {
     if (!d_ptr) {
@@ -1022,7 +1121,8 @@ RequestBuilder &RequestBuilder::method(QByteArrayView verb)
                                           << QByteArray(verb) << u"; ignored"_s;
         return *this;
     }
-    d_ptr->verbOverride = QByteArray(verb).toUpper();
+    // RFC 9110 §9.1：method 大小写敏感，原样保留用户传入的动词
+    d_ptr->verbOverride = QByteArray(verb);
     return *this;
 }
 
@@ -1031,7 +1131,6 @@ RequestBuilder &RequestBuilder::body(QByteArray data, QByteArray contentType)
     if (!d_ptr) {
         return *this;
     }
-    // 有值即"已设置 body"，允许空字节（空体是合法 body）
     d_ptr->bodyData = std::move(data);
     if (!contentType.isEmpty()) {
         setHeader(d_ptr->headers, "Content-Type", std::move(contentType));
@@ -1072,6 +1171,21 @@ RequestBuilder &RequestBuilder::ignoreSslErrors()
         return *this;
     }
     d_ptr->ignoreSslErrors = true;
+    return *this;
+}
+
+RequestBuilder &RequestBuilder::clientCert(const QSslCertificate &cert, const QSslKey &key)
+{
+    if (!d_ptr) {
+        return *this;
+    }
+    if (cert.isNull() || key.isNull()) {
+        qCWarning(lcHttpClient).noquote()
+            << u"RequestBuilder::clientCert(): null certificate or key; ignored"_s;
+        return *this;
+    }
+    d_ptr->clientCert = cert;
+    d_ptr->clientKey = key;
     return *this;
 }
 
@@ -1137,13 +1251,11 @@ RequestBuilder &RequestBuilder::multipartData(QString fileName, QByteArray data)
 HttpTask RequestBuilder::send()
 {
     if (!d_ptr) {
-        // 移动后的原对象（moved-from）：属 API 误用，告警并忽略而非崩溃
         qCWarning(lcHttpClient)
             << u"RequestBuilder::send(): moved-from builder; request not sent"_s;
         return {};
     }
     if (std::exchange(d_ptr->consumed, true)) {
-        // 二次终止属 API 误用：告警并忽略，不发起第二个请求
         qCWarning(lcHttpClient)
             << u"RequestBuilder::send(): builder already used; request not sent"_s;
         return {};
@@ -1167,9 +1279,6 @@ HttpResult RequestBuilder::sync()
         result.message = u"Builder already used"_s;
         return result;
     }
-    // 配置了 onFinished 却走同步终止属 API 误用（结果只经返回值交付，回调会造成
-    // 双重交付）：告警但不拒绝。onProgress 不在此列——sync 阻塞在事件循环期间
-    // 进度信号照常派发，回调正常工作。
     if (d_ptr->onFinished) {
         qCWarning(lcHttpClient)
             << u"RequestBuilder::sync(): onFinished ignored; sync() returns the result directly"_s;

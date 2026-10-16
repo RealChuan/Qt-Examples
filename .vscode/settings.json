@@ -5,5 +5,6 @@
   "cmake.generator": "Ninja",
   "cmake.environment": {
     "PATH": "C:\\Qt\\6.12.0\\msvc2022_64\\bin;${env:PATH};"
-  }
+  },
+  "terminal.integrated.scrollback": 10000
 }

@@ -3,11 +3,14 @@
 #include <LifecycleCallback/lifecyclecallback.hpp>
 
 #include <QByteArrayView>
+#include <QDateTime>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
+#include <QSslCertificate>
 #include <QSslError>
+#include <QSslKey>
 
 #include <chrono>
 #include <memory>
@@ -19,15 +22,15 @@ class RequestBuilder;
 /**
  * @brief 错误码
  *
- * 值域设计：0-999 直接复用 QNetworkReply::NetworkError 的值
- * （网络层失败，以及服务器返回错误状态时 QNAM 的映射码，如 404 -> ContentNotFoundError），
- * 1000 起为本地扩展码，code >= 1000 即本地错误。
+ * 值域：0-999 复用 QNetworkReply::NetworkError（含服务器错误状态的映射码，
+ * 如 404 -> ContentNotFoundError），1000 起为本地扩展码。
  */
 enum class HttpErrorCode : int {
     NoError = 0,
-    Timeout = 1000,   // 请求总时长超时（QTimer 主动 abort）
+    Timeout = 1000,   // 请求总时长超时
     FileError = 1001, // 上传源文件或下载目标文件打开/写入/保存失败
     InvalidUse = 1002, // API 误用：重复终止、移动后的构建器、upload + body()/json() 冲突、upload 未配置载荷
+    Canceled = 1003, // QNAM 内部取消（HTTP/2 RST_STREAM 等）；用户 cancel() 不产生结果
 };
 
 /**
@@ -36,16 +39,18 @@ enum class HttpErrorCode : int {
  * 所有终止路径（成功、服务器错误状态、网络失败、超时）统一产出本结构：
  *  - success()                 -> 2xx，json 可直接使用
  *  - !success() && status > 0  -> 服务器有响应（4xx/5xx），body/json 是 API 错误详情
- *  - !success() && status == 0 -> 请求未到达服务器（网络失败/超时/文件错误/误用）
+ *  - !success() && status == 0 -> 请求未到达服务器（网络失败/超时/文件错误/误用/QNAM 内部取消）
  */
 struct HttpResult
 {
     HttpErrorCode code = HttpErrorCode::NoError;
     QString message;    // 失败原因：QNAM errorString() 或本地映射消息
-    QUrl url;           // 请求 URL
+    QUrl url;           // 请求 URL（重定向跟随后的最终地址）
     int status = 0;     // HTTP 状态码；0 表示服务器无响应
     QByteArray body;    // 原始响应体；下载成功时为空（数据已写入文件）
     QJsonDocument json; // body 为合法 JSON 时即已解析，否则为 null
+    QByteArray
+        method; // 请求动词（枚举动词规范大写，字符串动词原样保留）；入口检查未通过（moved-from/二次使用）时为空
     QList<QSslError> sslErrors;
     QList<QNetworkReply::RawHeaderPair> headers;
 
@@ -95,13 +100,15 @@ private:
  *
  * 分层设计：
  *  - 通用层：RequestBuilder::body(QByteArray, contentType) + method(QByteArrayView)，
- *    覆盖任意动词与任意载荷（XML/protobuf/二进制/空体/WebDAV 扩展动词等）
+ *    覆盖任意动词与任意载荷（XML/protobuf/二进制/空体/扩展动词等）
  *  - 便利层：json()/post(url, obj)/put(url, obj) 等以 JSON 语法糖转调通用层
  *  - 响应侧对应便利：HttpResult::json
  *
  * 继承 QNetworkAccessManager：连接池/代理/cookie 等原生能力可用，
  * 子类可 override createRequest() 注入全局策略（统一 header、
  * QNetworkRequest::Attribute、按 URL 分流的 SSL/代理等）；所有请求路径均经过此处。
+ * 响应侧对称扩展点为 resultReady()：结果装配完成、用户回调派发前调用，
+ * 子类可观察/加工所有经 dispatch 的结果。
  *
  * 基类原始调用（如 get(QNetworkRequest)）返回裸 QNetworkReply*，
  * 不参与本类的回调/超时/取消管理（Basic 凭证的挑战-响应回填除外，
@@ -139,7 +146,7 @@ public:
      *        已有 .temp 时自动带 Range 头断点续传。
      *        默认 GET；经链式 method()/body()/json() 可改写动词与请求体：
      *          - .method(Post)                -> POST 无 body 下载
-     *          - .method(Post).json(obj)      -> POST + JSON 动作体下载（RPC 风格网关）
+     *          - .method(Post).json(obj)      -> POST + JSON 动作体下载
      *          - .method("REPORT").json(obj) -> 扩展动词 + JSON body
      *
      *        Range 头由 download() 独占管理：调用方经 header() 设置的 Range
@@ -158,6 +165,19 @@ public:
      *        API 误用，prepare 时报 InvalidUse（而非静默忽略）。
      */
     Q_REQUIRED_RESULT RequestBuilder upload(QUrl url);
+
+protected:
+    /**
+     * @brief 响应侧扩展点：与 createRequest()（请求侧）对称。
+     *
+     * 结果装配完成（含 body 解析/下载落盘）、用户 onFinished 派发之前调用，
+     * 故 override 内发起的后续请求已可见本结果的全部效应。
+     * 覆盖 send()/sync() 发起请求的所有终止路径：成功/服务器错误/网络失败/
+     * 超时/本地失败（文件打开失败等）。send()/sync() 入口的参数误用
+     * （moved-from、二次使用）与基类原始调用不经过此处。
+     * 实现须快速返回，勿在内部发起同步请求（回调栈内嵌套事件循环）。
+     */
+    virtual void resultReady(const HttpResult &result);
 
 private:
     friend class RequestBuilder;
@@ -199,7 +219,6 @@ private:
  * send()/sync() 为终止操作，仅可调用一次（重复调用：send() 返回空句柄并告警，
  * sync() 返回 InvalidUse 错误）。构建器仅可移动；移动后的原对象上一切配置
  * 方法为安全空操作，send()/sync() 同样告警/报错而不崩溃。
- * 配置状态经 Pimpl 隐藏，不进入公共头文件。
  */
 class RequestBuilder
 {
@@ -223,15 +242,38 @@ public:
     RequestBuilder &bearer(QByteArrayView token);
     /**
      * @brief Basic 认证：设置 Authorization: Basic base64(user:password)，
-     *        并将凭证注册为该 host 的 manager 级状态（同 host 覆盖、不可清除）。
+     *        并将凭证注册为该 host 的 manager 级状态（同 host 覆盖、不可清除）：
+     *        同 host 后续请求遇 401 挑战时自动回填，跨 host 重定向不泄漏；
+     *        外部 authenticationRequired 槽在内部槽之后执行，可覆盖回填值；
+     *        须在 client 所属线程调用。
      *
-     * 凭证表作用于同 host 的后续请求：遇 401 挑战时自动回填，无需逐请求
-     * 调用；跨 host 重定向查新 host 的表，无凭证则放行，不泄漏。外部
-     * connect authenticationRequired 的槽在内部槽之后执行，可覆盖回填值。
-     * 须在 client 所属线程调用。
+     * 挑战-响应路径对 Digest 同样生效：QAuthenticator 依据服务器挑战方式
+     * 自动选择应答 scheme，凭证表两种通用。
      */
     RequestBuilder &basicAuth(const QString &user, const QString &password);
     RequestBuilder &query(const QString &key, const QString &value);
+
+    // ── 条件请求（If-* 头便利封装）──
+    /**
+     * @brief If-None-Match：ETag 与服务器当前值匹配时回 304（缓存校验）。
+     *        etag 原样传输：传服务器返回的完整值（含引号 / W 前缀，"*" 表示任意）。
+     */
+    RequestBuilder &ifNoneMatch(QByteArray etag);
+    /**
+     * @brief If-Match：ETag 不匹配（含资源已不存在）时服务器回 412，
+     *        用于 PUT 覆盖前的丢失更新防护。etag 语义同 ifNoneMatch()。
+     */
+    RequestBuilder &ifMatch(QByteArray etag);
+    /**
+     * @brief If-Modified-Since：HTTP 日期（IMF-fixdate，UTC）表达的时间条件，
+     *        与 ifNoneMatch() 组合时 ETag 优先。
+     */
+    RequestBuilder &ifModifiedSince(const QDateTime &lastModified);
+    /**
+     * @brief If-Unmodified-Since：资源在给定时间后被修改则回 412。
+     */
+    RequestBuilder &ifUnmodifiedSince(const QDateTime &lastModified);
+
     /**
      * @brief 改写请求动词（枚举版本）。清除此前设置的字符串动词覆盖。
      */
@@ -239,6 +281,7 @@ public:
     /**
      * @brief 改写请求动词为任意字符串（如 "PROPFIND"、"REPORT"），
      *        扩展协议动词由此表达。与枚举版本互斥，最后一次调用生效；
+     *        动词原样使用，不做大小写改写（RFC 9110 §9.1：method 大小写敏感）；
      *        非 RFC 9110 token（含空格/空串等）的输入告警并忽略。
      */
     RequestBuilder &method(QByteArrayView verb);
@@ -261,10 +304,15 @@ public:
     RequestBuilder &timeout(std::chrono::milliseconds timeout); // 请求总时长上限，0 为不限
     RequestBuilder &ignoreSslErrors();
     /**
+     * @brief mTLS 客户端证书：合并进本请求的 TLS 配置，既有字段（自定义
+     *        CA、协议版本等）保留；链上最后一次调用生效。空证书或空私钥
+     *        告警并忽略。
+     */
+    RequestBuilder &clientCert(const QSslCertificate &cert, const QSslKey &key);
+    /**
      * @brief 下载专用：覆盖读缓冲在途窗口（背压）。0 或不设置用平台默认
-     *        （32 位 4 MiB / 64 位 8 MiB）。建议 4–128 MiB：并发多取小
-     *        （内存 ≈ 窗口 × 并发数），单大文件取大；
-     *        持续速率仍受磁盘写入速度约束。
+     *        （32 位 4 MiB / 64 位 8 MiB）。并发多取小（内存 ≈ 窗口 × 并发数），
+     *        单大文件取大。
      */
     RequestBuilder &readBufferLimit(qint64 limit);
 

@@ -200,11 +200,21 @@
 
 ### [HttpClient](src/HttpClient/) - HTTP 客户端
 
-- 以 JSON 为中心的链式 API：`client.post(url, json).timeout(30s).bearer(token).send()`
-- 支持 GET/POST/PUT/DELETE/PATCH，继承 QNetworkAccessManager，连接池等原生能力可用
-- 文件下载写入 `.temp` 成功后改名，支持 Range 断点续传；上传支持原始体与 multipart
-- `send()` 异步发起（返回可取消的 `HttpTask`），`sync()` 同步阻塞返回 `HttpResult`
-- 超时控制、忽略 SSL 错误、Bearer/Basic 认证、`onFinished`/`onProgress` 回调
+- 链式 API：`client.get(url).timeout(30s).bearer(token).onFinished(...).send()` 异步发起（返回可取消的 `HttpTask`，丢弃句柄即 fire-and-forget），`sync()` 同步阻塞直接返回 `HttpResult`
+- 通用层覆盖任意动词与载荷：`method("PROPFIND")` + `body(xml, "application/xml")`；JSON 为便利层（`post(url, obj)` 入口序列化、`HttpResult::json` 响应预解析）
+- 继承 QNetworkAccessManager，连接池/代理/Cookie 原生能力可用；Basic 凭证按 host 注册，遇 401 挑战自动应答且不跨 host 泄漏
+- 下载写入 `.temp` 成功后改名、按 `.temp` 偏移自动 Range 断点续传、读缓冲背压 `readBufferLimit`；上传支持原始体（文件流式不占内存 / 内存）与 multipart
+- 超时控制、SSL 错误处理、`onFinished`/`onProgress` 生命周期安全回调（接收对象销毁自动失效）
+- 协议封装扩展点：`createRequest()`（请求侧）与 `resultReady()`（响应侧），覆盖所有请求路径——WebDavClient 即基于此构建
+
+### [WebDavClient](src/WebDavClient/) - WebDAV 客户端（RFC 4918）
+
+- 直接继承 HttpClient（WebDAV 是 HTTP 的动词/头/XML 词汇扩展，无新传输行为），超时/取消/认证/断点续传等会话机制继承即用
+- 词汇层工厂 `propfind`/`mkcol`/`copy`/`move`/`options`/`lock`/`unlock` 只设置默认动词/头/体，链上调用可逐项覆盖
+- `check()` 一次调用完成响应判定：成功/失败、可读原因、`DavErrorCode` 分类，以及 207 multistatus 逐资源状态（PROPFIND 载荷 / COPY、MOVE 部分失败明细与计数）
+- 解析严格遵循 RFC 4918：propstat 标准序（属性暂存、仅 2xx 并入）、`DAV:` 命名空间 URI 匹配、href 相对解析且保留百分号编码、HTTP 日期（IMF-fixdate）
+- 锁令牌表：`lock()` 成功自动入表（先于用户回调），修改类请求自动携带 `If` 头（显式设置优先），`unlock()` 自动取表拼 `Lock-Token`；跨进程恢复经 `rememberLock()`
+- 三层测试：无网络分支矩阵 / Flask 故障注入（部分失败 207、畸形 XML、状态码注入）/ WsgiDAV 真实服务器符合性验证（含真实锁管理器）
 
 ### [ReactorServer](src/ReactorServer/) - 多线程 Reactor 模式 TCP 服务器
 

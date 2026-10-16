@@ -26,6 +26,7 @@ add_subdirectory(ProgressBar)
 add_subdirectory(ReactorServer)
 add_subdirectory(SqliteWAL)
 add_subdirectory(SwitchButton)
+add_subdirectory(WebDavClient)
 
 if(CMAKE_HOST_WIN32)
   add_subdirectory(WindowsIntegration)

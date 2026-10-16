@@ -3,6 +3,7 @@
 #include <LifecycleCallback/lifecyclecallback_qt.hpp>
 
 #include <QAuthenticator>
+#include <QDateTime>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonValue>
@@ -64,9 +65,12 @@ private slots:
     void testStringVerbOverride();
     void testMethodOverloadsAreMutuallyExclusive();
     void testCustomVerbPassedThrough();
+    void testCustomVerbCasePreserved();
+    void testResultCarriesRequestMethod();
     void testCustomHeaders();
     void testSpecialCharacterHeaders();
     void testHeaderOverrideSemantics();
+    void testConditionalRequestHelpers();
     void testBearerAuth();
     void testBasicAuth();
     // Basic 认证：挑战-响应兜底路径（/api/protected；各自使用独立 client，
@@ -99,6 +103,9 @@ private slots:
     void testConcurrentRequests();
     void testProgressReachesTotal();
 
+    // 响应侧扩展点
+    void testResultReadyOnDownloadSuccess();
+
     // Download
     void testDownload();
     void testDownloadProgress();
@@ -112,7 +119,7 @@ private slots:
     void testDownloadNoRangeRestartsFromScratch();
     void testDownloadOverwritesExistingFile();
     void testDownloadHttpErrorDiscardsTemp();
-    void testDownloadRenameFailureProducesFileError();
+    void testDownloadRemoveFailureProducesFileError();
 
     // SSL（自签 HTTPS 实例）
     void testSelfSignedSslFailsByDefault();
@@ -337,6 +344,48 @@ void HttpClientTest::testCustomVerbPassedThrough()
     QCOMPARE(result.status, 405);
 }
 
+void HttpClientTest::testCustomVerbCasePreserved()
+{
+    // RFC 9110 §9.1：method 大小写敏感——字符串动词原样透传，不做大写化。
+    // 判别器必须用线上回显而非 405/200：Werkzeug 的路由匹配对方法做
+    // 大小写不敏感比较（"RePort" 可命中 "REPORT" 路由），状态码无法
+    // 区分；/api/method-echo 回显 WSGI environ 的原样动词，逐字节比对。
+    // 若客户端擅自大写化，echo 将回 "REPORT" 使本用例失败
+    const auto result
+        = m_client->request(HttpClient::Method::Get, QUrl(m_baseUrl + u"/api/method-echo"_s))
+              .method("RePort")
+              .timeout(std::chrono::seconds(10))
+              .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.json.object().value(u"method"_s).toString(), u"RePort"_s);
+    QCOMPARE(result.method, QByteArray("RePort"));
+}
+
+void HttpClientTest::testResultCarriesRequestMethod()
+{
+    // HttpResult::method 与实际发出的动词一致（枚举与字符串覆盖两路，
+    // 成功与服务器错误状态均携带）
+    const auto got
+        = m_client->get(QUrl(m_baseUrl + u"/api/test"_s)).timeout(std::chrono::seconds(10)).sync();
+    QVERIFY(got.success());
+    QCOMPARE(got.method, QByteArray("GET"));
+
+    const auto posted = m_client->post(QUrl(m_baseUrl + u"/api/test"_s), QJsonObject{{u"k"_s, 1}})
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(posted.success());
+    QCOMPARE(posted.method, QByteArray("POST"));
+
+    const auto reported
+        = m_client->request(HttpClient::Method::Get, QUrl(m_baseUrl + u"/api/test"_s))
+              .method("PROPFIND")
+              .timeout(std::chrono::seconds(10))
+              .sync();
+    QVERIFY(!reported.success());
+    QCOMPARE(reported.status, 405);
+    QCOMPARE(reported.method, QByteArray("PROPFIND"));
+}
+
 void HttpClientTest::testCustomHeaders()
 {
     const auto result = m_client->get(QUrl(m_baseUrl + u"/api/headers"_s))
@@ -378,6 +427,27 @@ void HttpClientTest::testHeaderOverrideSemantics()
     const auto headers = result.json.object().value(u"headers"_s).toObject();
     QCOMPARE(headers.value(u"X-Override"_s).toString(), u"2"_s);
     QVERIFY(!headers.contains(u"x-override"_s)); // 无重复头产生
+}
+
+void HttpClientTest::testConditionalRequestHelpers()
+{
+    // 条件请求便利层：If-* 头以标准格式透传——ETag 原样（含引号），
+    // 日期为 IMF-fixdate（UTC），与手工 header() 拼接的效果一致
+    const auto dt = QDateTime::fromSecsSinceEpoch(784111777); // 1994-11-06 08:49:37 UTC
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/headers"_s))
+                            .ifNoneMatch("\"etag-abc\"")
+                            .ifMatch("\"etag-def\"")
+                            .ifModifiedSince(dt)
+                            .ifUnmodifiedSince(dt)
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto headers = result.json.object().value(u"headers"_s).toObject();
+    QCOMPARE(headers.value(u"If-None-Match"_s).toString(), u"\"etag-abc\""_s);
+    QCOMPARE(headers.value(u"If-Match"_s).toString(), u"\"etag-def\""_s);
+    QCOMPARE(headers.value(u"If-Modified-Since"_s).toString(), u"Sun, 06 Nov 1994 08:49:37 GMT"_s);
+    QCOMPARE(headers.value(u"If-Unmodified-Since"_s).toString(),
+             u"Sun, 06 Nov 1994 08:49:37 GMT"_s);
 }
 
 void HttpClientTest::testBearerAuth()
@@ -812,6 +882,43 @@ void HttpClientTest::testDownload()
     QVERIFY(content.contains("test file content"));
 }
 
+void HttpClientTest::testResultReadyOnDownloadSuccess()
+{
+    // onDownloadFinished 路径的 resultReady：下载成功时扩展点收到携带动词
+    // 与状态的结果，且先于用户回调。必须走 send()：sync() 按契约忽略
+    // onFinished（结果经返回值交付），无法断言回调顺序。
+    QStringList events;
+    HttpResult readyResult;
+
+    struct ProbeClient : HttpClient
+    {
+        QStringList *events = nullptr;
+        HttpResult *readyResult = nullptr;
+
+    protected:
+        void resultReady(const HttpResult &result) override
+        {
+            events->append(u"resultReady"_s);
+            *readyResult = result;
+        }
+    } client;
+
+    client.events = &events;
+    client.readyResult = &readyResult;
+
+    const auto path = m_tempDir.filePath(u"probe-download.txt"_s);
+    client.download(QUrl(m_baseUrl + u"/download"_s), path)
+        .timeout(std::chrono::seconds(15))
+        .onFinished([&events](const HttpResult &) { events.append(u"onFinished"_s); })
+        .send();
+
+    QTRY_COMPARE_WITH_TIMEOUT(events.size(), 2, 15000);
+    QCOMPARE(events, (QStringList{u"resultReady"_s, u"onFinished"_s}));
+    QCOMPARE(readyResult.method, QByteArray("GET"));
+    QCOMPARE(readyResult.status, 200);
+    QVERIFY(QFile::exists(path)); // onFinished 派发时下载已完成（.temp 已改名）
+}
+
 void HttpClientTest::testDownloadProgress()
 {
     const auto path = m_tempDir.filePath(u"progress.bin"_s);
@@ -1214,18 +1321,20 @@ void HttpClientTest::testLargeBodyRoundTrip()
     QCOMPARE(result.json.object().value(u"content_length"_s).toInt(), data.size());
 }
 
-void HttpClientTest::testDownloadRenameFailureProducesFileError()
+void HttpClientTest::testDownloadRemoveFailureProducesFileError()
 {
-    // 目标路径被同名目录占用：改名必败，必须报告 FileError 而非静默成功
-    const auto path = m_tempDir.filePath(u"rename_blocker"_s);
-    QVERIFY(QDir(m_tempDir.path()).mkdir(u"rename_blocker"_s));
+    // 目标被同名目录占用：remove 必败（目录不可 unlink，跨平台成立），此时
+    // 不得继续 rename——直接以 remove 失败报告 FileError，消息指向真实根因
+    //（Windows 上目标文件被其他进程占用时走同一分支）
+    const auto path = m_tempDir.filePath(u"remove_blocker"_s);
+    QVERIFY(QDir(m_tempDir.path()).mkdir(u"remove_blocker"_s));
 
     const auto result = m_client->download(QUrl(m_baseUrl + u"/download"_s), path)
                             .timeout(std::chrono::seconds(15))
                             .sync();
     QCOMPARE(result.code, HttpErrorCode::FileError);
     QVERIFY(!result.success());
-    QVERIFY(!result.message.isEmpty());
+    QVERIFY(result.message.startsWith(u"Cannot remove existing file"_s));
     // 完整数据保留在 .temp，可手工恢复
     QVERIFY(QFile::exists(path + u".temp"_s));
     QVERIFY(QFile(path + u".temp"_s).size() > 100);

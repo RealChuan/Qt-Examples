@@ -108,6 +108,21 @@ def api_timeout():
     )
 
 
+@app.route(
+    "/api/method-echo",
+    methods=["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH", "PROPFIND", "REPORT"],
+)
+def method_echo():
+    """Echoes the raw request method as received on the wire.
+
+    Reads environ["REQUEST_METHOD"] (the WSGI-layer verbatim verb) rather
+    than any normalized view: RFC 9110 makes methods case-sensitive, while
+    Werkzeug's own route matching compares methods case-insensitively
+    ("RePort" matches a "REPORT" route), so the status code cannot
+    discriminate. Serves as the case-preservation oracle for the client."""
+    return jsonify({"method": request.environ["REQUEST_METHOD"]})
+
+
 @app.route("/api/error")
 def api_error():
     """模拟服务器错误"""
@@ -295,12 +310,17 @@ def check_headers():
     headers = dict(request.headers)
     custom_headers = {}
 
-    # 提取自定义头
+    # 提取自定义头与条件请求头（If-*：条件请求便利层的回显验证）
     for key, value in headers.items():
-        if key.lower().startswith("x-") or key.lower() in [
-            "authorization",
-            "user-agent",
-        ]:
+        if (
+            key.lower().startswith("x-")
+            or key.lower().startswith("if-")
+            or key.lower()
+            in [
+                "authorization",
+                "user-agent",
+            ]
+        ):
             custom_headers[key] = value
 
     return jsonify(
@@ -452,4 +472,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"HTTPS instance unavailable ({e}); serving HTTP only")
         http_server.serve_forever()
-
