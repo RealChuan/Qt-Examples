@@ -4,7 +4,7 @@ QT       += core network testlib
 
 SOURCES += \
     httpclient.cc  \
-    httpclient_unittest.cc
+    httpclient_nonet_unittest.cc
 
 HEADERS += \
     httpclient.hpp

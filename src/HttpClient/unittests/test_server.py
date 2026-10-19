@@ -108,6 +108,21 @@ def api_timeout():
     )
 
 
+@app.route(
+    "/api/method-echo",
+    methods=["GET", "HEAD", "POST", "PUT", "DELETE", "PATCH", "PROPFIND", "REPORT"],
+)
+def method_echo():
+    """Echoes the raw request method as received on the wire.
+
+    Reads environ["REQUEST_METHOD"] (the WSGI-layer verbatim verb) rather
+    than any normalized view: RFC 9110 makes methods case-sensitive, while
+    Werkzeug's own route matching compares methods case-insensitively
+    ("RePort" matches a "REPORT" route), so the status code cannot
+    discriminate. Serves as the case-preservation oracle for the client."""
+    return jsonify({"method": request.environ["REQUEST_METHOD"]})
+
+
 @app.route("/api/error")
 def api_error():
     """模拟服务器错误"""
@@ -184,6 +199,51 @@ def download_no_range():
     return response
 
 
+@app.route("/download-empty")
+def download_empty():
+    """200 with empty body, Range ignored.
+
+    Exercises the client's finish-time truncation branch: an empty 200
+    never fires readyRead, so a stale .temp must be truncated at finish
+    instead of being delivered as-is (stale-bytes regression oracle)."""
+    response = app.response_class(b"", status=200, mimetype="text/plain")
+    response.headers["Accept-Ranges"] = "bytes"
+    response.headers["Content-Disposition"] = 'attachment; filename="test_file.txt"'
+    return response
+
+
+# /download-conditional 的固定 ETag（条件下载命中 304 的回显验证后端）
+DOWNLOAD_ETAG = '"etag-download-v1"'
+
+
+@app.route("/download-conditional")
+def download_conditional():
+    """Conditional download: If-None-Match matching the fixed etag gets a
+    304 with empty body (the client must keep the existing file and
+    discard .temp); any other request gets 200 with full content.
+    Range is ignored."""
+    if request.headers.get("If-None-Match") == DOWNLOAD_ETAG:
+        response = app.response_class(status=304)
+        response.headers["ETag"] = DOWNLOAD_ETAG
+        return response
+    file_content = b"This is test file content for download verification. " * 10
+    response = app.response_class(file_content, mimetype="text/plain")
+    response.headers["ETag"] = DOWNLOAD_ETAG
+    response.headers["Content-Disposition"] = 'attachment; filename="test_file.txt"'
+    return response
+
+
+@app.route("/download-redirect")
+def download_redirect():
+    """302 with a Location header. With a manual redirect policy the client
+    does not follow it: the body is not file data and .temp must be
+    discarded (not-followed-3xx branch oracle)."""
+    response = app.response_class(status=302)
+    response.headers["Location"] = "/download"
+    response.headers["Content-Disposition"] = 'attachment; filename="test_file.txt"'
+    return response
+
+
 @app.route("/download-post", methods=["POST", "REPORT"])
 def download_post():
     """POST + JSON action body returning a file stream (RPC-style gateway,
@@ -223,7 +283,8 @@ def download_post():
             )
             return response
         if start >= len(file_content):
-            # Range 不可满足：与真实网关一致返回 416（客户端保留 .temp 待处置）
+            # Range 不可满足：与真实网关一致返回 416（客户端丢弃不可信的
+            # .temp，重试从头下载）
             response = app.response_class(status=416)
             response.headers["Content-Range"] = f"bytes */{len(file_content)}"
             return response
@@ -295,12 +356,17 @@ def check_headers():
     headers = dict(request.headers)
     custom_headers = {}
 
-    # 提取自定义头
+    # 提取自定义头与条件请求头（If-*：条件请求便利层的回显验证）
     for key, value in headers.items():
-        if key.lower().startswith("x-") or key.lower() in [
-            "authorization",
-            "user-agent",
-        ]:
+        if (
+            key.lower().startswith("x-")
+            or key.lower().startswith("if-")
+            or key.lower()
+            in [
+                "authorization",
+                "user-agent",
+            ]
+        ):
             custom_headers[key] = value
 
     return jsonify(
@@ -311,6 +377,17 @@ def check_headers():
             "timestamp": time.time(),
         }
     )
+
+
+@app.route("/api/cookie-test")
+def cookie_test():
+    """响应携带凭证类头（Set-Cookie/X-Token）与非敏感头（X-Rate-Limit）：
+    响应头日志脱敏的回显验证后端"""
+    response = jsonify({"status": "ok"})
+    response.headers["Set-Cookie"] = "session=super-secret-session-id"
+    response.headers["X-Token"] = "secret-token-value-123"
+    response.headers["X-Rate-Limit"] = "remaining=42"
+    return response
 
 
 @app.route("/api/concurrent")
@@ -380,6 +457,16 @@ def upload():
                     "timestamp": time.time(),
                 }
             )
+
+
+@app.route("/api/upload-raw-body", methods=["POST"])
+def upload_raw_body():
+    """Echoes the raw multipart request body (latin-1 decoded).
+
+    Lets tests assert on the exact wire bytes of the part header, verifying
+    filename percent-encoding and CR/LF-injection safety independent of the
+    server's multipart parser (whose filename decoding is version-dependent)."""
+    return jsonify({"raw_body": request.get_data().decode("latin-1")})
 
 
 @app.route("/api/cleanup", methods=["POST", "GET"])
@@ -452,4 +539,3 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"HTTPS instance unavailable ({e}); serving HTTP only")
         http_server.serve_forever()
-

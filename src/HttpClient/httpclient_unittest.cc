@@ -3,13 +3,34 @@
 #include <LifecycleCallback/lifecyclecallback_qt.hpp>
 
 #include <QAuthenticator>
+#include <QDateTime>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonValue>
+#include <QLoggingCategory>
+#include <QRegularExpression>
 #include <QTemporaryDir>
 #include <QTest>
 
+#include <mutex>
+
 using namespace Qt::StringLiterals;
+
+namespace {
+
+// 响应头脱敏测试的日志捕获器：测试窗口内接管全部日志输出。
+// message handler 可能被 QNAM 工作线程调用，互斥保护共享缓冲
+std::mutex logMutex;
+QString logBuffer;
+
+void captureLog(QtMsgType, const QMessageLogContext &, const QString &msg)
+{
+    const std::lock_guard lock(logMutex);
+    logBuffer.append(msg);
+    logBuffer.append(u'\n');
+}
+
+} // namespace
 
 class CallbackReceiver : public QObject
 {
@@ -64,9 +85,13 @@ private slots:
     void testStringVerbOverride();
     void testMethodOverloadsAreMutuallyExclusive();
     void testCustomVerbPassedThrough();
+    void testCustomVerbCasePreserved();
+    void testResultCarriesRequestMethod();
     void testCustomHeaders();
     void testSpecialCharacterHeaders();
     void testHeaderOverrideSemantics();
+    void testConditionalRequestHelpers();
+    void testInvalidConditionalDatesIgnored();
     void testBearerAuth();
     void testBasicAuth();
     // Basic 认证：挑战-响应兜底路径（/api/protected；各自使用独立 client，
@@ -89,6 +114,7 @@ private slots:
     void testContentTypeLastWriteWins();
     void testNonJsonResponse();
     void testResponseHeaderLookup();
+    void testSensitiveResponseHeadersRedactedInLogs();
     void testServerErrorStatus_data();
     void testServerErrorStatus();
 
@@ -98,6 +124,9 @@ private slots:
     void testCancelRunningRequest();
     void testConcurrentRequests();
     void testProgressReachesTotal();
+
+    // 响应侧扩展点
+    void testResultReadyOnDownloadSuccess();
 
     // Download
     void testDownload();
@@ -112,7 +141,11 @@ private slots:
     void testDownloadNoRangeRestartsFromScratch();
     void testDownloadOverwritesExistingFile();
     void testDownloadHttpErrorDiscardsTemp();
-    void testDownloadRenameFailureProducesFileError();
+    void testDownloadEmptyBodyReplacesStaleTemp();
+    void testDownloadRangeUnsatisfiableDiscardsTemp();
+    void testDownloadNotModifiedKeepsExistingFile();
+    void testDownloadUnfollowedRedirectDiscardsTemp();
+    void testDownloadRemoveFailureProducesFileError();
 
     // SSL（自签 HTTPS 实例）
     void testSelfSignedSslFailsByDefault();
@@ -126,6 +159,7 @@ private slots:
     void testUploadPostRawData();
     void testUploadMultipartFile();
     void testUploadMultipartData();
+    void testMultipartFilenamePercentEncoded();
     void testUploadEmptyData();
     void testUploadProgress();
     void testLargeBodyRoundTrip();
@@ -337,6 +371,48 @@ void HttpClientTest::testCustomVerbPassedThrough()
     QCOMPARE(result.status, 405);
 }
 
+void HttpClientTest::testCustomVerbCasePreserved()
+{
+    // RFC 9110 §9.1：method 大小写敏感——字符串动词原样透传，不做大写化。
+    // 判别器必须用线上回显而非 405/200：Werkzeug 的路由匹配对方法做
+    // 大小写不敏感比较（"RePort" 可命中 "REPORT" 路由），状态码无法
+    // 区分；/api/method-echo 回显 WSGI environ 的原样动词，逐字节比对。
+    // 若客户端擅自大写化，echo 将回 "REPORT" 使本用例失败
+    const auto result
+        = m_client->request(HttpClient::Method::Get, QUrl(m_baseUrl + u"/api/method-echo"_s))
+              .method("RePort")
+              .timeout(std::chrono::seconds(10))
+              .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.json.object().value(u"method"_s).toString(), u"RePort"_s);
+    QCOMPARE(result.method, QByteArray("RePort"));
+}
+
+void HttpClientTest::testResultCarriesRequestMethod()
+{
+    // HttpResult::method 与实际发出的动词一致（枚举与字符串覆盖两路，
+    // 成功与服务器错误状态均携带）
+    const auto got
+        = m_client->get(QUrl(m_baseUrl + u"/api/test"_s)).timeout(std::chrono::seconds(10)).sync();
+    QVERIFY(got.success());
+    QCOMPARE(got.method, QByteArray("GET"));
+
+    const auto posted = m_client->post(QUrl(m_baseUrl + u"/api/test"_s), QJsonObject{{u"k"_s, 1}})
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(posted.success());
+    QCOMPARE(posted.method, QByteArray("POST"));
+
+    const auto reported
+        = m_client->request(HttpClient::Method::Get, QUrl(m_baseUrl + u"/api/test"_s))
+              .method("PROPFIND")
+              .timeout(std::chrono::seconds(10))
+              .sync();
+    QVERIFY(!reported.success());
+    QCOMPARE(reported.status, 405);
+    QCOMPARE(reported.method, QByteArray("PROPFIND"));
+}
+
 void HttpClientTest::testCustomHeaders()
 {
     const auto result = m_client->get(QUrl(m_baseUrl + u"/api/headers"_s))
@@ -378,6 +454,27 @@ void HttpClientTest::testHeaderOverrideSemantics()
     const auto headers = result.json.object().value(u"headers"_s).toObject();
     QCOMPARE(headers.value(u"X-Override"_s).toString(), u"2"_s);
     QVERIFY(!headers.contains(u"x-override"_s)); // 无重复头产生
+}
+
+void HttpClientTest::testConditionalRequestHelpers()
+{
+    // 条件请求便利层：If-* 头以标准格式透传——ETag 原样（含引号），
+    // 日期为 IMF-fixdate（UTC），与手工 header() 拼接的效果一致
+    const auto dt = QDateTime::fromSecsSinceEpoch(784111777); // 1994-11-06 08:49:37 UTC
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/headers"_s))
+                            .ifNoneMatch("\"etag-abc\"")
+                            .ifMatch("\"etag-def\"")
+                            .ifModifiedSince(dt)
+                            .ifUnmodifiedSince(dt)
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto headers = result.json.object().value(u"headers"_s).toObject();
+    QCOMPARE(headers.value(u"If-None-Match"_s).toString(), u"\"etag-abc\""_s);
+    QCOMPARE(headers.value(u"If-Match"_s).toString(), u"\"etag-def\""_s);
+    QCOMPARE(headers.value(u"If-Modified-Since"_s).toString(), u"Sun, 06 Nov 1994 08:49:37 GMT"_s);
+    QCOMPARE(headers.value(u"If-Unmodified-Since"_s).toString(),
+             u"Sun, 06 Nov 1994 08:49:37 GMT"_s);
 }
 
 void HttpClientTest::testBearerAuth()
@@ -812,6 +909,43 @@ void HttpClientTest::testDownload()
     QVERIFY(content.contains("test file content"));
 }
 
+void HttpClientTest::testResultReadyOnDownloadSuccess()
+{
+    // onDownloadFinished 路径的 resultReady：下载成功时扩展点收到携带动词
+    // 与状态的结果，且先于用户回调。必须走 send()：sync() 按契约忽略
+    // onFinished（结果经返回值交付），无法断言回调顺序。
+    QStringList events;
+    HttpResult readyResult;
+
+    struct ProbeClient : HttpClient
+    {
+        QStringList *events = nullptr;
+        HttpResult *readyResult = nullptr;
+
+    protected:
+        void resultReady(const HttpResult &result) override
+        {
+            events->append(u"resultReady"_s);
+            *readyResult = result;
+        }
+    } client;
+
+    client.events = &events;
+    client.readyResult = &readyResult;
+
+    const auto path = m_tempDir.filePath(u"probe-download.txt"_s);
+    client.download(QUrl(m_baseUrl + u"/download"_s), path)
+        .timeout(std::chrono::seconds(15))
+        .onFinished([&events](const HttpResult &) { events.append(u"onFinished"_s); })
+        .send();
+
+    QTRY_COMPARE_WITH_TIMEOUT(events.size(), 2, 15000);
+    QCOMPARE(events, (QStringList{u"resultReady"_s, u"onFinished"_s}));
+    QCOMPARE(readyResult.method, QByteArray("GET"));
+    QCOMPARE(readyResult.status, 200);
+    QVERIFY(QFile::exists(path)); // onFinished 派发时下载已完成（.temp 已改名）
+}
+
 void HttpClientTest::testDownloadProgress()
 {
     const auto path = m_tempDir.filePath(u"progress.bin"_s);
@@ -1214,18 +1348,20 @@ void HttpClientTest::testLargeBodyRoundTrip()
     QCOMPARE(result.json.object().value(u"content_length"_s).toInt(), data.size());
 }
 
-void HttpClientTest::testDownloadRenameFailureProducesFileError()
+void HttpClientTest::testDownloadRemoveFailureProducesFileError()
 {
-    // 目标路径被同名目录占用：改名必败，必须报告 FileError 而非静默成功
-    const auto path = m_tempDir.filePath(u"rename_blocker"_s);
-    QVERIFY(QDir(m_tempDir.path()).mkdir(u"rename_blocker"_s));
+    // 目标被同名目录占用：remove 必败（目录不可 unlink，跨平台成立），此时
+    // 不得继续 rename——直接以 remove 失败报告 FileError，消息指向真实根因
+    //（Windows 上目标文件被其他进程占用时走同一分支）
+    const auto path = m_tempDir.filePath(u"remove_blocker"_s);
+    QVERIFY(QDir(m_tempDir.path()).mkdir(u"remove_blocker"_s));
 
     const auto result = m_client->download(QUrl(m_baseUrl + u"/download"_s), path)
                             .timeout(std::chrono::seconds(15))
                             .sync();
     QCOMPARE(result.code, HttpErrorCode::FileError);
     QVERIFY(!result.success());
-    QVERIFY(!result.message.isEmpty());
+    QVERIFY(result.message.startsWith(u"Cannot remove existing file"_s));
     // 完整数据保留在 .temp，可手工恢复
     QVERIFY(QFile::exists(path + u".temp"_s));
     QVERIFY(QFile(path + u".temp"_s).size() > 100);
@@ -1257,6 +1393,186 @@ void HttpClientTest::testIgnoreSslErrorsSucceeds()
     QVERIFY(result.success());
     QVERIFY(!result.sslErrors.isEmpty()); // 忽略的同时错误详情仍带入结果
     QCOMPARE(result.json.object().value(u"status"_s).toString(), u"healthy"_s);
+}
+
+void HttpClientTest::testDownloadEmptyBodyReplacesStaleTemp()
+{
+    // 空 200 不触发 readyRead，其中的 200 截断逻辑落空：finish 必须把陈旧断点
+    // 截断后再交付，否则旧 .temp 会被原样改名
+    const auto path = m_tempDir.filePath(u"empty_dl.txt"_s);
+    {
+        QFile tempFile(path + u".temp"_s);
+        QVERIFY(tempFile.open(QIODevice::WriteOnly));
+        tempFile.write("STALE-JUNK-DATA");
+    }
+    const auto result = m_client->download(QUrl(m_baseUrl + u"/download-empty"_s), path)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.status, 200);
+    QVERIFY(!QFile::exists(path + u".temp"_s)); // 成功后 .temp 已改名消失
+
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QVERIFY(file.size() == 0); // 陈旧断点数据不得交付
+}
+
+void HttpClientTest::testDownloadRangeUnsatisfiableDiscardsTemp()
+{
+    // 断点已超过服务器文件大小：Range 不可满足，服务器回 416。断点不可信，
+    // 必须整个丢弃（不再"保留待用户处置"），重试从头下载
+    const auto path = m_tempDir.filePath(u"range_unsatisfiable.txt"_s);
+    {
+        QFile tempFile(path + u".temp"_s);
+        QVERIFY(tempFile.open(QIODevice::WriteOnly));
+        tempFile.write(QByteArray(4096, 'x'));
+    }
+    QJsonObject body;
+    body.insert("action", "download");
+    body.insert("items", QJsonArray{"ignored"});
+    const auto result = m_client->download(QUrl(m_baseUrl + u"/download-post"_s), path)
+                            .method(HttpClient::Method::Post)
+                            .json(body)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(!result.success());
+    QCOMPARE(result.status, 416);
+    QVERIFY(!QFile::exists(path));              // 最终文件不生成
+    QVERIFY(!QFile::exists(path + u".temp"_s)); // 断点已丢弃
+}
+
+void HttpClientTest::testDownloadNotModifiedKeepsExistingFile()
+{
+    const auto path = m_tempDir.filePath(u"conditional.txt"_s);
+
+    // 首次下载：200 + ETag
+    const auto first = m_client->download(QUrl(m_baseUrl + u"/download-conditional"_s), path)
+                           .timeout(std::chrono::seconds(15))
+                           .sync();
+    QVERIFY(first.success());
+    QCOMPARE(first.status, 200);
+    const auto etags = first.header("ETag");
+    QVERIFY(etags.size() == 1);
+    QByteArray original;
+    {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::ReadOnly));
+        original = file.readAll();
+        QVERIFY(original.size() > 100);
+    }
+
+    // 条件命中：304 -> success() 为真、既有文件保留、.temp 丢弃
+    const auto second = m_client->download(QUrl(m_baseUrl + u"/download-conditional"_s), path)
+                            .ifNoneMatch(etags.first())
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(second.success());
+    QCOMPARE(second.status, 304);
+    QVERIFY(!QFile::exists(path + u".temp"_s));
+
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QCOMPARE(file.readAll(), original);
+}
+
+void HttpClientTest::testDownloadUnfollowedRedirectDiscardsTemp()
+{
+    // 未跟随的 3xx（手动重定向策略）：响应体不是文件数据，.temp 必须丢弃、
+    // 不生成目标文件；success() 保持为真（3xx 非错误）
+    HttpClient client;
+    client.setRedirectPolicy(QNetworkRequest::ManualRedirectPolicy);
+
+    const auto path = m_tempDir.filePath(u"redirect_dl.txt"_s);
+    const auto result = client.download(QUrl(m_baseUrl + u"/download-redirect"_s), path)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(result.success());
+    QCOMPARE(result.status, 302);
+    QVERIFY(!QFile::exists(path));
+    QVERIFY(!QFile::exists(path + u".temp"_s));
+}
+
+void HttpClientTest::testInvalidConditionalDatesIgnored()
+{
+    // 无效 QDateTime：告警并忽略，If-Modified-Since/If-Unmodified-Since 头不得发出
+    QTest::ignoreMessage(
+        QtWarningMsg,
+        QRegularExpression(u".*RequestBuilder::ifModifiedSince\\(\\): invalid QDateTime.*"_s));
+    QTest::ignoreMessage(
+        QtWarningMsg,
+        QRegularExpression(u".*RequestBuilder::ifUnmodifiedSince\\(\\): invalid QDateTime.*"_s));
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/headers"_s))
+                            .ifModifiedSince(QDateTime())
+                            .ifUnmodifiedSince(QDateTime())
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    QVERIFY(result.success());
+    const auto headers = result.json.object().value(u"headers"_s).toObject();
+    QVERIFY(!headers.contains(u"If-Modified-Since"_s));
+    QVERIFY(!headers.contains(u"If-Unmodified-Since"_s));
+}
+
+void HttpClientTest::testMultipartFilenamePercentEncoded()
+{
+    // filename 按 RFC 5987 attr-char 白名单 percent-encoding：引号/CR/LF/空格/
+    // 非 ASCII 必须编码，杜绝 quoted-string 破坏与 part 头注入。服务端回显原始
+    // 请求体（latin-1），断言线上字节而非依赖服务端解码
+    const QByteArray data(64, 'X');
+
+    const auto quoted = m_client->upload(QUrl(m_baseUrl + u"/api/upload-raw-body"_s))
+                            .multipartData(u"report\"evil.txt"_s, data)
+                            .timeout(std::chrono::seconds(15))
+                            .sync();
+    QVERIFY(quoted.success());
+    const auto quotedBody = quoted.json.object().value(u"raw_body"_s).toString();
+    QVERIFY(quotedBody.contains(u"filename=\"report%22evil.txt\""_s));
+    QVERIFY(!quotedBody.contains(u"report\"evil"_s));
+
+    const auto crlf = m_client->upload(QUrl(m_baseUrl + u"/api/upload-raw-body"_s))
+                          .multipartData(u"x\r\ny"_s, data)
+                          .timeout(std::chrono::seconds(15))
+                          .sync();
+    QVERIFY(crlf.success());
+    const auto crlfBody = crlf.json.object().value(u"raw_body"_s).toString();
+    QVERIFY(crlfBody.contains(u"filename=\"x%0D%0Ay\""_s));
+    QVERIFY(!crlfBody.contains(u"x\r\ny"_s));
+
+    const auto unicode = m_client->upload(QUrl(m_baseUrl + u"/api/upload-raw-body"_s))
+                             .multipartData(u"中文.txt"_s, data)
+                             .timeout(std::chrono::seconds(15))
+                             .sync();
+    QVERIFY(unicode.success());
+    const auto unicodeBody = unicode.json.object().value(u"raw_body"_s).toString();
+    QVERIFY(unicodeBody.contains(u"filename=\"%E4%B8%AD%E6%96%87.txt\""_s));
+}
+
+void HttpClientTest::testSensitiveResponseHeadersRedactedInLogs()
+{
+    // 响应头脱敏（Set-Cookie/X-Token 命中子串，X-Rate-Limit 原样）。服务端回显
+    // 凭证类头；断言敏感值不落入日志、非敏感值原样
+    QLoggingCategory::setFilterRules(u"httpclient.debug=true"_s);
+    {
+        const std::lock_guard lock(logMutex);
+        logBuffer.clear();
+    }
+    const auto oldHandler = qInstallMessageHandler(captureLog);
+    const auto result = m_client->get(QUrl(m_baseUrl + u"/api/cookie-test"_s))
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    qInstallMessageHandler(oldHandler);
+    QLoggingCategory::setFilterRules(u"httpclient.debug=false"_s);
+
+    QString captured;
+    {
+        const std::lock_guard lock(logMutex);
+        captured = logBuffer;
+        logBuffer.clear();
+    }
+    QVERIFY(result.success());
+    QVERIFY2(!captured.contains(u"super-secret-session-id"_s), "Set-Cookie leaked into log");
+    QVERIFY2(!captured.contains(u"secret-token-value-123"_s), "X-Token leaked into log");
+    QVERIFY(captured.contains(u"***"_s));          // 敏感响应头已打码
+    QVERIFY(captured.contains(u"remaining=42"_s)); // 非敏感头原样保留
 }
 
 QTEST_MAIN(HttpClientTest)

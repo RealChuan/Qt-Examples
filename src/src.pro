@@ -22,7 +22,8 @@ SUBDIRS += \
     ProgressBar \
     ReactorServer \
     SqliteWAL \
-    SwitchButton
+    SwitchButton \
+    WebDavClient
 
 win32 {
     SUBDIRS += WindowsIntegration
