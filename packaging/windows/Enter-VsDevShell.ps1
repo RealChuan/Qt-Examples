@@ -1,18 +1,23 @@
 <#
 .SYNOPSIS
-  一键进入 Visual Studio 开发者命令行环境（DevShell）。
+  Enter the Visual Studio developer shell (DevShell) environment.
+
+.DESCRIPTION
+  This file is ASCII only on purpose: Windows PowerShell 5.1 decodes
+  BOM-less scripts with the ANSI code page, so non-ASCII text would break
+  parsing for anyone running this file on a non-UTF-8 code page.
 
 .PARAMETER VersionRange
-  要筛选的 VS 版本范围，例如 "[16.0,18.0)"；默认取最新正式版。
+  VS version range to match, e.g. "[16.0,18.0)". Defaults to the latest release.
 
 .PARAMETER Arch
-  目标架构：x86|x64|arm64；默认 x64。
+  Target architecture: x86|x64|arm64. Defaults to x64.
 
 .PARAMETER HostArch
-  Host 架构：x86|x64|arm64；默认 x64。
+  Host architecture: x86|x64|arm64. Defaults to x64.
 
 .PARAMETER Preview
-  允许匹配 Preview 版 VS；默认只找正式版。
+  Also match preview builds of VS. Defaults to release builds only.
 #>
 [CmdletBinding()]
 param(
@@ -24,10 +29,10 @@ param(
   [switch]$Preview
 )
 
-# 1. 拼 vswhere 命令 ----------------------------------------------------------
+# 1. Build the vswhere command line ------------------------------------------
 $vsWhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
 if (-not (Test-Path $vsWhere)) {
-  Write-Error "vswhere.exe 未找到，请确认 VS Installer 存在。"
+  Write-Error "vswhere.exe not found, check that the Visual Studio Installer exists."
   exit 0x80070002
 }
 
@@ -40,27 +45,27 @@ if ($Preview) { $argList += '-prerelease' }
 if ($VersionRange) { $argList += '-version', $VersionRange }
 else { $argList += '-latest' }
 
-# 2. 拿安装路径 ---------------------------------------------------------------
+# 2. Resolve the installation path -------------------------------------------
 $installations = @(& $vsWhere $argList | ConvertFrom-Json)
 if (-not $installations.Count) {
-  Write-Warning "vswhere 未找到任何符合条件的 VS 安装，尝试固定目录兜底。"
+  Write-Warning "vswhere found no matching Visual Studio installation, trying well-known paths."
   foreach ($base in @("${env:ProgramFiles(x86)}\Microsoft Visual Studio\2019\Enterprise",
       "${env:ProgramFiles}\Microsoft Visual Studio\2022\Enterprise")) {
     if (Test-Path $base) { $installations = @([PSCustomObject]@{installationPath = $base }) }
   }
   if (-not $installations.Count) {
-    Write-Error "未检测到任何 VS 安装。"
+    Write-Error "No Visual Studio installation detected."
     exit 0x80070003
   }
 }
 
 $vsPath = $installations[0].installationPath
-Write-Host "选中 VS 安装路径：$vsPath" -ForegroundColor Cyan
+Write-Host "Visual Studio: $vsPath" -ForegroundColor Cyan
 
-# 3. 加载 DevShell 并进入环境 -------------------------------------------------
+# 3. Load DevShell and enter the environment ---------------------------------
 $devShellDll = Join-Path $vsPath "Common7\Tools\Microsoft.VisualStudio.DevShell.dll"
 if (-not (Test-Path $devShellDll)) {
-  Write-Error "DevShell DLL 不存在：$devShellDll"
+  Write-Error "DevShell DLL not found: $devShellDll"
   exit 0x80070004
 }
 
@@ -68,9 +73,9 @@ try {
   Import-Module $devShellDll -ErrorAction Stop
   Enter-VsDevShell -VsInstallPath $vsPath `
     -DevCmdArguments "-arch=$Arch -host_arch=$HostArch"
-  Write-Host "DevShell 环境已启动 (arch=$Arch, host_arch=$HostArch)。" -ForegroundColor Green
+  Write-Host "DevShell ready (arch=$Arch, host_arch=$HostArch)." -ForegroundColor Green
 }
 catch {
-  Write-Error "进入 DevShell 失败：$_"
+  Write-Error "Failed to enter DevShell: $_"
   exit 0x80070005
 }

@@ -1,157 +1,90 @@
-# ArchitectureDetection.pri - 架构检测函数
+# =============================================================================
+# ArchitectureDetection.pri - 目标架构检测（与 cmake/ArchitectureDetection.cmake 对齐）
+#
+#   TARGET_ARCH : 统一命名 x86_64 / arm64 / x86 / universal / unknown
+#   ARCH_DIR    : 目录名   x64 / arm64 / x86 / universal / unknown
+#
+# 本文件被 ProjectSettings.pri 与 VcpkgToolchain.pri 重复 include，
+# 用 isEmpty() 守卫保证幂等（qmake 的 include 没有内置防重入）。
+# =============================================================================
 
-# 函数：验证架构字符串是否有效
-defineTest(is_valid_architecture) {
-    arch = $$1
-    contains(arch, "x86_64") | contains(arch, "x64") | contains(arch, "amd64") | \
-    contains(arch, "arm64") | contains(arch, "aarch64") | \
-    contains(arch, "i386") | contains(arch, "x86") | \
-    contains(arch, "universal") {
-        return(true)
-    }
-    return(false)
-}
-
-# 函数：规范化架构名称
+# 把各种写法归一成内部命名；无法识别时返回空串
 defineReplace(normalize_arch_name) {
     arch = $$1
-    contains(arch, "x86_64") | contains(arch, "x64") | contains(arch, "amd64") {
+
+    contains(arch, "x86_64")|contains(arch, "x64")|contains(arch, "amd64")|contains(arch, "AMD64") {
         return(x86_64)
     }
-    contains(arch, "arm64") | contains(arch, "aarch64") {
+    contains(arch, "arm64")|contains(arch, "aarch64")|contains(arch, "ARM64") {
         return(arm64)
     }
-    contains(arch, "i386") | contains(arch, "x86") {
+    contains(arch, "i386")|contains(arch, "x86")|contains(arch, "Win32") {
         return(x86)
     }
     contains(arch, "universal") {
         return(universal)
     }
+
+    return()
+}
+
+# 目录名 / vcpkg triplet 前缀
+defineReplace(arch_dir_name) {
+    arch = $$1
+
+    equals(arch, "x86_64"): return(x64)
+    equals(arch, "arm64"): return(arm64)
+    equals(arch, "x86"): return(x86)
+    equals(arch, "universal"): return(universal)
+
     return(unknown)
 }
 
-# 函数：检查列表是否包含特定架构
-defineTest(contains_architecture) {
-    arch_list = $$1
-    target_arch = $$2
-
-    for(arch, arch_list) {
-        equals(arch, $$target_arch) {
-            return(true)
-        }
-    }
-    return(false)
-}
-
-# 函数：检查列表是否同时包含 x86_64 和 arm64
-defineTest(contains_both_x64_and_arm64) {
-    arch_list = $$1
-
-    has_x64 = false
-    has_arm64 = false
-
-    for(arch, arch_list) {
-        equals(arch, "x86_64") {
-            has_x64 = true
-        }
-        equals(arch, "arm64") {
-            has_arm64 = true
-        }
-    }
-
-    equals(has_x64, "true"):equals(has_arm64, "true") {
-        return(true)
-    }
-    return(false)
-}
-
-# 函数：检测当前构建的架构
 defineReplace(detect_architecture) {
-    # 1. 优先检测 macOS 通用二进制（用户显式指定）
+    # 1. macOS：显式指定的架构 / 通用二进制
     macx {
         !isEmpty(QMAKE_APPLE_DEVICE_ARCHS) {
-            valid_arch_count = 0
-            supported_archs =
-
-            for(arch, QMAKE_APPLE_DEVICE_ARCHS) {
-                normalized_arch = $$normalize_arch_name($$arch)
-                is_valid_architecture($$arch) {
-                    valid_arch_count = $$eval(valid_arch_count) + 1
-                    supported_archs = $$supported_archs $$normalized_arch
-                } else {
-                    warning("Unsupported architecture '$$arch' in QMAKE_APPLE_DEVICE_ARCHS")
-                }
+            archs =
+            for(a, QMAKE_APPLE_DEVICE_ARCHS) {
+                n = $$normalize_arch_name($$a)
+                !isEmpty(n): archs += $$n
             }
 
-            equals(valid_arch_count, 0) {
-                error("No valid architectures found in QMAKE_APPLE_DEVICE_ARCHS: $$QMAKE_APPLE_DEVICE_ARCHS")
-                return(unknown)
-            } else:equals(valid_arch_count, 1) {
-                return($$first(supported_archs))
-            } else {
-                contains_both_x64_and_arm64($$supported_archs) {
-                    message("Detected universal binary (x86_64 + arm64)")
-                    return(universal)
-                } else {
-                    message("Multiple architectures detected: $$supported_archs, using first")
-                    return($$first(supported_archs))
-                }
+            !isEmpty(archs) {
+                contains(archs, "x86_64"):contains(archs, "arm64"): return(universal)
+                return($$first(archs))
             }
         }
+
+        # 2. uname -m 拿到真实硬件架构（可绕过 Rosetta）
+        native = $$system(uname -m)
+        n = $$normalize_arch_name($$native)
+        !isEmpty(n): return($$n)
     }
 
-    # 2. 其次使用 uname -m 获取真实硬件架构（绕过 Rosetta）
-    macx {
-        native_arch = $$system(uname -m)
-        normalized_native = $$normalize_arch_name($$native_arch)
-        is_valid_architecture($$normalized_native) {
-            return($$normalized_native)
-        }
-    }
-
-    # 3. 检测 QT_ARCH（跨平台 Qt 架构变量）
+    # 3. 交叉编译时 mkspec 里的目标架构
     !isEmpty(QT_ARCH) {
-        normalized_qt_arch = $$normalize_arch_name($$QT_ARCH)
-        is_valid_architecture($$normalized_qt_arch) {
-            return($$normalized_qt_arch)
-        }
+        n = $$normalize_arch_name($$QT_ARCH)
+        !isEmpty(n): return($$n)
     }
 
-    # 4. 使用 QMAKE_HOST.arch 进行最终检测
+    # 4. 主机架构兜底
     !isEmpty(QMAKE_HOST.arch) {
-        normalized_host_arch = $$normalize_arch_name($$QMAKE_HOST.arch)
-        is_valid_architecture($$normalized_host_arch) {
-            return($$normalized_host_arch)
-        }
+        n = $$normalize_arch_name($$QMAKE_HOST.arch)
+        !isEmpty(n): return($$n)
     }
 
-    # 默认情况
-    warning("Unable to detect architecture, using 'unknown'")
     return(unknown)
 }
 
-defineReplace(get_standard_architecture) {
-    arch = $$1
-    
-    # 首先处理通用二进制
-    equals(arch, "universal") {
-        return(universal)
-    }
-    
-    # 处理标准架构命名
-    equals(arch, "x86_64") {
-        return(x64)
-    }
-    equals(arch, "arm64") {
-        return(arm64)
-    }
-    equals(arch, "x86") {
-        return(x86)
-    }
-    
-    # 未知架构
-    return(unknown)
+# 允许命令行覆盖：qmake TARGET_ARCH=arm64
+isEmpty(TARGET_ARCH) {
+    TARGET_ARCH = $$detect_architecture()
+} else {
+    TARGET_ARCH_NORMALIZED = $$normalize_arch_name($$TARGET_ARCH)
+    !isEmpty(TARGET_ARCH_NORMALIZED): TARGET_ARCH = $$TARGET_ARCH_NORMALIZED
 }
 
-TARGET_ARCH = $$detect_architecture()
-TARGET_ARCH = $$get_standard_architecture($$TARGET_ARCH)
+isEmpty(ARCH_DIR): ARCH_DIR = $$arch_dir_name($$TARGET_ARCH)
+
+!isEmpty(VERBOSE): message("Target architecture: $$TARGET_ARCH (dir: $$ARCH_DIR)")

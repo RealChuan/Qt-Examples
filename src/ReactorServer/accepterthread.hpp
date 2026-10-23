@@ -5,6 +5,7 @@
 #include <QThread>
 
 class TcpServer;
+
 class AccepterThread : public QThread
 {
     Q_OBJECT

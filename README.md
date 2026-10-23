@@ -232,35 +232,6 @@
 
 ### [FlowLayout](https://doc.qt.io/qt-6/qtwidgets-layouts-flowlayout-example.html) - Qt 官方 Flow Layout Example
 
-### [packaging](src/packaging/) - 跨平台打包解决方案
-
-#### macOS 打包
-
-- **参考实现**: [Qt-App macOS 打包](https://github.com/RealChuan/Qt-App/tree/main/packaging/macos)
-- **核心文件**:
-  - **DMG 打包**:
-    - [create-dmg](https://github.com/sindresorhus/create-dmg)：最简单；
-    - [create-dmg](https://github.com/create-dmg/create-dmg)：Bash 脚本；
-    - [node-appdmg](https://github.com/LinusU/node-appdmg)：json 配置文件;
-    - [dmgbuild](https://pypi.org/project/dmgbuild/)：Python 脚本;
-  - [entitlements.plist](src/packaging/macos/entitlements.plist) - 应用程序签名权限配置文件
-  - [package.sh](src/packaging/macos/package.sh) - 主要打包脚本，这里包含签名过程，[Qt-App macOS 打包](https://github.com/RealChuan/Qt-App/tree/main/packaging/macos)这里没有签名过程
-  - [utils.sh](src/packaging/macos/utils.sh) - 打包辅助函数
-
-#### Windows 打包
-
-- **参考实现**: [Qt-App Windows 打包](https://github.com/RealChuan/Qt-App/tree/main/packaging/windows)
-- **核心文件**:
-  - [sign.bat](src/packaging/windows/sign.bat) - 代码签名脚本，支持集成到 Inno Setup
-- **签名集成**: 将 sign.bat 中的签名脚本集成到 Inno Setup 工具：
-  1. 在 Inno Setup 中选择 `Tools` → `Configure Sign Tools`
-  2. 添加签名工具并粘贴 sign.bat 中的脚本内容
-  3. 在打包脚本中为需要签名的文件添加对应的 sign flags 参数
-
-#### Ubuntu 打包
-
-- **参考实现**: [Qt-App Ubuntu 打包](https://github.com/RealChuan/Qt-App/tree/main/packaging/ubuntu)
-
 ## 资源
 
 - [Qt 实用技巧（中文）](https://realchuan.github.io/2021/10/12/QT实用小技巧（想到就更新）/)

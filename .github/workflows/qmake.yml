@@ -9,7 +9,6 @@ on:
       - "translations/**"
       - "**/CMakeLists.txt"
       - "**/*.md"
-      - "**/*.txt"
       - "**/.clang-*"
       - "**/.gitignore"
       - "**/LICENSE*"
@@ -23,7 +22,6 @@ on:
       - "translations/**"
       - "**/CMakeLists.txt"
       - "**/*.md"
-      - "**/*.txt"
       - "**/.clang-*"
       - "**/.gitignore"
       - "**/LICENSE*"
@@ -31,21 +29,20 @@ on:
       - "vcpkg.json"
 
 env:
-  MACOSX_DEPLOYMENT_TARGET: 14.4
+  MACOSX_DEPLOYMENT_TARGET: "14.4"
   MACOSX_BUILD_ARCHS: "x86_64 arm64"
   BUILD_DIR: build
 
 jobs:
   build:
-    name: Build
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
         os:
           - windows-latest
-          - macos-latest
           - ubuntu-latest
+          - macos-latest
 
     steps:
       - uses: actions/checkout@v7
@@ -54,13 +51,13 @@ jobs:
 
       - uses: ./.github/actions/install-dependencies
 
-      - uses: RealChuan/install-jom@main
+      - uses: RealChuan/setup-jom@main
 
       - name: Create build directory
         shell: bash
         run: mkdir -p ${{ env.BUILD_DIR }}
 
-      - name: Build windows
+      - name: QMake and build windows
         if: runner.os == 'Windows'
         working-directory: ${{ env.BUILD_DIR }}
         shell: pwsh
@@ -69,7 +66,7 @@ jobs:
           & qmake ..\.
           & jom
 
-      - name: Build linux
+      - name: QMake and build linux
         if: runner.os == 'Linux'
         working-directory: ${{ env.BUILD_DIR }}
         shell: bash
@@ -77,7 +74,7 @@ jobs:
           qmake ../.
           make -j $(nproc)
 
-      - name: Build macos
+      - name: QMake and build macos
         if: runner.os == 'macOS'
         working-directory: ${{ env.BUILD_DIR }}
         shell: bash

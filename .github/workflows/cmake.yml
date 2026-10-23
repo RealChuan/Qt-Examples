@@ -4,7 +4,7 @@ on:
   push:
     paths-ignore:
       - "docs/**"
-      - "packaging/**"
+      - "packaging/version.txt"
       - "qmake/**"
       - "translations/**"
       - "**/*.md"
@@ -17,7 +17,7 @@ on:
   pull_request:
     paths-ignore:
       - "docs/**"
-      - "packaging/**"
+      - "packaging/version.txt"
       - "qmake/**"
       - "translations/**"
       - "**/*.md"
@@ -36,7 +36,7 @@ env:
 
 jobs:
   build:
-    name: Build
+    name: Build (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -53,9 +53,10 @@ jobs:
         with:
           fetch-depth: 1
 
-      - uses: ./.github/actions/install-dependencies
+      - name: Install dependencies
+        uses: ./.github/actions/install-dependencies
 
-      - name: Configure and build windows
+      - name: Configure, build and test windows
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -64,10 +65,12 @@ jobs:
             -S . `
             -B "${{ env.BUILD_DIR }}" `
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} `
+            -DBUILD_TESTS=ON `
             -G "${{ matrix.generators }}"
           cmake --build "${{ env.BUILD_DIR }}" --config ${{ env.BUILD_TYPE }}
+          ctest --test-dir "${{ env.BUILD_DIR }}" --build-config ${{ env.BUILD_TYPE }} --output-on-failure
 
-      - name: Configure and build ubuntu
+      - name: Configure, build and test linux
         if: runner.os == 'Linux'
         shell: bash
         run: |
@@ -75,10 +78,12 @@ jobs:
             -S . \
             -B "${{ env.BUILD_DIR }}" \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
+            -DBUILD_TESTS=ON \
             -G "${{ matrix.generators }}"
           cmake --build "${{ env.BUILD_DIR }}" --config ${{ env.BUILD_TYPE }}
+          ctest --test-dir "${{ env.BUILD_DIR }}" --build-config ${{ env.BUILD_TYPE }} --output-on-failure
 
-      - name: Configure and build macos
+      - name: Configure, build and test macos
         if: runner.os == 'macOS'
         shell: bash
         run: |
@@ -87,5 +92,7 @@ jobs:
             -B "${{ env.BUILD_DIR }}" \
             -DCMAKE_BUILD_TYPE=${{ env.BUILD_TYPE }} \
             -DCMAKE_OSX_ARCHITECTURES="${{ env.MACOSX_BUILD_ARCHS }}" \
+            -DBUILD_TESTS=ON \
             -G "${{ matrix.generators }}"
           cmake --build "${{ env.BUILD_DIR }}" --config ${{ env.BUILD_TYPE }}
+          ctest --test-dir "${{ env.BUILD_DIR }}" --build-config ${{ env.BUILD_TYPE }} --output-on-failure

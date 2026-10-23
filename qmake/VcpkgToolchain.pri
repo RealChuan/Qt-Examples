@@ -1,29 +1,28 @@
+# =============================================================================
 # VcpkgToolchain.pri - vcpkg 依赖配置
+#
+# vcpkg 的位置固定，直接硬编码，不读 VCPKG_ROOT 环境变量
+# （VS 安装器会把它指向自带的空仓库，跟随它会走错目录）。
+# triplet 用 ARCH_DIR（x64/arm64），与 cmake/VcpkgToolchain.cmake 保持一致。
+# =============================================================================
 
-include($$PWD/ArchitectureDetection.pri)
+include(ArchitectureDetection.pri)
 
-# vcpkg 路径：优先使用环境变量，回退到默认路径
-isEmpty(VCPKG_ROOT) {
-    win32: VCPKG_ROOT = C:/vcpkg
-    macx: VCPKG_ROOT = /usr/local/share/vcpkg
-    unix:!macx: VCPKG_ROOT = /usr/local/share/vcpkg
-}
-
-# 设置平台特定的 vcpkg triplet 路径
 win32 {
-    vcpkg_path = $$VCPKG_ROOT/installed/$$TARGET_ARCH-windows-static-md
+    vcpkg_path = C:/vcpkg/installed/$${ARCH_DIR}-windows-static-md
 }
 
 macx {
-    vcpkg_path = $$VCPKG_ROOT/installed/$$TARGET_ARCH-osx
+    vcpkg_path = /usr/local/share/vcpkg/installed/$${ARCH_DIR}-osx
 }
 
 unix:!macx {
-    vcpkg_path = $$VCPKG_ROOT/installed/$$TARGET_ARCH-linux
+    vcpkg_path = /usr/local/share/vcpkg/installed/$${ARCH_DIR}-linux
 }
 
-# 输出 vcpkg 路径信息
-message("Using vcpkg path: $$vcpkg_path")
+!exists($$vcpkg_path): warning("vcpkg: 未找到 $$vcpkg_path")
+
+!isEmpty(VERBOSE): message("Using vcpkg path: $$vcpkg_path")
 
 # 设置调试后缀和库路径
 CONFIG(debug, debug|release) {
@@ -33,9 +32,6 @@ CONFIG(debug, debug|release) {
     suffix =
     LIBS += -L$$vcpkg_path/lib
 }
-
-# Breakpad 库
-LIBS += -llibbreakpad_client$$suffix -llibbreakpad$$suffix
 
 # Crashpad 库
 LIBS += -lvcpkg_crashpad_client_common -lvcpkg_crashpad_client -lvcpkg_crashpad_util -lvcpkg_crashpad_base
@@ -47,7 +43,7 @@ INCLUDEPATH += \
 
 # for crashpad
 win32 {
-    LIBS += -lzlib$$suffix -lAdvapi32
+    LIBS += -lzs$$suffix -lAdvapi32
     DEFINES += NOMINMAX
 }
 

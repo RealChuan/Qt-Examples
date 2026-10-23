@@ -17,9 +17,9 @@ public:
     BatteryWidget *q_ptr;
 
     // 可配置属性
-    QColor borderColor = QColor(44, 44, 46);    // #2c2c2e
-    QColor powerColor = QColor(52, 199, 89);    // #34c759
-    QColor alarmColor = QColor(255, 69, 58);    // #ff453a
+    QColor borderColor = QColor(44, 44, 46); // #2c2c2e
+    QColor powerColor = QColor(52, 199, 89); // #34c759
+    QColor alarmColor = QColor(255, 69, 58); // #ff453a
     int alarmValue = 20;
     int value = 75;
     int animationDuration = 500;
@@ -75,10 +75,13 @@ void BatteryWidget::initAnimations()
     d_ptr->pulseAnimation->setKeyValueAt(0.5, 1.0);
     d_ptr->pulseAnimation->setKeyValueAt(1.0, 0.5);
     d_ptr->pulseAnimation->setEasingCurve(QEasingCurve::InOutQuad);
-    connect(d_ptr->pulseAnimation, &QVariantAnimation::valueChanged, this, [this](const QVariant &value) {
-        d_ptr->chargingOpacity = value.toReal();
-        update();
-    });
+    connect(d_ptr->pulseAnimation,
+            &QVariantAnimation::valueChanged,
+            this,
+            [this](const QVariant &value) {
+                d_ptr->chargingOpacity = value.toReal();
+                update();
+            });
 
     // 连接内部信号
     connect(

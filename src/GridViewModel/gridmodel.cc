@@ -3,9 +3,7 @@
 class GridModel::GridModelPrivate
 {
 public:
-    explicit GridModelPrivate(GridModel *parent)
-        : q_ptr(parent)
-    {}
+    explicit GridModelPrivate(GridModel *parent) : q_ptr(parent) {}
 
     GridModel *q_ptr;
 
@@ -15,16 +13,13 @@ public:
 };
 
 GridModel::GridModel(QObject *parent)
-    : QAbstractListModel(parent)
-    , d_ptr(std::make_unique<GridModelPrivate>(this))
+    : QAbstractListModel(parent), d_ptr(std::make_unique<GridModelPrivate>(this))
 {}
 
 GridModel::~GridModel() = default;
 
 int GridModel::rowCount(const QModelIndex &parent) const
-{
-    return parent.isValid() ? 0 : d_ptr->cellList.size();
-}
+{ return parent.isValid() ? 0 : d_ptr->cellList.size(); }
 
 QVariant GridModel::data(const QModelIndex &index, int role) const
 {
@@ -69,6 +64,4 @@ void GridModel::setCellSize(int width, int height)
 }
 
 QSize GridModel::cellSize() const
-{
-    return QSize{d_ptr->cellWidth, d_ptr->cellHeight};
-}
+{ return QSize{d_ptr->cellWidth, d_ptr->cellHeight}; }

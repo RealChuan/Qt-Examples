@@ -4,8 +4,11 @@
 
 # -----------------------------------------------------------------------------
 # 配置选项
+#   默认关闭：每次 configure 打印约 40 行会明显拖慢 IDE/CI 的配置反馈，
+#   需要时用 -DPROJECT_DEBUG_INFO=ON 显式开启。
+#   若顶层已声明同名选项，这里的 option() 不会覆盖已有值。
 # -----------------------------------------------------------------------------
-option(PROJECT_DEBUG_INFO "Print detailed CMake configuration information" ON)
+option(PROJECT_DEBUG_INFO "Print detailed CMake configuration information" OFF)
 
 # -----------------------------------------------------------------------------
 # 通用工具函数
@@ -69,10 +72,13 @@ endfunction()
 # 编译器信息显示函数
 # -----------------------------------------------------------------------------
 function(show_compiler_info)
-  message(STATUS "│ C Compiler      : ${CMAKE_C_COMPILER}")
-  message(
-    STATUS
-      "│ C Compiler ID   : ${CMAKE_C_COMPILER_ID} ${CMAKE_C_COMPILER_VERSION}")
+  # 本项目 LANGUAGES 只有 CXX，C 编译器信息为空时不必打印
+  if(CMAKE_C_COMPILER)
+    message(STATUS "│ C Compiler      : ${CMAKE_C_COMPILER}")
+    message(
+      STATUS
+        "│ C Compiler ID   : ${CMAKE_C_COMPILER_ID} ${CMAKE_C_COMPILER_VERSION}")
+  endif()
   message(STATUS "│ CXX Compiler    : ${CMAKE_CXX_COMPILER}")
   message(
     STATUS
@@ -171,10 +177,8 @@ function(show_features_info)
     message(STATUS "│ Install RPATH   : ${CMAKE_INSTALL_RPATH}")
   endif()
 
-  # 检测编译特性支持
-  if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
-    include(CheckCXXCompilerFlag)
-    check_cxx_compiler_flag(-fstack-protector-strong HAS_STACK_PROTECTOR)
+  # 编译特性：结果已在 CompilerSettings.cmake 里缓存，这里只读取不重跑检查
+  if(DEFINED HAS_STACK_PROTECTOR)
     message(STATUS "│ Stack Protector : ${HAS_STACK_PROTECTOR}")
   endif()
 endfunction()

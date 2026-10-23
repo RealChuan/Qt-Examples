@@ -1,13 +1,14 @@
-name: "Install Dependencies"
-description: "Install qt environment and compile dependencies"
+name: "Install Build Dependencies"
+description: "Install vcpkg libraries and Qt environment for cross-platform builds"
+
 inputs:
   qt_modules:
-    description: "qt modules"
+    description: "Qt modules to install"
     required: false
     default: "qt5compat qtnetworkauth qtimageformats"
     type: string
   qt_ver:
-    description: "qt version"
+    description: "Qt version to install"
     required: false
     default: "6.12.0"
     type: string
@@ -20,7 +21,6 @@ runs:
       if: runner.os == 'Windows'
       shell: bash
       run: |
-        choco install ninja
         ninja --version
         cmake --version
 
@@ -37,14 +37,15 @@ runs:
       shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install -y ninja-build build-essential libgl1-mesa-dev
+        sudo apt-get install ninja-build build-essential libgl1-mesa-dev clang lintian tree
         ninja --version
         cmake --version
         gcc --version
 
+    # ---------------- Qt ----------------
     - name: Install Qt
       uses: jurplel/install-qt-action@v4
       with:
         version: ${{ inputs.qt_ver }}
         modules: ${{ inputs.qt_modules }}
-        cache: "true"
+        cache: true

@@ -30,7 +30,8 @@ enum class HttpErrorCode : int {
     NoError = 0,
     Timeout = 1000,   // 请求总时长超时
     FileError = 1001, // 上传源文件或下载目标文件打开/写入/保存失败
-    InvalidUse = 1002, // API 误用：重复终止、移动后的构建器、upload + body()/json() 冲突、upload 未配置载荷
+    InvalidUse
+    = 1002, // API 误用：重复终止、移动后的构建器、upload + body()/json() 冲突、upload 未配置载荷
     Canceled = 1003, // QNAM 内部取消（HTTP/2 RST_STREAM 等）；用户 cancel() 不产生结果
 };
 

@@ -10,8 +10,7 @@
 class BubbleWrapperWidget::BubbleWrapperWidgetPrivate
 {
 public:
-    explicit BubbleWrapperWidgetPrivate(BubbleWrapperWidget *q)
-        : q_ptr(q)
+    explicit BubbleWrapperWidgetPrivate(BubbleWrapperWidget *q) : q_ptr(q)
     {
         bubble = new BubbleWidget(q_ptr);
 
@@ -45,22 +44,20 @@ public:
 };
 
 BubbleWrapperWidget::BubbleWrapperWidget(QWidget *parent)
-    : QWidget(parent)
-    , d_ptr(std::make_unique<BubbleWrapperWidgetPrivate>(this))
+    : QWidget(parent), d_ptr(std::make_unique<BubbleWrapperWidgetPrivate>(this))
 {
     setupUI();
     buildConnect();
 
-    QMetaObject::invokeMethod(this, &BubbleWrapperWidget::onEnsureInitialized, Qt::QueuedConnection);
+    QMetaObject::invokeMethod(
+        this, &BubbleWrapperWidget::onEnsureInitialized, Qt::QueuedConnection);
 }
 
 BubbleWrapperWidget::~BubbleWrapperWidget() = default;
 
 // 获取内部气泡控件
 BubbleWidget *BubbleWrapperWidget::bubbleWidget() const
-{
-    return d_ptr->bubble;
-}
+{ return d_ptr->bubble; }
 
 auto BubbleWrapperWidget::sizeHint() const -> QSize
 {
@@ -86,14 +83,10 @@ void BubbleWrapperWidget::setAnimationDuration(int duration)
 }
 
 auto BubbleWrapperWidget::animationDuration() const -> int
-{
-    return d_ptr->animationDuration;
-}
+{ return d_ptr->animationDuration; }
 
 bool BubbleWrapperWidget::isAnimating() const
-{
-    return d_ptr->isAnimating;
-}
+{ return d_ptr->isAnimating; }
 
 // 显示控制
 void BubbleWrapperWidget::showAt(const QPoint &pos, BubbleWidget::Direction direction)
@@ -161,15 +154,15 @@ void BubbleWrapperWidget::showNearWidget(QWidget *widget,
         targetPos = widget->mapToGlobal(QPoint(widgetRect.width() / 2, -margin));
         break;
     case BubbleWidget::Direction::Bottom:
-        targetPos = widget->mapToGlobal(
-            QPoint(widgetRect.width() / 2, widgetRect.height() + margin));
+        targetPos
+            = widget->mapToGlobal(QPoint(widgetRect.width() / 2, widgetRect.height() + margin));
         break;
     case BubbleWidget::Direction::Left:
         targetPos = widget->mapToGlobal(QPoint(-margin, widgetRect.height() / 2));
         break;
     case BubbleWidget::Direction::Right:
-        targetPos = widget->mapToGlobal(
-            QPoint(widgetRect.width() + margin, widgetRect.height() / 2));
+        targetPos
+            = widget->mapToGlobal(QPoint(widgetRect.width() + margin, widgetRect.height() / 2));
         break;
     }
 
@@ -257,7 +250,8 @@ void BubbleWrapperWidget::showEvent(QShowEvent *event)
 
 void BubbleWrapperWidget::setupUI()
 {
-    setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::Popup | Qt::NoDropShadowWindowHint);
+    setWindowFlags(windowFlags() | Qt::FramelessWindowHint | Qt::Popup
+                   | Qt::NoDropShadowWindowHint);
     setAttribute(Qt::WA_TranslucentBackground);
     setFocusPolicy(Qt::StrongFocus);
 

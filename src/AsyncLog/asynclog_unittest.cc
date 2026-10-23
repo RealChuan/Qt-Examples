@@ -74,15 +74,28 @@ namespace {
     return lines;
 }
 
-// 预置一个过期文件（mtime 前拨），用于清理测试
+// 预置一个过期文件（mtime 前拨），用于清理测试。
+// 必须先写完并关闭，再另开句柄拨时间：QFile 在 QIODevice 层有写缓冲，
+// close() 时的落盘写会重新刷新 mtime，把此前设置的时间覆盖成“现在”
 void makeStaleFile(const QString &path, const QByteArray &content)
 {
-    QFile file(path);
-    QVERIFY(file.open(QIODevice::WriteOnly));
-    file.write(content);
-    QVERIFY(file.setFileTime(QDateTime::currentDateTime().addDays(-30),
-                             QFileDevice::FileModificationTime));
-    file.close();
+    {
+        QFile file(path);
+        QVERIFY(file.open(QIODevice::WriteOnly));
+        QCOMPARE(file.write(content), qint64(content.size()));
+    }
+
+    QFile stamp(path);
+    QVERIFY(stamp.open(QIODevice::ReadWrite)); // setFileTime 要求文件处于打开状态
+    QVERIFY(stamp.setFileTime(QDateTime::currentDateTime().addDays(-30),
+                              QFileDevice::FileModificationTime));
+    stamp.close();
+
+    // 清理逻辑按 mtime 判定过期，这里确认时间真的拨过去了
+    const auto mtime = QFileInfo(path).lastModified();
+    QVERIFY2(mtime < QDateTime::currentDateTime().addDays(-1),
+             qPrintable(QStringLiteral("cannot backdate %1: mtime=%2")
+                            .arg(path, mtime.toString(Qt::ISODateWithMs))));
 }
 
 // 严格命名模式：版本槽位按期望原文精确匹配，主机/进程取当前
