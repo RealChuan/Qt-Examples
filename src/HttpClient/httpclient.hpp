@@ -20,6 +20,11 @@
 class HttpClient;
 class RequestBuilder;
 
+namespace Utils {
+struct TaskState;
+struct Prepared;
+} // namespace Utils
+
 /**
  * @brief 错误码
  *
@@ -191,6 +196,15 @@ private:
     HttpTask execute(RequestBuilder &builder);
     HttpResult executeSync(RequestBuilder &builder);
     void cancelInternal(QNetworkReply *reply);
+    void registerBasicAuth(const QString &host, const QString &user, const QString &password);
+
+    std::unique_ptr<Utils::TaskState> buildTaskState(RequestBuilder &builder);
+    Utils::Prepared prepare(RequestBuilder &builder);
+    void connectSignals(RequestBuilder &builder, QNetworkReply *reply, Utils::TaskState *state);
+    QNetworkReply *postMultipart(const QNetworkRequest &request,
+                                 const QString &fileName,
+                                 QIODevice *device,
+                                 const QByteArray &data);
 
 private slots:
     void onReplyFinished();

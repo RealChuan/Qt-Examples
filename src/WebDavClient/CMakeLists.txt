@@ -1,7 +1,10 @@
 if(BUILD_TESTS)
   set(PROJECT_SOURCES
       ${CMAKE_SOURCE_DIR}/src/HttpClient/httpclient.cc
-      ${CMAKE_SOURCE_DIR}/src/HttpClient/httpclient.hpp webdavclient.cc
+      ${CMAKE_SOURCE_DIR}/src/HttpClient/httpclient.hpp
+      ${CMAKE_SOURCE_DIR}/src/HttpClient/httpclient_p.cc
+      ${CMAKE_SOURCE_DIR}/src/HttpClient/httpclient_p.hpp
+      ${CMAKE_SOURCE_DIR}/src/HttpClient/requestbuilder.cc webdavclient.cc
       webdavclient.hpp)
 
   # 需要测试服务器的集成测试：unittests/dav_server.py（127.0.0.1:8001）， 服务器不可达时整批自动跳过；不加入

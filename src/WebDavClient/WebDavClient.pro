@@ -4,11 +4,14 @@ QT       += core network testlib
 
 SOURCES += \
     ../HttpClient/httpclient.cc  \
+    ../HttpClient/httpclient_p.cc  \
+    ../HttpClient/requestbuilder.cc  \
     webdavclient.cc  \
     webdavclient_nonet_unittest.cc
 
 HEADERS += \
     ../HttpClient/httpclient.hpp  \
+    ../HttpClient/httpclient_p.hpp  \
     webdavclient.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY

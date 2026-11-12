@@ -1,5 +1,10 @@
 if(BUILD_TESTS)
-  set(PROJECT_SOURCES httpclient.cc httpclient.hpp)
+  set(PROJECT_SOURCES
+      httpclient.cc
+      httpclient.hpp
+      httpclient_p.cc
+      httpclient_p.hpp
+      requestbuilder.cc)
 
   # 需要测试服务器的集成测试：手动起 unittests/test_server.py 后运行，不加入 CTest
   qt_add_executable(httpclient_unittest httpclient_unittest.cc

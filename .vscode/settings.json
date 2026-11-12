@@ -1,4 +1,5 @@
 {
+  "cmake.cmakePath": "C:\\Qt\\Tools\\CMake_64\\bin\\cmake.exe",
   "cmake.configureEnvironment": {
     "CMAKE_MAKE_PROGRAM": "C:\\Qt\\Tools\\Ninja\\ninja.exe;"
   },

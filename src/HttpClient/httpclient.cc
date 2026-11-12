@@ -1,14 +1,11 @@
-#include "httpclient.hpp"
+#include "httpclient_p.hpp"
 
 #include <QAuthenticator>
 #include <QEventLoop>
 #include <QFileInfo>
-#include <QHash>
 #include <QHttpMultiPart>
-#include <QLocale>
 #include <QLoggingCategory>
 #include <QPointer>
-#include <QSslConfiguration>
 #include <QStringView>
 #include <QTimer>
 #include <QUrlQuery>
@@ -16,14 +13,16 @@
 #include <algorithm>
 #include <array>
 #include <ranges>
-#include <unordered_map>
 #include <utility>
 
 using namespace Qt::StringLiterals;
+using Utils::encodeJsonBody;
+using Utils::Prepared;
+using Utils::redactedHeader;
+using Utils::TaskState;
 
 // 分类日志：默认只输出里程碑（info）与错误（warning）；
 // 设 QT_LOGGING_RULES="httpclient.debug=true" 可开启请求/响应明细，便于调试
-Q_DECLARE_LOGGING_CATEGORY(lcHttpClient)
 Q_LOGGING_CATEGORY(lcHttpClient, "httpclient")
 
 namespace {
@@ -39,31 +38,8 @@ constexpr bool kIs32BitProcess = sizeof(void *) == 4;
 // 在途窗口：32 位 4 MiB（地址空间紧），64 位 8 MiB；readBufferLimit() 可按请求覆盖
 constexpr qint64 kDownloadReadBufferLimit = kIs32BitProcess ? 4 * 1024 * 1024 : 8 * 1024 * 1024;
 
-// 落盘块：1 MiB。readyRead 槽内同步写，过大会拉长事件循环阻塞，
-// 1 MiB 已摊薄 write() 次数，再大收益递减
-constexpr qint64 kDownloadChunkSize = 1024 * 1024;
-
-// 凭证类头部只打印占位，避免 token/会话泄漏到日志。
-// 头名为 ASCII：折叠一次后在字节域匹配（QByteArrayView 无大小写不敏感查找），
-// 免去每次调用一次 QString 分配与 Latin-1 到 UTF-16 的转换
-bool isSensitiveHeader(QByteArrayView name)
-{
-    static const std::array sensitiveSubstrings{"authorization"_ba,
-                                                "cookie"_ba,
-                                                "token"_ba,
-                                                "secret"_ba,
-                                                "api_key"_ba,
-                                                "apikey"_ba,
-                                                "api-key"_ba};
-    const QByteArray lowered = name.toByteArray().toLower();
-    return std::ranges::any_of(sensitiveSubstrings, [&lowered](QByteArrayView substring) {
-        return lowered.contains(substring);
-    });
-}
-
-// 敏感头值打码（与 redactedUrl 的 *** 占位约定一致）
-QByteArray redactedHeader(QByteArrayView name, const QByteArray &value)
-{ return isSensitiveHeader(name) ? QByteArray("***") : value; }
+qint64 effectiveReadBufferLimit(qint64 limit)
+{ return limit > 0 ? limit : kDownloadReadBufferLimit; }
 
 // query 中的凭证类键（预签名 URL、OAuth token 等）：子串匹配覆盖键名变体
 //（access_token、X-Amz-Signature 等），X-Amz-Date 等非凭证参数不命中
@@ -117,32 +93,6 @@ QString redactedUrl(const QUrl &url)
     return copy.toString();
 }
 
-// RFC 9110 token 词法（tchar）：动词等协议元素的合法字符集
-bool isTChar(char c)
-{
-    switch (c) {
-    case '!':
-    case '#':
-    case '$':
-    case '%':
-    case '&':
-    case '\'':
-    case '*':
-    case '+':
-    case '-':
-    case '.':
-    case '^':
-    case '_':
-    case '`':
-    case '|':
-    case '~': return true;
-    default: return (c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
-    }
-}
-
-bool isValidHttpToken(QByteArrayView token)
-{ return !token.isEmpty() && std::ranges::all_of(token, isTChar); }
-
 // multipart filename 编码：RFC 5987 attr-char 白名单之外的字节（含 " \ CR LF、
 // 空格与非 ASCII）全部 %XX——quoted-string 转义、part 头注入、文件名编码三件
 // 事一次解决；服务端（PHP/Werkzeug/multer 等）普遍按 percent-encoded 解读
@@ -154,25 +104,6 @@ QByteArray encodeMultipartFilename(const QString &fileName)
                                     "!#$&+-.^_`|~";
     return fileName.toUtf8().toPercentEncoding(attrChars);
 }
-
-// JSON 序列化为请求体：空对象产出 "{}"（有效 JSON），
-// 与 std::nullopt 表达的"无 body"严格区分
-struct BodyEncoding
-{
-    QByteArray data;
-    QByteArray contentType;
-};
-
-BodyEncoding encodeJsonBody(const QJsonObject &json)
-{
-    return {QJsonDocument(json).toJson(QJsonDocument::Compact),
-            QByteArrayLiteral("application/json; charset=utf-8")};
-}
-
-// HTTP-date（IMF-fixdate）："Sun, 06 Nov 1994 08:49:37 GMT"。
-// QLocale::c() 保证英文日/月名（系统 locale 无关），toUTC() 统一为 GMT
-QByteArray httpDate(const QDateTime &dateTime)
-{ return QLocale::c().toString(dateTime.toUTC(), u"ddd, dd MMM yyyy HH:mm:ss 'GMT'"_s).toLatin1(); }
 
 // 丢弃下载 .temp：先回退本次响应的写入（downloadBase 为起点）再删——删除
 // 失败（Windows 上杀毒/索引服务常短暂占用刚关闭的文件）时残留的也是干净
@@ -189,53 +120,8 @@ void discardTempFile(const QString &tempPath, qint64 downloadBase)
 
 } // namespace
 
-// 本地错误码的可读消息；网络错误不经过此函数，消息直接取 QNetworkReply::errorString()
-static QString httpErrorMessage(HttpErrorCode code)
-{
-    switch (code) {
-    case HttpErrorCode::Timeout: return u"Request timed out"_s;
-    case HttpErrorCode::FileError: return u"File operation failed"_s;
-    default: return {};
-    }
-}
-
 QList<QByteArray> HttpResult::header(QByteArrayView name) const
 { return headers.values(name); }
-
-class RequestBuilder::RequestBuilderPrivate
-{
-public:
-    RequestBuilderPrivate() = default;
-
-    HttpClient *client = nullptr;
-    RequestBuilder::Kind kind = RequestBuilder::Kind::Json;
-    HttpClient::Method method = HttpClient::Method::Get;
-
-    // body 三态：nullopt = 未设置；有值 = 已设置（空字节即空体；
-    // json({}) 序列化为 "{}"，与"无 body"严格区分）
-    std::optional<QByteArray> bodyData;
-
-    QByteArray verbOverride; // 字符串动词覆盖；effectiveVerb() 决议
-
-    QUrl url;
-    QString downloadPath;
-
-    RequestBuilder::PayloadKind payloadKind = RequestBuilder::PayloadKind::None;
-    QString filePath;
-    QByteArray data;
-    QString fileName;
-
-    QHttpHeaders headers; // 覆盖语义由 replaceOrAppend 提供（同名大小写不敏感替换）
-    QList<QPair<QString, QString>> queries;
-    std::chrono::milliseconds timeout{0};
-    bool ignoreSslErrors = false;
-    QList<QSslCertificate> clientCertChain; // mTLS 客户端证书链（空 = 未设置，链首为叶证书）
-    QSslKey clientKey;
-    qint64 readBufferLimit = 0; // 下载在途窗口覆盖值；0 = 使用默认 kDownloadReadBufferLimit
-    bool consumed = false;      // send()/sync() 一次性守卫
-    HttpFinishedCallback onFinished;
-    HttpProgressCallback onProgress;
-};
 
 // 取消句柄的内部状态：QPointer 弱引用，不延长任何生命周期
 class HttpTask::HttpTaskPrivate
@@ -247,402 +133,8 @@ public:
     QPointer<QNetworkReply> reply;
 };
 
-// 每个在途请求的执行期状态，由 tasks map 以 unique_ptr 持有（RAII）：
-// 析构即停止超时定时器、关闭文件句柄
-class HttpClient::HttpClientPrivate
-{
-public:
-    explicit HttpClientPrivate(HttpClient *q) : q_ptr(q) {}
-
-    struct TaskState
-    {
-        HttpFinishedCallback onFinished;
-        HttpProgressCallback onProgress;
-        std::unique_ptr<QFile> file;          // 上传：源文件；下载：目标 .temp
-        std::unique_ptr<QTimer> timeoutTimer; // 总时长超时定时器
-        QString downloadPath;                 // 仅下载：最终路径
-        qint64 downloadBase = 0;              // 仅下载：断点续传偏移
-        bool ignoreSsl = false;
-        bool rangeChecked = false;            // 仅下载：首个 readyRead 已处理 200 截断分支
-        QString fileError;                    // 仅下载：写入/保存失败原因；非空即失败
-        // QNetworkReply 无 sslErrors() getter，信号是唯一来源：槽中收集，buildResult 时带入
-        QList<QSslError> sslErrors;
-        QByteArray method;     // 请求动词（QNetworkReply 无对应 getter）
-        bool timedOut = false; // 超时定时器已触发：buildResult 据此区分 Timeout 与 QNAM 内部取消
-        QByteArray ioChunk;    // drainToFile 复用的落盘缓冲：跨多次 readyRead 避免重复分配 1 MiB
-    };
-
-    // prepare 的产出：reply 为空表示请求未发起（文件打开失败等），error 携带原因
-    struct Prepared
-    {
-        QNetworkReply *reply = nullptr;
-        std::unique_ptr<TaskState> state;
-        HttpResult error;
-
-        [[nodiscard]] bool ok() const { return reply != nullptr; }
-
-        static Prepared fail(HttpResult err, std::unique_ptr<TaskState> state = nullptr)
-        { return {.state = std::move(state), .error = std::move(err)}; }
-    };
-
-    static QByteArray methodBytes(HttpClient::Method method)
-    {
-        // Q_ENUM 反射取得枚举名（"Get"），统一大写化为 HTTP 动词（"GET"）
-        return QByteArray(
-                   QMetaEnum::fromType<HttpClient::Method>().valueToKey(static_cast<int>(method)))
-            .toUpper();
-    }
-
-    // 动词决议：字符串覆盖（method(QByteArrayView)）优先于枚举，
-    // 与 method() 两个重载"最后一次调用生效"的契约一致
-    static QByteArray effectiveVerb(const RequestBuilder::RequestBuilderPrivate &config)
-    { return config.verbOverride.isEmpty() ? methodBytes(config.method) : config.verbOverride; }
-
-    static HttpResult fileError(const QUrl &url, const QString &path, const QString &reason)
-    {
-        HttpResult result;
-        result.code = HttpErrorCode::FileError;
-        result.url = url;
-        result.message = u"Cannot open file %1: %2"_s.arg(path, reason);
-        qCWarning(lcHttpClient).noquote() << result.message;
-        return result;
-    }
-
-    static HttpResult invalidUse(const QUrl &url, const QString &reason)
-    {
-        HttpResult result;
-        result.code = HttpErrorCode::InvalidUse;
-        result.url = url;
-        result.message = reason;
-        qCWarning(lcHttpClient).noquote() << result.message;
-        return result;
-    }
-
-    // excludeHeader：由调用方独占管理的头（大小写不敏感）。用户经 header()
-    // 设置的该头不进入最终请求（如 download() 的 Range），避免双重管理
-    QNetworkRequest buildRequest(const RequestBuilder::RequestBuilderPrivate &config,
-                                 QByteArrayView excludeHeader = {})
-    {
-        QNetworkRequest request;
-        auto url = config.url;
-        if (!config.queries.isEmpty()) {
-            QUrlQuery query(url);
-            for (const auto &[key, value] : std::as_const(config.queries)) {
-                query.addQueryItem(key, value);
-            }
-            url.setQuery(query);
-        }
-        request.setUrl(url);
-        // 隐式共享拷贝；excludeHeader（如 download 的 Range）由调用方独占管理，用户值移除
-        auto headers = config.headers;
-        if (!excludeHeader.isEmpty()) {
-            const auto excluded = QByteArray{excludeHeader};
-            if (headers.contains(excluded)) {
-                qCDebug(lcHttpClient).noquote()
-                    << "header" << excluded << "is managed exclusively; user value ignored";
-                headers.removeAll(excluded);
-            }
-        }
-        for (const auto &[name, value] : headers.toListOfPairs()) {
-            qCDebug(lcHttpClient).noquote()
-                << "request header:" << name << redactedHeader(name, value);
-        }
-        request.setHeaders(std::move(headers));
-        if (!config.clientCertChain.isEmpty()) {
-            // 在请求当前 SSL 配置之上叠加证书链与私钥，自定义 CA 等既有字段保留
-            auto sslConfiguration = request.sslConfiguration();
-            sslConfiguration.setLocalCertificateChain(config.clientCertChain);
-            sslConfiguration.setPrivateKey(config.clientKey);
-            request.setSslConfiguration(sslConfiguration);
-        }
-        return request;
-    }
-
-    std::unique_ptr<TaskState> buildTaskState(const RequestBuilder::RequestBuilderPrivate &config)
-    {
-        auto state = std::make_unique<TaskState>();
-        state->method = effectiveVerb(config);
-        state->onFinished = config.onFinished;
-        state->onProgress = config.onProgress;
-        state->ignoreSsl = config.ignoreSslErrors;
-        if (config.timeout > std::chrono::milliseconds{0}) {
-            state->timeoutTimer = std::make_unique<QTimer>();
-            state->timeoutTimer->setSingleShot(true);
-            q_ptr->connect(
-                state->timeoutTimer.get(), &QTimer::timeout, q_ptr, &HttpClient::onTimeout);
-            state->timeoutTimer->start(config.timeout);
-        }
-        return state;
-    }
-
-    // 分块排空 reply 并写入下载文件（readAll() 整体分配复制在 32 位下会 OOM）；
-    // chunk 由 TaskState 持有、跨多次 readyRead 复用。返回空串表示成功，
-    // 非空为写入失败原因（磁盘满等）
-    static QString drainToFile(QNetworkReply *reply, QFile *file, QByteArray &chunk)
-    {
-        if (chunk.size() != int(kDownloadChunkSize)) {
-            chunk.resize(int(kDownloadChunkSize));
-        }
-        while (reply->bytesAvailable() > 0) {
-            const qint64 read = reply->read(chunk.data(), chunk.size());
-            if (read <= 0) {
-                break; // 暂无数据可读：readyRead 与实际到达竞态时的正常退出
-            }
-            if (file->write(chunk.constData(), read) != read) {
-                auto error = file->errorString();
-                if (error.isEmpty()) {
-                    error = u"write failed"_s;
-                }
-                return error;
-            }
-        }
-        return {};
-    }
-
-    QNetworkReply *postMultipart(const QNetworkRequest &request,
-                                 const QString &fileName,
-                                 QIODevice *device,
-                                 const QByteArray &data)
-    {
-        QHttpPart filePart;
-        // 整值以 QByteArray 组装走 setRawHeader，不经 QVariant 的字符串隐式转换；
-        // filename 的转义/防注入/非 ASCII 编码见 encodeMultipartFilename
-        filePart.setRawHeader("Content-Disposition",
-                              "form-data; name=\"file\"; filename=\""_ba
-                                  + encodeMultipartFilename(fileName) + '"');
-        if (device) {
-            filePart.setBodyDevice(device);
-        } else {
-            filePart.setBody(data);
-        }
-        // QHttpMultiPart 归 reply 所有（Qt 对象树），随 reply 析构自动释放
-        auto *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
-        multiPart->append(filePart);
-        auto *reply = q_ptr->post(request, multiPart);
-        multiPart->setParent(reply);
-        return reply;
-    }
-
-    void connectSignals(const RequestBuilder::RequestBuilderPrivate &config,
-                        QNetworkReply *reply,
-                        TaskState *state)
-    {
-        q_ptr->connect(reply, &QNetworkReply::sslErrors, q_ptr, &HttpClient::onSslErrors);
-        switch (config.kind) {
-        case RequestBuilder::Kind::Json:
-        case RequestBuilder::Kind::Upload:
-            q_ptr->connect(reply, &QNetworkReply::finished, q_ptr, &HttpClient::onReplyFinished);
-            if (state->onProgress) {
-                q_ptr->connect(
-                    reply, &QNetworkReply::uploadProgress, q_ptr, &HttpClient::onUploadProgress);
-            }
-            break;
-        case RequestBuilder::Kind::Download:
-            q_ptr->connect(reply, &QNetworkReply::finished, q_ptr, &HttpClient::onDownloadFinished);
-            q_ptr->connect(
-                reply, &QNetworkReply::readyRead, q_ptr, &HttpClient::onDownloadReadyRead);
-            // 重定向会重建 HTTP 线程 delegate（窗口归零），每个响应到达时重设背压
-            const auto readBufferLimit
-                = config.readBufferLimit > 0 ? config.readBufferLimit : kDownloadReadBufferLimit;
-            q_ptr->connect(reply, &QNetworkReply::metaDataChanged, reply, [reply, readBufferLimit] {
-                reply->setReadBufferSize(readBufferLimit);
-            });
-            if (state->onProgress) {
-                q_ptr->connect(reply,
-                               &QNetworkReply::downloadProgress,
-                               q_ptr,
-                               &HttpClient::onDownloadProgress);
-            }
-            break;
-        }
-    }
-
-    Prepared prepare(const RequestBuilder::RequestBuilderPrivate &config)
-    {
-        Prepared prepared;
-        prepared.state = buildTaskState(config);
-        auto &state = prepared.state;
-
-        const auto verb = effectiveVerb(config);
-
-        switch (config.kind) {
-        case RequestBuilder::Kind::Json: {
-            auto request = buildRequest(config);
-            QByteArray body;
-            if (config.bodyData.has_value()) {
-                body = *config.bodyData;
-                if (!body.isEmpty()) {
-                    qCDebug(lcHttpClient).noquote() << "request body:" << body;
-                }
-            }
-            prepared.reply = q_ptr->sendCustomRequest(request, verb, body);
-            break;
-        }
-        case RequestBuilder::Kind::Download: {
-            const auto tempPath = config.downloadPath + u".temp"_s;
-            auto file = std::make_unique<QFile>(tempPath);
-            if (!file->open(QIODevice::WriteOnly | QIODevice::Append)) {
-                return Prepared::fail(fileError(config.url, tempPath, file->errorString()),
-                                      std::move(prepared.state));
-            }
-            auto request = buildRequest(config, "Range");
-            state->downloadBase = file->size();
-            if (state->downloadBase > 0) {
-                request.setRawHeader(
-                    "Range", "bytes="_ba + QByteArray::number(state->downloadBase) + "-"_ba);
-            }
-            // 纯 GET 走原生 get() 快路径；改动词或带动作体经自定义动词发送
-            const bool needCustomVerb = config.bodyData.has_value()
-                                        || !config.verbOverride.isEmpty()
-                                        || config.method != HttpClient::Method::Get;
-            if (needCustomVerb) {
-                QByteArray body;
-                if (config.bodyData.has_value()) {
-                    body = *config.bodyData;
-                    if (!body.isEmpty()) {
-                        qCDebug(lcHttpClient).noquote() << "request body:" << body;
-                    }
-                }
-                prepared.reply = q_ptr->sendCustomRequest(request, verb, body);
-            } else {
-                prepared.reply = q_ptr->get(request);
-            }
-            // 背压窗口需排队设置：setReadBufferSize() 经信号通知 HTTP 线程 delegate，
-            // 而信号连接在请求启动（_q_startOperation，get() 后的排队事件）才建立，
-            // 同步调用会因信号无接收者而失效
-            const auto readBufferLimit
-                = config.readBufferLimit > 0 ? config.readBufferLimit : kDownloadReadBufferLimit;
-            QMetaObject::invokeMethod(
-                prepared.reply,
-                [reply = prepared.reply, readBufferLimit] {
-                    reply->setReadBufferSize(readBufferLimit);
-                },
-                Qt::QueuedConnection);
-            state->file = std::move(file);
-            state->downloadPath = config.downloadPath;
-            break;
-        }
-        case RequestBuilder::Kind::Upload: {
-            if (config.bodyData.has_value()) {
-                return Prepared::fail(
-                    invalidUse(config.url,
-                               u"upload() payload is provided by putFile/putData/multipart*; "
-                               u"body()/json() are not applicable"_s),
-                    std::move(prepared.state));
-            }
-            auto request = buildRequest(config);
-            const bool isMultipart
-                = config.payloadKind == RequestBuilder::PayloadKind::MultipartFile
-                  || config.payloadKind == RequestBuilder::PayloadKind::MultipartData;
-            if (isMultipart && verb != "POST") {
-                qCWarning(lcHttpClient).noquote()
-                    << "multipart upload is always POST; verb" << verb << "ignored";
-            }
-            switch (config.payloadKind) {
-            case RequestBuilder::PayloadKind::PutFile: {
-                auto file = std::make_unique<QFile>(config.filePath);
-                if (!file->open(QIODevice::ReadOnly)) {
-                    return Prepared::fail(
-                        fileError(config.url, config.filePath, file->errorString()),
-                        std::move(prepared.state));
-                }
-                // 默认 PUT 走原生 put() 流式快路径；改写动词经自定义动词发送
-                prepared.reply = verb == "PUT"
-                                     ? q_ptr->put(request, file.get())
-                                     : q_ptr->sendCustomRequest(request, verb, file.get());
-                state->file = std::move(file);
-                break;
-            }
-            case RequestBuilder::PayloadKind::PutData:
-                prepared.reply = verb == "PUT"
-                                     ? q_ptr->put(request, config.data)
-                                     : q_ptr->sendCustomRequest(request, verb, config.data);
-                break;
-            case RequestBuilder::PayloadKind::MultipartFile: {
-                auto file = std::make_unique<QFile>(config.filePath);
-                if (!file->open(QIODevice::ReadOnly)) {
-                    return Prepared::fail(
-                        fileError(config.url, config.filePath, file->errorString()),
-                        std::move(prepared.state));
-                }
-                const auto fileName = QFileInfo(config.filePath).fileName();
-                prepared.reply = postMultipart(request, fileName, file.get(), {});
-                state->file = std::move(file);
-                break;
-            }
-            case RequestBuilder::PayloadKind::MultipartData:
-                prepared.reply = postMultipart(request, config.fileName, nullptr, config.data);
-                break;
-            case RequestBuilder::PayloadKind::None:
-                // 未配置载荷属 API 误用而非断言：debug/release 一致地返回 InvalidUse
-                return Prepared::fail(invalidUse(config.url,
-                                                 u"upload() requires a payload "
-                                                 u"(putFile/putData/multipart*)"_s),
-                                      std::move(prepared.state));
-            }
-            break;
-        }
-        }
-
-        // 文件打开失败已在各分支提前返回，此处 reply 必非空
-        connectSignals(config, prepared.reply, state.get());
-        qCInfo(lcHttpClient).noquote()
-            << state->method << redactedUrl(prepared.reply->url()) << "dispatched";
-        return prepared;
-    }
-
-    static HttpResult buildResult(QNetworkReply *reply, const TaskState &state)
-    {
-        HttpResult result;
-        result.url = reply->url();
-        result.method = state.method;
-        result.status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        result.headers = reply->headers();
-        result.sslErrors = state.sslErrors;
-        const auto error = reply->error();
-        if (error == QNetworkReply::NoError) {
-            result.code = HttpErrorCode::NoError;
-        } else if (error == QNetworkReply::OperationCanceledError) {
-            // 用户取消路径会先 disconnect 再 abort，不会进入槽。到达此处的
-            // OperationCanceledError 有两个来源，须按 timedOut 归因：
-            //  - 超时定时器的 abort -> Timeout
-            //  - QNAM 内部取消（HTTP/2 RST_STREAM、代理取消等）-> Canceled
-            if (state.timedOut) {
-                result.code = HttpErrorCode::Timeout;
-                result.message = httpErrorMessage(HttpErrorCode::Timeout);
-            } else {
-                result.code = HttpErrorCode::Canceled;
-                result.message = reply->errorString();
-            }
-        } else {
-            // 网络层失败与服务器错误状态（QNAM 映射码），消息直接用 errorString()
-            result.code = static_cast<HttpErrorCode>(error);
-            result.message = reply->errorString();
-        }
-        return result;
-    }
-
-    HttpClient *q_ptr;
-    // 生命周期契约：tasks 的键是非拥有的 reply 视图（reply 由 deleteLater 释放）。
-    // 任何终止路径（onReplyFinished/onDownloadFinished/cancelInternal）必须先 erase
-    // 再 reply->deleteLater()——reply 若在仍被键入时析构，地址一旦被新 reply 复用，
-    // 陈旧条目会被误命中，TaskState 张冠李戴。cancelInternal 还须先 disconnect 再
-    // abort（abort 会同步触发 finished，未断开将重入槽访问已移除的状态）
-    std::unordered_map<QNetworkReply *, std::unique_ptr<TaskState>> tasks;
-
-    // BasicCredentials 嵌套于此而非匿名 namespace：外部链接类的成员使用
-    // 内部链接类型会触发 -Wsubobject-linkage（CI 有 -Werror）
-    struct BasicCredentials
-    {
-        QString user;
-        QString password;
-    };
-
-    QHash<QString, BasicCredentials> hostBasicAuth;
-};
-
 HttpClient::HttpClient(QObject *parent)
-    : QNetworkAccessManager(parent), d_ptr(std::make_unique<HttpClientPrivate>(this))
+    : QNetworkAccessManager(parent), d_ptr(std::make_unique<HttpClientPrivate>())
 {
     connect(this,
             &QNetworkAccessManager::authenticationRequired,
@@ -760,7 +252,7 @@ RequestBuilder HttpClient::upload(QUrl url)
 
 HttpTask HttpClient::execute(RequestBuilder &builder)
 {
-    auto prepared = d_ptr->prepare(*builder.d_ptr);
+    auto prepared = prepare(builder);
     if (!prepared.ok()) {
         // 请求未发起（文件打开失败等）：与异步契约一致延迟到事件循环派发，
         // 避免回调在 send() 调用栈内同步执行；扩展点与回调同批派发
@@ -782,7 +274,7 @@ HttpTask HttpClient::execute(RequestBuilder &builder)
 
 HttpResult HttpClient::executeSync(RequestBuilder &builder)
 {
-    auto prepared = d_ptr->prepare(*builder.d_ptr);
+    auto prepared = prepare(builder);
     if (!prepared.ok()) {
         prepared.error.method = prepared.state->method;
         resultReady(prepared.error);
@@ -822,6 +314,208 @@ void HttpClient::cancelInternal(QNetworkReply *reply)
     reply->abort();
     d_ptr->tasks.erase(it);
     reply->deleteLater();
+}
+
+void HttpClient::registerBasicAuth(const QString &host,
+                                   const QString &user,
+                                   const QString &password)
+{ d_ptr->hostBasicAuth[host] = {user, password}; }
+
+std::unique_ptr<TaskState> HttpClient::buildTaskState(RequestBuilder &builder)
+{
+    const auto &config = *builder.d_ptr;
+    auto state = std::make_unique<TaskState>();
+    state->method = HttpClientPrivate::effectiveVerb(config);
+    state->onFinished = config.onFinished;
+    state->onProgress = config.onProgress;
+    state->ignoreSsl = config.ignoreSslErrors;
+    if (config.timeout > std::chrono::milliseconds{0}) {
+        state->timeoutTimer = std::make_unique<QTimer>();
+        state->timeoutTimer->setSingleShot(true);
+        connect(state->timeoutTimer.get(), &QTimer::timeout, this, &HttpClient::onTimeout);
+        state->timeoutTimer->start(config.timeout);
+    }
+    return state;
+}
+
+Prepared HttpClient::prepare(RequestBuilder &builder)
+{
+    const auto &config = *builder.d_ptr;
+    Prepared prepared;
+    prepared.state = buildTaskState(builder);
+    auto &state = prepared.state;
+
+    const auto verb = HttpClientPrivate::effectiveVerb(config);
+    const auto requestBody = [&config] {
+        QByteArray body;
+        if (config.bodyData.has_value()) {
+            body = *config.bodyData;
+            if (!body.isEmpty()) {
+                qCDebug(lcHttpClient).noquote() << "request body:" << body;
+            }
+        }
+        return body;
+    };
+
+    switch (config.kind) {
+    case RequestBuilder::Kind::Json: {
+        auto request = d_ptr->buildRequest(config);
+        prepared.reply = sendCustomRequest(request, verb, requestBody());
+        break;
+    }
+    case RequestBuilder::Kind::Download: {
+        const auto tempPath = config.downloadPath + u".temp"_s;
+        auto file = std::make_unique<QFile>(tempPath);
+        if (!file->open(QIODevice::WriteOnly | QIODevice::Append)) {
+            return Prepared::fail(
+                HttpClientPrivate::fileError(config.url, tempPath, file->errorString()),
+                std::move(prepared.state));
+        }
+        auto request = d_ptr->buildRequest(config, "Range");
+        state->downloadBase = file->size();
+        if (state->downloadBase > 0) {
+            request.setRawHeader("Range",
+                                 "bytes="_ba + QByteArray::number(state->downloadBase) + "-"_ba);
+        }
+        // 纯 GET 走原生 get() 快路径；改动词或带动作体经自定义动词发送
+        const bool needCustomVerb = config.bodyData.has_value() || !config.verbOverride.isEmpty()
+                                    || config.method != HttpClient::Method::Get;
+        if (needCustomVerb) {
+            prepared.reply = sendCustomRequest(request, verb, requestBody());
+        } else {
+            prepared.reply = get(request);
+        }
+        // 背压窗口需排队设置：setReadBufferSize() 经信号通知 HTTP 线程 delegate，
+        // 而信号连接在请求启动（_q_startOperation，get() 后的排队事件）才建立，
+        // 同步调用会因信号无接收者而失效
+        const auto readBufferLimit = effectiveReadBufferLimit(config.readBufferLimit);
+        QMetaObject::invokeMethod(
+            prepared.reply,
+            [reply = prepared.reply, readBufferLimit] {
+                reply->setReadBufferSize(readBufferLimit);
+            },
+            Qt::QueuedConnection);
+        state->file = std::move(file);
+        state->downloadPath = config.downloadPath;
+        break;
+    }
+    case RequestBuilder::Kind::Upload: {
+        if (config.bodyData.has_value()) {
+            return Prepared::fail(
+                HttpClientPrivate::invalidUse(
+                    config.url,
+                    u"upload() payload is provided by putFile/putData/multipart*; "
+                    u"body()/json() are not applicable"_s),
+                std::move(prepared.state));
+        }
+        auto request = d_ptr->buildRequest(config);
+        const bool isMultipart
+            = config.payloadKind == RequestBuilder::PayloadKind::MultipartFile
+              || config.payloadKind == RequestBuilder::PayloadKind::MultipartData;
+        if (isMultipart && verb != "POST") {
+            qCWarning(lcHttpClient).noquote()
+                << "multipart upload is always POST; verb" << verb << "ignored";
+        }
+        switch (config.payloadKind) {
+        case RequestBuilder::PayloadKind::PutFile: {
+            auto file = std::make_unique<QFile>(config.filePath);
+            if (!file->open(QIODevice::ReadOnly)) {
+                return Prepared::fail(
+                    HttpClientPrivate::fileError(config.url, config.filePath, file->errorString()),
+                    std::move(prepared.state));
+            }
+            // 默认 PUT 走原生 put() 流式快路径；改写动词经自定义动词发送
+            prepared.reply = verb == "PUT" ? put(request, file.get())
+                                           : sendCustomRequest(request, verb, file.get());
+            state->file = std::move(file);
+            break;
+        }
+        case RequestBuilder::PayloadKind::PutData:
+            prepared.reply = verb == "PUT" ? put(request, config.data)
+                                           : sendCustomRequest(request, verb, config.data);
+            break;
+        case RequestBuilder::PayloadKind::MultipartFile: {
+            auto file = std::make_unique<QFile>(config.filePath);
+            if (!file->open(QIODevice::ReadOnly)) {
+                return Prepared::fail(
+                    HttpClientPrivate::fileError(config.url, config.filePath, file->errorString()),
+                    std::move(prepared.state));
+            }
+            const auto fileName = QFileInfo(config.filePath).fileName();
+            prepared.reply = postMultipart(request, fileName, file.get(), {});
+            state->file = std::move(file);
+            break;
+        }
+        case RequestBuilder::PayloadKind::MultipartData:
+            prepared.reply = postMultipart(request, config.fileName, nullptr, config.data);
+            break;
+        case RequestBuilder::PayloadKind::None:
+            // 未配置载荷属 API 误用而非断言：debug/release 一致地返回 InvalidUse
+            return Prepared::fail(HttpClientPrivate::invalidUse(config.url,
+                                                                u"upload() requires a payload "
+                                                                u"(putFile/putData/multipart*)"_s),
+                                  std::move(prepared.state));
+        }
+        break;
+    }
+    }
+
+    // 文件打开失败已在各分支提前返回，此处 reply 必非空
+    connectSignals(builder, prepared.reply, state.get());
+    qCInfo(lcHttpClient).noquote()
+        << state->method << redactedUrl(prepared.reply->url()) << "dispatched";
+    return prepared;
+}
+
+void HttpClient::connectSignals(RequestBuilder &builder, QNetworkReply *reply, TaskState *state)
+{
+    const auto &config = *builder.d_ptr;
+    connect(reply, &QNetworkReply::sslErrors, this, &HttpClient::onSslErrors);
+    switch (config.kind) {
+    case RequestBuilder::Kind::Json:
+    case RequestBuilder::Kind::Upload:
+        connect(reply, &QNetworkReply::finished, this, &HttpClient::onReplyFinished);
+        if (state->onProgress) {
+            connect(reply, &QNetworkReply::uploadProgress, this, &HttpClient::onUploadProgress);
+        }
+        break;
+    case RequestBuilder::Kind::Download:
+        connect(reply, &QNetworkReply::finished, this, &HttpClient::onDownloadFinished);
+        connect(reply, &QNetworkReply::readyRead, this, &HttpClient::onDownloadReadyRead);
+        // 重定向会重建 HTTP 线程 delegate（窗口归零），每个响应到达时重设背压
+        const auto readBufferLimit = effectiveReadBufferLimit(config.readBufferLimit);
+        connect(reply, &QNetworkReply::metaDataChanged, reply, [reply, readBufferLimit] {
+            reply->setReadBufferSize(readBufferLimit);
+        });
+        if (state->onProgress) {
+            connect(reply, &QNetworkReply::downloadProgress, this, &HttpClient::onDownloadProgress);
+        }
+        break;
+    }
+}
+
+QNetworkReply *HttpClient::postMultipart(const QNetworkRequest &request,
+                                         const QString &fileName,
+                                         QIODevice *device,
+                                         const QByteArray &data)
+{
+    QHttpPart filePart;
+    // 整值以 QByteArray 组装走 setRawHeader，不经 QVariant 的字符串隐式转换；
+    // filename 的转义/防注入/非 ASCII 编码见 encodeMultipartFilename
+    filePart.setRawHeader("Content-Disposition",
+                          "form-data; name=\"file\"; filename=\""_ba
+                              + encodeMultipartFilename(fileName) + '"');
+    if (device) {
+        filePart.setBodyDevice(device);
+    } else {
+        filePart.setBody(data);
+    }
+    // QHttpMultiPart 归 reply 所有（Qt 对象树），随 reply 析构自动释放
+    auto *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType);
+    multiPart->append(filePart);
+    auto *reply = post(request, multiPart);
+    multiPart->setParent(reply);
+    return reply;
 }
 
 void HttpClient::onSslErrors(const QList<QSslError> &errors)
@@ -1115,276 +809,4 @@ void HttpTask::cancel() const
     if (d_ptr && d_ptr->client && d_ptr->reply) {
         d_ptr->client->cancelInternal(d_ptr->reply);
     }
-}
-
-RequestBuilder::RequestBuilder(HttpClient *client,
-                               Kind kind,
-                               HttpClient::Method method,
-                               QUrl url,
-                               std::optional<QByteArray> body,
-                               QByteArray contentType,
-                               QString downloadPath)
-    : d_ptr(std::make_unique<RequestBuilderPrivate>())
-{
-    d_ptr->client = client;
-    d_ptr->kind = kind;
-    d_ptr->method = method;
-    d_ptr->url = std::move(url);
-    d_ptr->bodyData = std::move(body);
-    if (d_ptr->bodyData.has_value() && !contentType.isEmpty()) {
-        d_ptr->headers.replaceOrAppend("Content-Type", std::move(contentType));
-    }
-    d_ptr->downloadPath = std::move(downloadPath);
-}
-
-RequestBuilder::RequestBuilder(RequestBuilder &&) noexcept = default;
-RequestBuilder &RequestBuilder::operator=(RequestBuilder &&) noexcept = default;
-RequestBuilder::~RequestBuilder() = default;
-
-RequestBuilder &RequestBuilder::header(QByteArray name, QByteArray value)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->headers.replaceOrAppend(std::move(name), std::move(value));
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::bearer(QByteArrayView token)
-{ return header("Authorization", "Bearer " + token.toByteArray()); }
-
-RequestBuilder &RequestBuilder::basicAuth(const QString &user, const QString &password)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->client->d_ptr->hostBasicAuth[d_ptr->url.host()] = {user, password};
-    const auto credentials = u"%1:%2"_s.arg(user, password).toUtf8().toBase64();
-    return header("Authorization", "Basic " + credentials);
-}
-
-RequestBuilder &RequestBuilder::query(const QString &key, const QString &value)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->queries.append({key, value});
-    return *this;
-}
-
-// ── 条件请求便利层：各自只是一次 header() 封装，覆盖语义与其一致 ──
-
-RequestBuilder &RequestBuilder::ifNoneMatch(QByteArray etag)
-{ return header("If-None-Match", std::move(etag)); }
-
-RequestBuilder &RequestBuilder::ifMatch(QByteArray etag)
-{ return header("If-Match", std::move(etag)); }
-
-RequestBuilder &RequestBuilder::ifModifiedSince(const QDateTime &lastModified)
-{
-    if (!lastModified.isValid()) {
-        qCWarning(lcHttpClient)
-            << u"RequestBuilder::ifModifiedSince(): invalid QDateTime; header ignored"_s;
-        return *this;
-    }
-    return header("If-Modified-Since", httpDate(lastModified));
-}
-
-RequestBuilder &RequestBuilder::ifUnmodifiedSince(const QDateTime &lastModified)
-{
-    if (!lastModified.isValid()) {
-        qCWarning(lcHttpClient)
-            << u"RequestBuilder::ifUnmodifiedSince(): invalid QDateTime; header ignored"_s;
-        return *this;
-    }
-    return header("If-Unmodified-Since", httpDate(lastModified));
-}
-
-RequestBuilder &RequestBuilder::method(HttpClient::Method method)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->method = method;
-    d_ptr->verbOverride.clear();
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::method(QByteArrayView verb)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    if (!isValidHttpToken(verb)) {
-        qCWarning(lcHttpClient).noquote() << u"RequestBuilder::method(): invalid HTTP token:"_s
-                                          << QByteArray(verb) << u"; ignored"_s;
-        return *this;
-    }
-    // RFC 9110 §9.1：method 大小写敏感，原样保留用户传入的动词
-    d_ptr->verbOverride = QByteArray(verb);
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::body(QByteArray data, QByteArray contentType)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->bodyData = std::move(data);
-    if (!contentType.isEmpty()) {
-        d_ptr->headers.replaceOrAppend("Content-Type", std::move(contentType));
-    }
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::json(const QJsonObject &obj)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    auto encoded = encodeJsonBody(obj);
-    return body(std::move(encoded.data), std::move(encoded.contentType));
-}
-
-RequestBuilder &RequestBuilder::timeout(std::chrono::milliseconds timeout)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->timeout = timeout;
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::readBufferLimit(qint64 limit)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->readBufferLimit = limit;
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::ignoreSslErrors()
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->ignoreSslErrors = true;
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::clientCert(const QList<QSslCertificate> &certChain,
-                                           const QSslKey &key)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    const bool hasNullCert
-        = std::ranges::any_of(certChain, [](const QSslCertificate &cert) { return cert.isNull(); });
-    if (certChain.isEmpty() || hasNullCert || key.isNull()) {
-        qCWarning(lcHttpClient).noquote()
-            << u"RequestBuilder::clientCert(): empty chain, null certificate, "
-               u"or null key; ignored"_s;
-        return *this;
-    }
-    d_ptr->clientCertChain = certChain;
-    d_ptr->clientKey = key;
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::onFinished(HttpFinishedCallback callback)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->onFinished = std::move(callback);
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::onProgress(HttpProgressCallback callback)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->onProgress = std::move(callback);
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::putFile(QString filePath)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->payloadKind = PayloadKind::PutFile;
-    d_ptr->filePath = std::move(filePath);
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::putData(QByteArray data)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->payloadKind = PayloadKind::PutData;
-    d_ptr->data = std::move(data);
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::multipartFile(QString filePath)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->payloadKind = PayloadKind::MultipartFile;
-    d_ptr->filePath = std::move(filePath);
-    return *this;
-}
-
-RequestBuilder &RequestBuilder::multipartData(QString fileName, QByteArray data)
-{
-    if (!d_ptr) {
-        return *this;
-    }
-    d_ptr->payloadKind = PayloadKind::MultipartData;
-    d_ptr->fileName = std::move(fileName);
-    d_ptr->data = std::move(data);
-    return *this;
-}
-
-HttpTask RequestBuilder::send()
-{
-    if (!d_ptr) {
-        qCWarning(lcHttpClient)
-            << u"RequestBuilder::send(): moved-from builder; request not sent"_s;
-        return {};
-    }
-    if (std::exchange(d_ptr->consumed, true)) {
-        qCWarning(lcHttpClient)
-            << u"RequestBuilder::send(): builder already used; request not sent"_s;
-        return {};
-    }
-    return d_ptr->client->execute(*this);
-}
-
-HttpResult RequestBuilder::sync()
-{
-    if (!d_ptr) {
-        qCWarning(lcHttpClient) << u"RequestBuilder::sync(): moved-from builder"_s;
-        HttpResult result;
-        result.code = HttpErrorCode::InvalidUse;
-        result.message = u"Moved-from builder"_s;
-        return result;
-    }
-    if (std::exchange(d_ptr->consumed, true)) {
-        qCWarning(lcHttpClient) << u"RequestBuilder::sync(): builder already used"_s;
-        HttpResult result;
-        result.code = HttpErrorCode::InvalidUse;
-        result.message = u"Builder already used"_s;
-        return result;
-    }
-    if (d_ptr->onFinished) {
-        qCWarning(lcHttpClient)
-            << u"RequestBuilder::sync(): onFinished ignored; sync() returns the result directly"_s;
-    }
-    return d_ptr->client->executeSync(*this);
 }

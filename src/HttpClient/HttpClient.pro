@@ -4,10 +4,13 @@ QT       += core network testlib
 
 SOURCES += \
     httpclient.cc  \
+    httpclient_p.cc  \
+    requestbuilder.cc  \
     httpclient_nonet_unittest.cc
 
 HEADERS += \
-    httpclient.hpp
+    httpclient.hpp  \
+    httpclient_p.hpp
 
 DESTDIR = $$RUNTIME_OUTPUT_DIRECTORY
 
