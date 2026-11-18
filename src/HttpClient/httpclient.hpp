@@ -41,7 +41,18 @@ enum class HttpErrorCode : int {
 };
 
 /**
- * @brief 请求终止结果
+ * @brief 请求侧快照：发起时实际下发的信息（不含 SSL 配置与传输层追加的 Host 等头）
+ */
+struct HttpRequestSnapshot
+{
+    QByteArray method;    // 有效动词；字符串覆盖原样保留
+    QUrl url;             // 发起地址；重定向后的地址见 HttpResult::url
+    QHttpHeaders headers; // 客户端层下发的头（含 download 的 Range）
+    QByteArray body;      // 副本；putFile/multipart 等流式载荷为空
+};
+
+/**
+ * @brief 请求终止结果：一次交换的完整现场（请求侧快照 + 响应侧）
  *
  * 所有终止路径（成功、服务器错误状态、网络失败、超时）统一产出本结构：
  *  - success()                    -> 无协议错误：2xx（json 可直接使用）、条件请求命中的
@@ -49,19 +60,20 @@ enum class HttpErrorCode : int {
  *  - !success() && status >= 400  -> 服务器错误状态（4xx/5xx），body/json 是 API 错误详情
  *  - !success() && status < 400   -> 传输失败（status 为已收到的状态码，头未到达则为 0）、
  *                                   超时/文件错误/误用/QNAM 内部取消
+ *
+ * 请求未发起（moved-from/二次使用/文件打不开等本地失败）时 request 只含 method。
  */
 struct HttpResult
 {
     HttpErrorCode code = HttpErrorCode::NoError;
-    QString message;    // 失败原因：QNAM errorString() 或本地映射消息
-    QUrl url;           // 请求 URL（重定向跟随后的最终地址）
-    int status = 0;     // HTTP 状态码；0 表示服务器无响应
-    QByteArray body;    // 原始响应体；下载成功时为空（数据已写入文件）
-    QJsonDocument json; // body 为合法 JSON 时即已解析，否则为 null
-    QByteArray
-        method; // 请求动词（枚举动词规范大写，字符串动词原样保留）；入口检查未通过（moved-from/二次使用）时为空
+    QString message;             // 失败原因：QNAM errorString() 或本地映射消息
+    HttpRequestSnapshot request; // 请求侧快照：查"发了什么"不用再回 Builder
+    QUrl url;                    // 响应地址（重定向跟随后的最终地址）
+    int status = 0;              // HTTP 状态码；0 表示服务器无响应
+    QByteArray body;             // 原始响应体；下载成功时为空（数据已写入文件）
+    QJsonDocument json;          // body 为合法 JSON 时即已解析，否则为 null
     QList<QSslError> sslErrors;
-    QHttpHeaders headers; // 全部响应头（多值头如 Set-Cookie 保留多条）
+    QHttpHeaders headers;        // 全部响应头（多值头如 Set-Cookie 保留多条）
 
     Q_REQUIRED_RESULT bool success() const { return code == HttpErrorCode::NoError; }
 
@@ -189,6 +201,16 @@ protected:
      */
     virtual void resultReady(const HttpResult &result);
 
+private slots:
+    void onReplyFinished();
+    void onSslErrors(const QList<QSslError> &errors);
+    void onTimeout();
+    void onAuthenticationRequired(QNetworkReply *reply, QAuthenticator *auth);
+    void onUploadProgress(qint64 bytesSent, qint64 bytesTotal);
+    void onDownloadReadyRead();
+    void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+    void onDownloadFinished();
+
 private:
     friend class RequestBuilder;
     friend class HttpTask;
@@ -206,17 +228,6 @@ private:
                                  QIODevice *device,
                                  const QByteArray &data);
 
-private slots:
-    void onReplyFinished();
-    void onSslErrors(const QList<QSslError> &errors);
-    void onTimeout();
-    void onAuthenticationRequired(QNetworkReply *reply, QAuthenticator *auth);
-    void onUploadProgress(qint64 bytesSent, qint64 bytesTotal);
-    void onDownloadReadyRead();
-    void onDownloadProgress(qint64 bytesReceived, qint64 bytesTotal);
-    void onDownloadFinished();
-
-private:
     class HttpClientPrivate;
     std::unique_ptr<HttpClientPrivate> d_ptr;
 };

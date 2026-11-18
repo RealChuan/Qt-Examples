@@ -18,7 +18,7 @@ makeResult(int status, const QByteArray &body, const QUrl &url, QByteArray metho
     result.url = url;
     result.status = status;
     result.body = body;
-    result.method = std::move(method);
+    result.request.method = std::move(method);
     // code 只需令 success() 与状态码一致：check() 不读具体网络错误值
     result.code
         = status >= 200 && status < 300 ? HttpErrorCode::NoError : HttpErrorCode::InvalidUse;

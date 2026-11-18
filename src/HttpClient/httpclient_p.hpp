@@ -33,9 +33,10 @@ struct TaskState
     QString fileError;                    // 仅下载：写入/保存失败原因；非空即失败
     // QNetworkReply 无 sslErrors() getter，信号是唯一来源：槽中收集，buildResult 时带入
     QList<QSslError> sslErrors;
-    QByteArray method;     // 请求动词（QNetworkReply 无对应 getter）
     bool timedOut = false; // 超时定时器已触发：buildResult 据此区分 Timeout 与 QNAM 内部取消
     QByteArray ioChunk;    // drainToFile 复用的落盘缓冲：跨多次 readyRead 避免重复分配 1 MiB
+    // 请求侧快照：verb/url/headers 由 prepare 记录，body 是副本（config 在 send() 后析构）
+    HttpRequestSnapshot request;
 };
 
 // prepare 的产出：reply 为空表示请求未发起（文件打开失败等），error 携带原因

@@ -162,7 +162,7 @@ HttpResult HttpClient::HttpClientPrivate::buildResult(QNetworkReply *reply, cons
 {
     HttpResult result;
     result.url = reply->url();
-    result.method = state.method;
+    result.request = state.request;
     result.status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     result.headers = reply->headers();
     result.sslErrors = state.sslErrors;

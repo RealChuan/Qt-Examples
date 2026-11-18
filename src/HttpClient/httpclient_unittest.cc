@@ -115,6 +115,7 @@ private slots:
     void testNonJsonResponse();
     void testResponseHeaderLookup();
     void testSensitiveResponseHeadersRedactedInLogs();
+    void testFailureLogCarriesContext();
     void testServerErrorStatus_data();
     void testServerErrorStatus();
 
@@ -385,7 +386,7 @@ void HttpClientTest::testCustomVerbCasePreserved()
               .sync();
     QVERIFY(result.success());
     QCOMPARE(result.json.object().value(u"method"_s).toString(), u"RePort"_s);
-    QCOMPARE(result.method, QByteArray("RePort"));
+    QCOMPARE(result.request.method, QByteArray("RePort"));
 }
 
 void HttpClientTest::testResultCarriesRequestMethod()
@@ -395,13 +396,13 @@ void HttpClientTest::testResultCarriesRequestMethod()
     const auto got
         = m_client->get(QUrl(m_baseUrl + u"/api/test"_s)).timeout(std::chrono::seconds(10)).sync();
     QVERIFY(got.success());
-    QCOMPARE(got.method, QByteArray("GET"));
+    QCOMPARE(got.request.method, QByteArray("GET"));
 
     const auto posted = m_client->post(QUrl(m_baseUrl + u"/api/test"_s), QJsonObject{{u"k"_s, 1}})
                             .timeout(std::chrono::seconds(10))
                             .sync();
     QVERIFY(posted.success());
-    QCOMPARE(posted.method, QByteArray("POST"));
+    QCOMPARE(posted.request.method, QByteArray("POST"));
 
     const auto reported
         = m_client->request(HttpClient::Method::Get, QUrl(m_baseUrl + u"/api/test"_s))
@@ -410,7 +411,7 @@ void HttpClientTest::testResultCarriesRequestMethod()
               .sync();
     QVERIFY(!reported.success());
     QCOMPARE(reported.status, 405);
-    QCOMPARE(reported.method, QByteArray("PROPFIND"));
+    QCOMPARE(reported.request.method, QByteArray("PROPFIND"));
 }
 
 void HttpClientTest::testCustomHeaders()
@@ -941,7 +942,7 @@ void HttpClientTest::testResultReadyOnDownloadSuccess()
 
     QTRY_COMPARE_WITH_TIMEOUT(events.size(), 2, 15000);
     QCOMPARE(events, (QStringList{u"resultReady"_s, u"onFinished"_s}));
-    QCOMPARE(readyResult.method, QByteArray("GET"));
+    QCOMPARE(readyResult.request.method, QByteArray("GET"));
     QCOMPARE(readyResult.status, 200);
     QVERIFY(QFile::exists(path)); // onFinished 派发时下载已完成（.temp 已改名）
 }
@@ -1573,6 +1574,41 @@ void HttpClientTest::testSensitiveResponseHeadersRedactedInLogs()
     QVERIFY2(!captured.contains(u"secret-token-value-123"_s), "X-Token leaked into log");
     QVERIFY(captured.contains(u"***"_s));          // 敏感响应头已打码
     QVERIFY(captured.contains(u"remaining=42"_s)); // 非敏感头原样保留
+}
+
+void HttpClientTest::testFailureLogCarriesContext()
+{
+    // 失败日志必须自带定位上下文（原因/请求头/请求体前缀/响应体前缀），且不依赖
+    // httpclient.debug：默认级别下就要能判断失败原因，无需复现时开调试日志
+    QLoggingCategory::setFilterRules(u"httpclient.debug=false"_s);
+    {
+        const std::lock_guard lock(logMutex);
+        logBuffer.clear();
+    }
+    QJsonObject payload;
+    payload[u"marker"_s] = u"request-payload-marker"_s;
+    const auto oldHandler = qInstallMessageHandler(captureLog);
+    // POST /api/error 不被受理（405 + HTML 错误页）：请求侧与响应侧上下文可同测
+    const auto result = m_client->post(QUrl(m_baseUrl + u"/api/error"_s), payload)
+                            .header("X-Trace-Id", "trace-123")
+                            .timeout(std::chrono::seconds(10))
+                            .sync();
+    qInstallMessageHandler(oldHandler);
+
+    QString captured;
+    {
+        const std::lock_guard lock(logMutex);
+        captured = logBuffer;
+        logBuffer.clear();
+    }
+    QVERIFY(!result.success());
+    QCOMPARE(result.status, 405);
+    QVERIFY2(captured.contains(u"failed"_s), "failure not logged");
+    QVERIFY2(captured.contains(u"code:"_s), "error code name missing");
+    // QHttpHeaders 把头名规范为小写，故断言落在值上，不约束头名大小写
+    QVERIFY2(captured.contains(u"trace-123"_s), "request header missing");
+    QVERIFY2(captured.contains(u"request-payload-marker"_s), "request body missing");
+    QVERIFY2(captured.contains(u"<!doctype html>"_s), "response body missing");
 }
 
 QTEST_MAIN(HttpClientTest)

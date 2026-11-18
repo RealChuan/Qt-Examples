@@ -208,12 +208,13 @@ QString davMessage(const HttpResult &result)
     switch (result.status) {
     case 403: return u"Forbidden: no permission for this operation"_s;
     case 405:
-        if (result.method == "MKCOL") {
+        if (result.request.method == "MKCOL") {
             return u"Collection already exists"_s;
         }
         return u"Method not allowed"_s;
     case 409:
-        if (result.method == "MKCOL" || result.method == "COPY" || result.method == "MOVE") {
+        if (result.request.method == "MKCOL" || result.request.method == "COPY"
+            || result.request.method == "MOVE") {
             return u"Parent collection of the target does not exist"_s;
         }
         return u"Conflict"_s;
@@ -222,7 +223,7 @@ QString davMessage(const HttpResult &result)
                u"header was rejected"_s;
     case 415: return u"The server does not support the request body media type"_s;
     case 423:
-        if (result.method == "LOCK") {
+        if (result.request.method == "LOCK") {
             return u"A conflicting lock exists on the resource"_s;
         }
         return u"The resource is locked (acquire a token via lock())"_s;
@@ -446,7 +447,7 @@ DavResult WebDavClient::check(const HttpResult &result)
                     .message = u"Malformed 207 multistatus body"_s,
                     .code = DavErrorCode::Multistatus};
         }
-        if (result.method == "PROPFIND") {
+        if (result.request.method == "PROPFIND") {
             return {.success = true, .code = DavErrorCode::Multistatus, .resources = *parsed};
         }
         // COPY/MOVE 仅部分失败才回 207；PROPPATCH 恒 207：按逐资源状态与
@@ -487,18 +488,19 @@ WebDavClient::createRequest(Operation op, const QNetworkRequest &request, QIODev
 
 void WebDavClient::resultReady(const HttpResult &result)
 {
-    if (result.method != "LOCK"_ba && result.method != "UNLOCK"_ba) {
+    if (result.request.method != "LOCK"_ba && result.request.method != "UNLOCK"_ba) {
         return;
     }
     // 键口径：result.url 为 reply->url()（重定向跟随后的地址）。LOCK/UNLOCK
     // 在 Qt 默认重定向策略下不自动跟随，与 createRequest() 注入侧一致
     const auto key = lockKey(result.url);
-    if (result.method == "LOCK"_ba && result.status == 200) {
+    if (result.request.method == "LOCK"_ba && result.status == 200) {
         if (const auto token = parseLockToken(result.body)) {
             d_ptr->lockTokens.insert(key, *token);
             qCDebug(lcWebDavClient).noquote() << "lock token remembered for" << key;
         }
-    } else if (result.method == "UNLOCK"_ba && (result.status == 204 || result.status == 200)) {
+    } else if (result.request.method == "UNLOCK"_ba
+               && (result.status == 204 || result.status == 200)) {
         d_ptr->lockTokens.remove(key);
         qCDebug(lcWebDavClient).noquote() << "lock token released for" << key;
     }
